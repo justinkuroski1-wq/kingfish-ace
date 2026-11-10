@@ -564,6 +564,9 @@ body{font-size:15.5px}
 @media (max-height:800px){#app.projmode .clock{padding:10px 0 8px}#app.projmode .clock .big{font-size:66px}#app.projmode .side .sbox{padding:6px 16px}#app.projmode .score{font-size:15px;padding:2px 0}#app.projmode .side .sbox h4{margin-bottom:4px}#app.projmode .side .sbox>div[style*="font-size:12px"]{font-size:12.5px!important}}
 .wing:has(>.commsbar){grid-template-rows:auto auto minmax(0,1fr)!important}
 .lg-right{position:relative}.lg-home{position:absolute;top:22px;left:28px;color:#9AA5AF;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.3px;padding:6px 10px;border-radius:3px}.lg-home:hover{color:#EDF0F2;background:rgba(255,255,255,.06)}
+.room{font-family:Consolas,monospace;font-size:13px;letter-spacing:2px;color:var(--mute);padding:0 16px;border-left:1px solid var(--line);white-space:nowrap}.room b{color:#F2C14E;font-size:20px;letter-spacing:4px;margin-left:6px}#app.projmode .room b{font-size:24px}
+/* owner 11-10: projector map larger, side data smaller */
+#app.projmode .boardbody{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,460px)!important}#app.projmode .mapbox,#app:not(.projmode) .mapbox{aspect-ratio:1960/1350!important;max-width:100%!important;width:100%;height:100%}#app.projmode .side{zoom:.82}
 </style>
 </head>
 <body>
@@ -584,6 +587,7 @@ body{font-size:15.5px}
       <label class="lg-lbl" for="lg-role">Role</label>
       <select id="lg-role" class="lg-in" onchange="lgRole()"></select>
       <div id="lg-pwbox"><label class="lg-lbl" for="lg-pwi">Password</label><input id="lg-pwi" type="password" class="lg-in" autocomplete="off" onkeydown="if(event.key==='Enter')lgGo()"></div>
+      <div id="lg-roombox" style="display:none"><label class="lg-lbl" for="lg-room">Join code <span style="opacity:.6;font-weight:400">(shown on the projector · leave blank on the instructor laptop)</span></label><input id="lg-room" class="lg-in" maxlength="6" autocomplete="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:6px;font-family:Consolas,monospace" onkeydown="if(event.key==='Enter')lgGo()"></div>
       <div id="lg-err" class="lg-err"></div>
       <button class="lg-go" onclick="lgGo()">Sign in</button>
       <div class="lg-note">Open the Instructor window first. It runs the game for the projector and the wing screens.</div>
@@ -776,7 +780,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.6.11';   // shown on every screen; bump on each release
+const APP_VER='1.7.1';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -990,6 +994,16 @@ if(!S.requests){ S.requests=[]; S.movesOpen=true; S.reqSeq=1; }
 const ROUTE=(location.hash||'').replace('#','');
 const MODE=ROUTE==='projector'?'projector':/^wing[1-4]$/.test(ROUTE)?'wing':ROUTE==='instructor'?'instructor':'login';
 const WING_ID=MODE==='wing'?['alpha','bravo','charlie','delta'][+ROUTE.slice(4)-1]:null;
+// ===== Cloud rooms: the instructor laptop stays the only writer; wings on other laptops join with a 6-character code =====
+const FB_ROOT='https://kingfish-ace-default-rtdb.firebaseio.com/rooms/';
+let ROOM=null, REMOTE=false, __remoteSeen=0, __rev=0;
+try{ if(MODE==='instructor'){ ROOM=localStorage.getItem('kfa-room'); if(!/^[A-Z0-9]{6}$/.test(ROOM||'')){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; ROOM=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join(''); localStorage.setItem('kfa-room',ROOM); } }
+  else if(MODE==='projector'){ ROOM=localStorage.getItem('kfa-room'); }
+  else if(MODE==='wing'){ const j=sessionStorage.getItem('kfa-join'); if(/^[A-Z0-9]{6}$/.test(j||'')){ ROOM=j; REMOTE=true; } } }catch(e){}
+function fbUrl(path){ return FB_ROOT+ROOM+'/'+path+'.json'; }
+async function fbGet(path){ try{ const r=await fetch(fbUrl(path)+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return undefined; return await r.json(); }catch(e){ return undefined; } }
+async function fbSend(path,method,val){ try{ const r=await fetch(fbUrl(path),{method,body:JSON.stringify(val)}); return r.ok; }catch(e){ return false; } }
+function sendWing(m){ if(REMOTE){ fbSend('cmds','POST',JSON.stringify(m)); } else if(BC) BC.postMessage(m); }
 const INSTR_PW='Admin1';   // classroom lock only: anyone can read this file's code
 function confirmThen(msg,fn,yesLabel){ if(window.__yesNow) return true;
   if(!/\[native code\]/.test(Function.prototype.toString.call(window.confirm))) return window.confirm(msg);
@@ -1014,35 +1028,58 @@ window.alert=notice;
 let __lastBtn={t:0,x:-99,y:-99}; addEventListener('click',e=>{ if(!e.isTrusted) return; const b=e.target.closest&&e.target.closest('button'); if(!b||b.closest('.cfx')) return; const tx=b.textContent.trim(); if(tx.length<=1||b.classList.contains('tailb')) return; const now=Date.now(), L=__lastBtn; if(now-L.t<500&&Math.abs(e.clientX-L.x)<14&&Math.abs(e.clientY-L.y)<14){ e.stopImmediatePropagation(); e.preventDefault(); return; } __lastBtn={t:now,x:e.clientX,y:e.clientY}; },true);   // a double-click on a command button counts once
 const UI_ONLY=new Set(['wingPickAf','wingTail','wingHex','wingSet','wingPlot','undoPlot','cancelPlot','rfiToggle','wingFrom','wingCargo']);
 const BC=(()=>{ try{ return new BroadcastChannel('kfa'); }catch(e){ return null; } })(); let lastHb=0;
-function instructorAlive(){ return BC&&Date.now()-lastHb<6000; }
+function instructorAlive(){ return REMOTE?Date.now()-__remoteSeen<9000:(BC&&Date.now()-lastHb<6000); }
 const cmd=new Proxy({},{get:(_,fn)=>(...args)=>{ if(!CMD_OK.includes(fn)) return;
   if(MODE==='wing'&&UI_ONLY.has(fn)){ window[fn](...args); return; }          // stays on this screen
   if(MODE==='wing'&&instructorAlive()) window.__waitN=0;
-  if(MODE==='wing'&&BC&&!instructorAlive()&&(performance.now()<4000||lastHb>0)&&(window.__waitN=(window.__waitN||0)+1)<40){ BC.postMessage({ping:1}); if(window.__waitN===2) notice('Waiting for the instructor screen. Your action goes through when it answers.'); setTimeout(()=>cmd[fn](...args),250); return; }
+  if(MODE==='wing'&&(REMOTE||BC)&&!instructorAlive()&&(REMOTE||performance.now()<4000||lastHb>0)&&(window.__waitN=(window.__waitN||0)+1)<40){ if(BC&&!REMOTE) BC.postMessage({ping:1}); if(window.__waitN===2) notice('Waiting for the instructor screen. Your action goes through when it answers.'); setTimeout(()=>cmd[fn](...args),250); return; }
   if(MODE==='wing') window.__waitN=0;   // wait for the instructor window; never write alongside it   // just opened: wait to hear from the instructor window
   if(MODE==='wing'&&instructorAlive()){ const team=args[0];
     if(fn==='wingSubmit'){ const c=checkPlan(planOf(team),S.plot?S.plot.path:[]); if(c.block) return; }
-    BC.postMessage({cmd:fn,args,team,ui:{plot:S.plot,wsel:(S.wsel||{})[team],wselAf:((S.wselAf||{})[team]),wform:(S.wform||{})[team],rfiPick:((S.rfiPick||{})[team])}});
+    sendWing({cmd:fn,args,team,ui:{plot:S.plot,wsel:(S.wsel||{})[team],wselAf:((S.wselAf||{})[team]),wform:(S.wform||{})[team],rfiPick:((S.rfiPick||{})[team])}});
     if(fn==='wingSubmit'){ const f=wingForm(team); f.cargo={}; f.tail=null; S.plot=null; }
     if(fn==='rfiRollPicked'&&S.rfiPick&&S.rfiPick[team]) S.rfiPick[team][args[1]]=[];
     render(); return; }
+  if(REMOTE){ notice('Not connected to the instructor. Check the room code on the projector, or ask the instructor to open the game.'); return; }
   const run=()=>{ try{ syncIn(); }catch(e){} window[fn](...args); save(); };   // no instructor window open: save directly
   if(navigator.locks&&navigator.locks.request) navigator.locks.request('kfa-game',run); else run(); }});
 const INS_ID=Date.now()+'-'+Math.random().toString(36).slice(2);
 function standDown(){ if(window.__standby) return; window.__standby=true; save=function(){}; publishTick=function(){}; S.running=false;
   const ov=document.createElement('div'); ov.className='cfx'; ov.innerHTML=`<div class="cfp"><div class="cfh">Open in another window</div><div class="cfb">Kingfish ACE was opened as instructor in another window or tab. This window has stopped so the two cannot overwrite each other. Use the newer window, or close it and reload this one.</div><div class="cfr"><button class="btn p" onclick="location.reload()">Reload this window</button></div></div>`; document.body.appendChild(ov); }
-if(BC) BC.onmessage=e=>{ const m=e.data||{}; if(window.__standby) return;
+function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
   if(m.insHello&&MODE==='instructor'&&m.insHello!==INS_ID){ standDown(); return; }
   if(m.hb){ lastHb=Date.now(); return; }
-  if(m.ping&&MODE==='instructor'){ BC.postMessage({hb:1}); return; }
+  if(m.ping&&MODE==='instructor'){ if(BC) BC.postMessage({hb:1}); return; }
   if(m.alertFor&&MODE==='wing'&&m.alertFor===WING_ID){ alert(m.text); return; }
   if(m.cmd&&MODE==='instructor'&&CMD_OK.includes(m.cmd)&&!UI_ONLY.has(m.cmd)){ const team=m.team, mine=S.plot, realAlert=window.alert; let said=null;
     S.wsel=S.wsel||{}; S.wform=S.wform||{}; S.rfiPick=S.rfiPick||{};
     S.plot=m.ui.plot||null; S.wsel[team]=m.ui.wsel; (S.wselAf=S.wselAf||{})[team]=m.ui.wselAf||null; if(m.ui.wform) S.wform[team]=m.ui.wform; if(m.ui.rfiPick) S.rfiPick[team]=m.ui.rfiPick;
     window.alert=x=>{ said=String(x); };
     try{ window[m.cmd](...m.args); }catch(x){ console.error(x); } finally{ window.alert=realAlert||notice; S.plot=mine; }
-    save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,120); if(said) BC.postMessage({alertFor:team,text:said});
-    if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args); } };
+    save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,120); if(said){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }
+    if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args); } }
+if(BC) BC.onmessage=onWingMsg;
+setTimeout(()=>{
+  if(MODE==='instructor'&&ROOM){
+    let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
+    window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; fbSend('live','PUT',{rev:__rev,t:Date.now(),clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
+      if(now===true){ clearTimeout(liveT); liveT=null; send(); return; } if(liveT) return; liveT=setTimeout(()=>{ liveT=null; send(); },900); };
+    window.cloudSave=()=>{ clearTimeout(gameT); gameT=setTimeout(async()=>{ if(window.__standby) return; let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g||g===lastGame) return; if(await fbSend('game','PUT',g)){ lastGame=g; __rev++; cloudLive(true); } },400); };
+    window.cloudAlert=(team,text)=>{ alerts[team]={text,t:Date.now()}; cloudLive(true); };
+    setInterval(()=>cloudLive(true),3000);
+    setInterval(async()=>{ if(busy||window.__standby) return; busy=true; try{ const c=await fbGet('cmds'); if(c&&typeof c==='object'){ const del={}; for(const k of Object.keys(c).sort()){ del[k]=null; let m=c[k]; try{ if(typeof m==='string') m=JSON.parse(m); onWingMsg({data:m}); }catch(e){ console.error(e); } } await fbSend('cmds','PATCH',del); } }finally{ busy=false; } },1000);
+    cloudSave(); cloudLive(true);
+  }
+  if(REMOTE){
+    let rev=-1, busy=false;
+    const apply=g=>{ try{ const k=gameKey(g); if(k&&k===window.__gk) return; window.__gk=k; const n=JSON.parse(g); if(!validSave(n)) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); S=n; Object.assign(S,keep); restoreUi(ui); try{ localStorage.setItem('kfa-game',g); }catch(e){} render(); }catch(e){} };
+    const tick=async()=>{ if(busy) return; busy=true; try{ const L=await fbGet('live'); if(L&&L.t){ if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
+        const a=L.alerts&&L.alerts[WING_ID]; if(a&&a.t!==window.__lastAlert){ if(window.__lastAlert!==undefined) alert(a.text); window.__lastAlert=a.t; }
+        if(L.rev!==rev){ const g=await fbGet('game'); if(typeof g==='string'){ rev=L.rev; apply(g); } }
+        S.clock=L.clock; S.hidden=L.hidden; S.running=L.running; S.endsAt=L.endsAt; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } }finally{ busy=false; } };
+    tick(); setInterval(tick,1000);
+  }
+},0);
 if(BC&&MODE==='instructor'){ BC.postMessage({insHello:INS_ID}); setInterval(()=>{ if(!window.__standby) BC.postMessage({hb:1}); },800); }
 if(MODE==='instructor'){ addEventListener('pagehide',()=>save());
   let asked=false; try{ asked=sessionStorage.getItem('kfa-asked')==='1'; }catch(e){}
@@ -1063,14 +1100,15 @@ function resumeChoice(){ const when=new Date(window.__bootSavedAt||S.savedAt), d
 if(BC&&MODE==='wing') setInterval(()=>{ const lost=lastHb>0&&Date.now()-lastHb>6000; let b=document.getElementById('kfa-recon');
   if(lost&&!b){ b=document.createElement('div'); b.id='kfa-recon'; b.textContent='Reconnecting to the instructor window… Your actions will send when it is back.'; document.body.appendChild(b); }
   if(!lost&&b) b.remove(); },1000);
+function gameKey(g){ return g?String(g).replace(/"savedAt":\d+,?/,'').replace(/"clock":\d+,?/,''):''; }
 function validSave(n){ return n&&n.bases&&n.v===SAVE_V; }
 function localUi(){ return {plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined}; }
 function restoreUi(k){ S.plot=k.plot===undefined?null:k.plot; if(WING_ID){ (S.wsel=S.wsel||{})[WING_ID]=k.wsel; (S.wselAf=S.wselAf||{})[WING_ID]=k.wselAf||null; if(k.wform) (S.wform=S.wform||{})[WING_ID]=k.wform; if(k.rfiPick) (S.rfiPick=S.rfiPick||{})[WING_ID]=k.rfiPick; } }
 function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } }
 const CMD_OK=['wingPickAf','wingCancelFlight','wingResReq','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
 function go(route){ location.hash=route; location.reload(); }
-function save(){ if(MODE!=='instructor'&&MODE!=='wing') return; try{ S.savedAt=Date.now(); localStorage.setItem('kfa-game',JSON.stringify({...S,v:SAVE_V,running:false,endsAt:S.running?S.endsAt:null})); if(MODE==='instructor') publishTick(); }catch(e){} }
-function publishTick(){ try{ localStorage.setItem('kfa-tick',JSON.stringify({clock:S.clock,hidden:S.hidden,running:S.running,endsAt:S.endsAt||null,t:Date.now()})); }catch(e){} }
+function save(){ if(MODE!=='instructor'&&MODE!=='wing') return; try{ S.savedAt=Date.now(); localStorage.setItem('kfa-game',JSON.stringify({...S,v:SAVE_V,running:false,endsAt:S.running?S.endsAt:null})); if(MODE==='instructor'){ publishTick(); if(window.cloudSave) cloudSave(); } }catch(e){} }
+function publishTick(){ try{ localStorage.setItem('kfa-tick',JSON.stringify({clock:S.clock,hidden:S.hidden,running:S.running,endsAt:S.endsAt||null,t:Date.now()})); }catch(e){} if(window.cloudLive) cloudLive(); }
 function day(){return Math.floor((S.turn-1)/3)+1} function shift(){return SHIFTS[(S.turn-1)%3]}
 function log(m){S.log.push(`[T${S.turn} D${day()} ${shift()[0].split(' ')[0]}] ${m}`);}
 
@@ -1089,9 +1127,6 @@ const STATIC=(()=>{let s=`<rect class="sea" x="0" y="${VY}" width="${W}" height=
   for(const c of MD.cities) s+=`<circle cx="${c.x}" cy="${c.y}" r="4" fill="#3D3220"/><text class="city" x="${c.x+8}" y="${c.y-6}">${c.t}</text>`;
   const g=MD.ring; s+=`<clipPath id="cl"><rect x="0" y="${VY}" width="${W}" height="${VH}"/></clipPath><circle class="ring" clip-path="url(#cl)" cx="${g.cx}" cy="${g.cy}" r="${g.r}"/><text class="ringl" x="${g.cx+g.r*0.86}" y="${g.cy+g.r*0.42}" transform="rotate(-62 ${g.cx+g.r*0.86} ${g.cy+g.r*0.42})">DF-26</text>`;
   for(const h of HEXES) s+=`<text class="hexn" x="${h.x}" y="${h.y-36}">${h.id}</text>`;
-  // en-route box
-  s+=`<g transform="translate(1795,40)"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
-     <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`;
   for(const p of [[1640,430],[1880,900]]) s+=`<g transform="translate(${p[0]},${p[1]})"><polygon points="0,-34 54,0 0,34 -54,0" fill="#FFF3C4" stroke="#8A7A3A" stroke-width="2"/><text y="-2" font-size="15" font-weight="800" text-anchor="middle" fill="#4A3E14">AOR</text><text y="16" font-size="13" font-weight="700" text-anchor="middle" fill="#4A3E14">ENTRY</text></g>`;
   return s;})();
 let __plates=[];
@@ -1100,8 +1135,11 @@ function plate(x,y,txt,c,dashed){ const w=Math.round(txt.length*13.2+30); for(le
 function sortieTagY(so,B){ const lab=`${so.n} × ${FTYPE[so.team]} · ${so.lost?`${so.n-so.lost} of ${so.n} back`:so.mp?`+${so.mp} MP`:(so.conflict?'mission flown':'presence')}`, w=lab.length*11+22; let y=B.y-72;
   for(let k=0;k<5&&__plates.some(p=>Math.abs(p.x-B.x)<(p.w+w)/2+4&&Math.abs(p.y-(y-25))<38);k++) y-=44; return y; }
 function chipSvg(c){return `<circle class="chip" cx="${c.x}" cy="${c.y}" r="15" fill="${CHIPC[c.c]}"/><path d="M${c.x-8},${c.y+8}L${c.x+8},${c.y-8}" stroke="#1d1d1d" stroke-width="3.5" stroke-linecap="round" pointer-events="none"/>`;}
+function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g></defs></svg>`; (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac='';
-  let s=`<svg viewBox="0 ${VY} ${W} ${VH}" preserveAspectRatio="xMidYMid meet" style="aspect-ratio:${W}/${VH};width:min(100%,calc(100cqh * ${W} / ${VH}));height:auto" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)">${STATIC}`;
+  const vb=only?[0,VY,W,VH]:[40,150,1960,1350];   // owner 11-10: the class board (instructor and projector) zooms to the play area; wing screens keep the full map
+  let s=`<svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%,calc(100cqh * ${vb[2]} / ${vb[3]}));height:auto" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
+     <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`}`;
   for(const id of S.targets) if(HX[id]) s+=`<polygon class="tgt" points="${hexPts(HX[id])}"/>`;
   for(const h of HEXES) s+=`<polygon class="hex${clickable?' click':''}" data-id="${h.id}" points="${hexPts(h)}"/>`;
   for(const id of S.highlights) if(HX[id]) s+=`<polygon class="hl" points="${hexPts(HX[id])}"/>`;
@@ -1232,7 +1270,7 @@ function animateFlights(){ if(window.__stk&&turnFrac()>0){ window.__stk=false; t
 function boardHtml(clickable){
   const [sn,sh]=shift(); const m=Math.floor(Math.max(S.clock,0)/60), sec=Math.max(S.clock,0)%60;
   const cls='clock'+(S.hidden?' hidden':S.clock<=0?' zero':S.clock<=60?' warn':'');
-  return `<div class="board"><div class="topbar"><span class="t">KINGFISH ACE</span><span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Planning before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp" style="margin-left:auto"></span>${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}<span class="sit ${S.orders.sit}">${S.orders.sit.toUpperCase()}</span></div>
+  return `<div class="board"><div class="topbar"><span class="t">KINGFISH ACE</span><span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Planning before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp" style="margin-left:auto"></span>${ROOM&&(MODE==='instructor'||MODE==='projector')?`<span class="room" title="Wings on other laptops: open the Kingfish ACE site, pick your wing and enter this code">JOIN CODE <b>${ROOM}</b></span>`:''}${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}<span class="sit ${S.orders.sit}">${S.orders.sit.toUpperCase()}</span></div>
   <div class="boardbody"><div class="mapbox">${mapSvg(clickable)}</div>
   <div class="side"><div class="${cls}"><div class="big">${S.hidden?'--:--':m+':'+String(sec).padStart(2,'0')}</div><div class="lbl">${S.opening?'PLANNING TIMER':'SHIFT TIMER · 8-HR TURN'}</div></div>
    <div class="sbox"><h4 class="pth">POINTS<b><span>SCORE</span><span>MP</span><span>DP</span><span>RP</span></b></h4>${VIS().map(t=>{const p=S.pts[t.id], net=netScore(p);return `<div class="score"><i style="background:${t.c}"></i>${t.n}<b style="display:flex;gap:14px"><span title="Score: Mission Points minus 1 for every 5 Demoralization Points" style="color:#F2F4F6;min-width:34px;text-align:right">${net}</span><span title="Mission Points" style="color:var(--mute)">${p.mp}</span><span title="Demoralization Points" style="color:${p.dp?'#FF9C8C':'var(--mute)'}">${p.dp}</span><span title="Resource Points" style="color:#A8E6C1">${p.rp}</span></b></div>`}).join('')}${(()=>{ const all=TEAMS.map(x=>S.pts[x.id]); const sc=all.reduce((a,p)=>a+netScore(p),0), mp=all.reduce((a,p)=>a+p.mp,0), dp=all.reduce((a,p)=>a+p.dp,0), rp=all.reduce((a,p)=>a+p.rp,0);
@@ -1245,10 +1283,10 @@ function boardHtml(clickable){
 let proj=null;
 function renderNoSave(){ const sv=save; save=function(){}; try{ render(); } finally { save=sv; } }
 function render(){
-  const host=document.getElementById('boardHost'); host.innerHTML=boardHtml(true);
+  const host=document.getElementById('boardHost'); ensureStatic(document); host.innerHTML=boardHtml(true);
   host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>selectHex(p.dataset.id)));
   for(const id in WINS) if(WINS[id]&&!WINS[id].closed) wingRender(id);
-  if(proj&&!proj.closed){ const b=proj.document.getElementById('b'); if(b){ b.innerHTML=boardHtml(true); b.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>selectHex(p.dataset.id))); } }
+  if(proj&&!proj.closed){ const b=proj.document.getElementById('b'); if(b){ ensureStatic(proj.document); b.innerHTML=boardHtml(true); b.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>selectHex(p.dataset.id))); } }
   renderPanel(); save();
 }
 function renderClockOnly(){ const html=boardHtml(true); // cheap enough; keeps both windows in sync
@@ -1301,7 +1339,7 @@ function openWingOld(team){ const w=window.open('','kfa-wing-'+team,'width=1600,
   log(`${TM[team].n} screen opened`); render(); }
 function wingRender(team){ const w=WINS[team]; const box=w.document.getElementById('w'); if(!box) return;
   const keep=box.querySelector('.wside'); const sc=keep?keep.scrollTop:0;
-  box.innerHTML=wingHtml(team); box.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>wingHex(team,p.dataset.id)));
+  ensureStatic(box.ownerDocument); box.innerHTML=wingHtml(team); box.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>wingHex(team,p.dataset.id)));
   const ns=box.querySelector('.wside'); if(ns) ns.scrollTop=sc; }
 function wingHex(team,id){ if(S.plot&&S.plot.team===team){ plotClick(id); return; } S.wsel[team]=S.wsel[team]===id?null:id; (S.wselAf=S.wselAf||{})[team]=null; if(MODE==='wing') WSTAB='plan'; render(); }
 // Owner 11-09: aircraft are called "C-17 Chalk 1", "C-17 Chalk 2"... numbered within each type.
@@ -1983,8 +2021,17 @@ if(MODE==='instructor'&&S.endsAt&&S.endsAt>Date.now()+1000){ S.running=true; S.c
 else if(MODE==='instructor'&&S.endsAt&&Date.now()-S.endsAt<30*60000){ S.running=false; S.clock=0; S.endsAt=null; setTimeout(()=>{ try{ log('Shift timer ran out while the instructor window was closed'); timeUp(); }catch(e){} },800); }
 else { S.running=false; S.endsAt=null; }
 function lgInstructor(){ document.getElementById('lg-pwi').focus(); }
-function lgRole(){ const r=document.getElementById('lg-role').value; document.getElementById('lg-pwbox').style.display=r==='instructor'?'block':'none'; document.getElementById('lg-err').textContent=''; if(r==='instructor') document.getElementById('lg-pwi').focus(); }
-function lgGo(){ const r=document.getElementById('lg-role').value; if(r==='instructor') lgCheck(); else go(r); }
+function lgRole(){ const r=document.getElementById('lg-role').value; document.getElementById('lg-pwbox').style.display=r==='instructor'?'block':'none'; document.getElementById('lg-roombox').style.display=/^wing/.test(r)?'block':'none'; document.getElementById('lg-err').textContent=''; if(r==='instructor') document.getElementById('lg-pwi').focus(); }
+async function lgGo(){ const r=document.getElementById('lg-role').value; if(r==='instructor') return lgCheck();
+  if(/^wing/.test(r)){ const el=document.getElementById('lg-room'), code=(el.value||'').toUpperCase().replace(/[^A-Z0-9]/g,''), err=document.getElementById('lg-err');
+    if(!code){ try{ sessionStorage.removeItem('kfa-join'); }catch(e){} return go(r); }
+    if(code.length!==6){ err.textContent='The join code has 6 letters and numbers.'; return; }
+    err.textContent='Checking the code…';
+    let live=null; try{ const x=await fetch(FB_ROOT+code+'/live.json?t='+Date.now(),{cache:'no-store'}); live=x.ok?await x.json():null; }catch(e){ err.textContent='Cannot reach the game server from this network.'; return; }
+    if(!live||!live.t){ err.textContent='No game found with that code. Check the code on the projector.'; return; }
+    try{ sessionStorage.setItem('kfa-join',code); }catch(e){}
+    return go(r); }
+  go(r); }
 (function(){ const h=()=>{ const el=document.getElementById('lg-home'); if(!el) return; if(location.protocol==='file:'){ el.style.display='none'; return; } el.href=/(\/|\/index\.html)$/.test(location.pathname)?'../':'./'; }; if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',h); else h(); })();
 function lgCheck(){ if(document.getElementById('lg-pwi').value===INSTR_PW){ try{ sessionStorage.setItem('kfa-ins','1'); sessionStorage.removeItem('kfa-asked'); }catch(e){} go('instructor'); } else { document.getElementById('lg-err').textContent='Incorrect password.'; document.getElementById('lg-pwi').select(); } }
 const FIGHTERS={alpha:'16 × F-15',bravo:'16 × F-22',charlie:'16 × F-22',delta:'16 × F-16 at Misawa'};
@@ -2003,24 +2050,24 @@ if(MODE==='login'){
   document.title='Kingfish ACE · '+TM[WING_ID].n;
   const app=document.getElementById('app'); app.classList.add('nopanel','projmode');
   render=function(){ const host=document.getElementById('boardHost'); const keep=grabScroll(host), typed=keepTyping(host);
-    host.innerHTML=wingHtml(WING_ID,'cmd.',WVIEW).replace('<span class="sp"></span>','<span class="sp"></span><span style="border-left:1px solid var(--line);cursor:pointer;color:var(--mute);font-size:13px" onclick="go(\'\')">Sign out</span>');
+    ensureStatic(document); host.innerHTML=wingHtml(WING_ID,'cmd.',WVIEW).replace('<span class="sp"></span>','<span class="sp"></span><span style="border-left:1px solid var(--line);cursor:pointer;color:var(--mute);font-size:13px" onclick="go(\'\')">Sign out</span>');
     host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>{ const id=p.dataset.id, plotting=!!S.plot;
       cmd.wingHex(WING_ID,id);
       if(!plotting&&S.bases[WING_ID].some(b=>b.hex===id)){ WRES=id; WVIEW='res'; render(); } }));   // click your hub or a spoke: its resources open
     putScroll(host,keep); typed(); if(window.__gid!==S.gid){ if(window.__gid!==undefined) document.querySelectorAll('.rlx').forEach(x=>x.remove()); window.__gid=S.gid; } };
   const pull=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g){ const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); { const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } } }
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.clock=v.clock; S.hidden=v.hidden; S.running=v.running; S.endsAt=v.endsAt; } }catch(x){} };
-  window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ pull(); render(); } else if(e.key==='kfa-tick'){ pull(); const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; pull(); render(); } else if(e.key==='kfa-tick'){ pull(); const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } });
   pull(); { let ok=false; try{ ok=validSave(JSON.parse(localStorage.getItem('kfa-game'))); }catch(e){} if(!ok) save(); } render();
   setInterval(()=>{ if(S.running&&S.endsAt){ const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c!==S.clock){ S.clock=c; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } } },250);
 } else if(MODE==='projector'){
   document.title='Kingfish ACE · Projector';
   const app=document.getElementById('app'); app.classList.add('nopanel','projmode','hint'); setTimeout(()=>app.classList.remove('hint'),9000);
-  render=function(){ const host=document.getElementById('boardHost'); host.innerHTML=boardHtml(true);
+  render=function(){ const host=document.getElementById('boardHost'); ensureStatic(document); host.innerHTML=boardHtml(true);
     host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>{ try{ localStorage.setItem('kfa-cmd',JSON.stringify({hex:p.dataset.id,t:Date.now()})); }catch(x){} })); };
   const pull=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g){ const keep={clock:S.clock,running:S.running,hidden:S.hidden}; { const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); } } }
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.clock=v.clock; S.hidden=v.hidden; S.running=v.running; S.endsAt=v.endsAt; } }catch(x){} };
-  window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ pull(); render(); } else if(e.key==='kfa-tick'){ pull(); renderClockOnly(); animateFlights(); } });
+  window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; pull(); render(); } else if(e.key==='kfa-tick'){ pull(); renderClockOnly(); animateFlights(); } });
   pull(); render();
   setInterval(()=>{ if(S.running&&S.endsAt){ const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c!==S.clock){ S.clock=c; renderClockOnly(); animateFlights(); } } },250);
 } else { render(); setupTabs();
