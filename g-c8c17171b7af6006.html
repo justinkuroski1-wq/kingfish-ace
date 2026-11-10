@@ -629,6 +629,9 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 .watk{margin:0 0 8px;padding:10px 12px;border:1px solid #7A3A33;border-left:4px solid #F08A7E;background:#2A1514;color:#F6D2CC;font-size:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}.watk b{color:#fff}
 .atkh{font-size:11px;letter-spacing:2px;color:#F08A7E;margin:4px 0 4px}.atkrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1F262D;font-size:13px}.atkrow i{width:10px;height:10px;display:inline-block;flex-shrink:0}
 .atkc{margin-left:auto;min-width:86px;text-align:right}.atkc+.atkc{margin-left:0}.atkr{min-width:62px;text-align:right;color:var(--mute)}.atkr.ok{color:#A8E6C1}.atkr.bad{color:#FF9C8C;font-weight:600}
+#kfa-ctx{position:fixed;z-index:9600;min-width:236px;background:#1B2128;border:1px solid #3A4652;border-radius:3px;box-shadow:0 10px 28px rgba(0,0,0,.55);padding:4px 0;font-size:13px;-webkit-user-select:none;user-select:none}
+#kfa-ctx button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:6px 14px;font:inherit;cursor:default}#kfa-ctx button:hover,#kfa-ctx button:focus-visible{background:#2B4E6E;color:#fff;outline:none}
+#kfa-ctx hr{border:0;border-top:1px solid #2A323B;margin:4px 0}#kfa-ctx .cxh{padding:5px 14px 4px;color:var(--mute);font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -980,7 +983,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.10.2';   // shown on every screen; bump on each release
+const APP_VER='1.10.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2224,6 +2227,24 @@ function atkInstrHtml(){ const L=(S.attacks||[]).filter(a=>a.turn===S.turn||!a.d
     <span class="atkc">${a.red===null?`<button class="btn sm d" onclick="attackRed(${a.id})">Roll D20</button>`:`Red <b>${a.red}</b>`}</span>
     <span class="atkc">${a.blue===null?`<button class="btn sm" onclick="attackForWing(${a.id})" title="Roll for the wing if it is away">Roll for wing</button>`:`Wing <b>${a.blue}${a.mod?'+'+a.mod:''}</b>`}</span>
     <span class="atkr ${a.done?(a.res==='defended'?'ok':'bad'):''}">${a.done?(a.res==='defended'?'Defended':'Struck'):'waiting'}</span></div>`).join('')+(p>1?`<div class="row" style="margin-top:6px"><button class="btn sm" onclick="attackRollAll()">Roll all remaining</button></div>`:''); }
+// R10.13 Right-click menu (owner 11-10: feel like desktop software). On the instructor board, right-clicking a hex
+//       selects it and opens the common map actions at the cursor. Esc or any click elsewhere closes it.
+//       Wing and projector screens show no browser menu on the map.
+function closeCtx(){ const m=document.getElementById('kfa-ctx'); if(m){ m.remove(); return true; } return false; }
+function showCtx(x,y,id){ closeCtx(); const o=ownerOf(id), red=(S.redz||{})[id];
+  const items=[['Hex '+id+(o?' · '+TM[o.team].n+' '+(o.b.role==='mob'||o.b.role==='hub'?'hub':'spoke'):''),null,'hd'],
+    [(S.highlights||[]).includes(id)?'Remove highlight':'Highlight','toggleHighlight()'],
+    [(S.targets||[]).includes(id)?'Remove Mission hex':'Make Mission hex','toggleTarget()'],['-'],
+    ['Red: farthest intercept (D10)',"placeRed('fi')"],['Red: air-land attack (D12)',"placeRed('al')"],['Red: deep anti-annihilation (D20)',"placeRed('da')"],
+    ...(red?[['Remove Red here',"placeRed('')"]]:[]),
+    ...(o&&o.b.role!=='mob'&&o.b.role!=='hub'?[['-'],['Effect: airfield strike',"inject('Airfield strike')"],['Effect: jamming',"inject('Jamming: delayed coordination')"],['Effect: cyber attack',"inject('Cyber attack')"]]:o?[['-'],['Effect: jamming',"inject('Jamming: delayed coordination')"],['Effect: cyber attack',"inject('Cyber attack')"]]:[]),
+    ['-'],['Clear selection','S.sel=null;render()']];
+  const m=document.createElement('div'); m.id='kfa-ctx'; m.setAttribute('role','menu');
+  m.innerHTML=items.map(it=>it[0]==='-'?'<hr>':it[2]==='hd'?`<div class="cxh">${it[0]}</div>`:`<button role="menuitem" data-go="${it[1].replace(/"/g,'&quot;')}">${it[0]}</button>`).join('');
+  document.body.appendChild(m); const r=m.getBoundingClientRect(); m.style.left=Math.max(4,Math.min(x,innerWidth-r.width-6))+'px'; m.style.top=Math.max(4,Math.min(y,innerHeight-r.height-6))+'px';
+  m.addEventListener('click',ev=>{ const b=ev.target.closest('button[data-go]'); if(!b) return; closeCtx(); try{ (new Function(b.dataset.go))(); }catch(x){ console.error(x); } }); }
+addEventListener('contextmenu',e=>{ const p=e.target.closest&&e.target.closest('polygon.hex'); if(!p) return; e.preventDefault(); if(MODE!=='instructor') return; const id=p.dataset.id; if(S.sel!==id){ S.sel=id; S.selTeam=null; render(); } showCtx(e.clientX,e.clientY,id); });
+addEventListener('pointerdown',e=>{ if(document.getElementById('kfa-ctx')&&!(e.target.closest&&e.target.closest('#kfa-ctx'))) closeCtx(); },true);
 function placeRed(kind){ if(!S.sel) return alert('Select a hex first.'); { const o=ownerOf(S.sel); if(kind&&o&&!confirmThen(`Hex ${S.sel} is a ${TM[o.team].n} base. Place Red on it anyway?`,()=>placeRed(kind),'Place Red')) return; } if(kind) S.redz[S.sel]=kind; else delete S.redz[S.sel]; log(kind?`Red capability placed at ${S.sel}: ${REDZ[kind].n} (D${REDZ[kind].die})`:`Red capability removed at ${S.sel}`); render(); }
 function payLogisticsTax(){ const lines=[];
   for(const t of TEAMS) for(const hex of Object.keys(S.inv[t.id]||{})){ const b=S.bases[t.id].find(x=>x.hex===hex); if(b&&b.role==='mob') continue;
@@ -2549,7 +2570,7 @@ function keys(e){ if(MODE==='projector') return; if(e.target.tagName==='INPUT'||
   if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ if(MODE==='instructor'){ e.preventDefault(); gmUndo(); } return; }   // R10.10 Ctrl+Z undoes the last game-master action
   if(e.ctrlKey||e.metaKey||e.altKey) return;
   if(e.key==='h'||e.key==='H') togglePanel(); else if(e.key===' '){ e.preventDefault(); clockStartPause(); }
-  else if(e.key==='Escape'){ let closed=false; if(document.getElementById('kfa-cards')){ closeCards(); closed=true; } document.querySelectorAll('.rlx').forEach(o=>{ o.click(); closed=true; }); const gm=document.getElementById('gm'); if(gm&&gm.style.display!=='none'){ gm.style.display='none'; closed=true; } if(!closed){ S.sel=null; S.plot=null; render(); } } }
+  else if(e.key==='Escape'){ let closed=false; if(document.getElementById('kfa-cards')){ closeCards(); closed=true; } document.querySelectorAll('.rlx').forEach(o=>{ o.click(); closed=true; }); const gm=document.getElementById('gm'); if(gm&&gm.style.display!=='none'){ gm.style.display='none'; closed=true; } if(closeCtx()) closed=true; if(!closed){ S.sel=null; S.plot=null; render(); } } }
 document.addEventListener('keydown',keys);
 document.getElementById('d-wing').innerHTML=TEAMS.map(t=>`<option value="${t.id}">${t.n}</option>`).join('');
 document.getElementById('d-country').innerHTML=Object.keys(ACCESS).map(c=>`<option>${c}</option>`).join('');
