@@ -567,6 +567,9 @@ body{font-size:15.5px}
 .room{font-family:Consolas,monospace;font-size:13px;letter-spacing:2px;color:var(--mute);padding:0 16px;border-left:1px solid var(--line);white-space:nowrap}.room b{color:#F2C14E;font-size:20px;letter-spacing:4px;margin-left:6px}#app.projmode .room b{font-size:24px}
 /* owner 11-10: projector map larger, side data smaller */
 #app.projmode .boardbody{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,460px)!important}#app.projmode .mapbox,#app:not(.projmode) .mapbox{aspect-ratio:1960/1350!important;max-width:100%!important;width:100%;height:100%}#app.projmode .side{zoom:.82}
+/* owner 11-10: Resources tables never cut off (fall to one column when narrow); no pulsing ring on moving aircraft */
+.rst2{grid-template-columns:repeat(auto-fit,minmax(440px,1fr))!important}.rst2 .rst .st{width:auto!important;white-space:nowrap;padding-right:10px}.rst2 .rst .q{width:56px!important}.rst .st{white-space:nowrap}
+.flping{display:none!important}
 </style>
 </head>
 <body>
@@ -670,6 +673,7 @@ body{font-size:15.5px}
             <button class="btn" onclick="setStatus('foc')">FOC</button>
             <button class="btn d" onclick="setStatus('struck')">Struck</button>
             <button class="btn" onclick="removeBase()">Remove</button>
+            <button class="btn" onclick="unlockRfi()" title="Let the wing at this base ask new RFIs (adds 5 on a first-pick spoke, 3 on a re-pick) and frees its question choice.">Unlock new RFIs</button>
             <button class="btn" onclick="startRecovery()" title="Contingency location: personnel and equipment assigned to Base Recovery. 1 turn UXO sweep + 2 turns repair.">Start base recovery</button>
           </div>
           <div class="hint" style="margin:2px 0 4px"><b style="color:var(--ink)">RFIs</b> · pick the questions, roll a D4 (blank = program rolls, or type the table roll): <span id="i-rficount"></span></div>
@@ -780,7 +784,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.7.1';   // shown on every screen; bump on each release
+const APP_VER='1.7.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -887,6 +891,15 @@ function hnLines(team,hex){ const ans=rfiAns(team,hex), out=[];
   for(const i in ans){ const v=ans[i]; if(v>=2){ const g=HN_SUPPORT[i][v-2]; if(Object.keys(g).length) out.push(Object.entries(g).map(([id,n])=>n+' '+CHIT[id].name).join(', ')); } }
   return out; }
 const RFI_CAP=[5,3,1,1];   // rulebook p.8-9: first airfield in a turn 5 questions, next 3, next 1; up to 4 airfields per turn; resets each turn
+// Owner 11-10: RFIs are asked only on chosen spokes. The 5 questions asked at the first spoke are locked for the wing's other first-pick spokes
+// (each spoke rolls its own answers). A re-picked spoke (moved or replaced after the first 3) gets any 3. The instructor can unlock a base for new RFIs.
+function spokePicks(team){ const n=(S.spokePicks||{})[team]; return n==null?S.bases[team].filter(b=>b.role!=='mob').length:n; }
+function lockedSet(team,hex){ const s=(S.rfiSet||{})[team]; if(!s||!s.length) return null; if((S.rfiSetHex||{})[team]===hex) return null; const own=S.bases[team].find(b=>b.hex===hex); if(own&&own.rfiMax>5) return null; return rfiInfo(team,hex).cap===5?s:null; }
+function rfiChosen(team,hex){ return S.bases[team].some(b=>b.hex===hex)||S.requests.some(q=>q.team===team&&q.st==='pending'&&q.hex===hex); }
+function noteRfiSet(team,hex){ if(rfiInfo(team,hex).cap!==5) return; S.rfiSet=S.rfiSet||{}; S.rfiSetHex=S.rfiSetHex||{}; const asked=Object.keys(rfiAns(team,hex)).map(Number);
+  if(!S.rfiSet[team]){ S.rfiSet[team]=asked.slice(0,5); S.rfiSetHex[team]=hex; } else if(S.rfiSetHex[team]===hex){ for(const i of asked) if(!S.rfiSet[team].includes(i)&&S.rfiSet[team].length<5) S.rfiSet[team].push(i); } }
+function unlockRfi(){ const o=ownerOf(S.sel); if(!o||o.b.role==='mob') return; const add=(o.b.rfiMax||5)>=5?5:3; o.b.rfiMax=Math.min(10,(o.b.rfiMax||5)+add); if(S.rfiSet) delete S.rfiSet[o.team];
+  log(`${TM[o.team].n} ${S.sel}: instructor unlocked ${add} new RFIs`); banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} · ${add} NEW RFIs UNLOCKED BY THE INSTRUCTOR`,false); render(); }
 function rfiKey(){ return S.opening?0:S.turn; }
 function rfiAns(team,hex){ return ((S.rfi||{})[team]||{})[hex]||{}; }
 // Owner's rule (11-09): each of the first 3 spokes gets 5 RFIs; a re-picked airfield (spoke moved there) gets 3; people on site can ask the rest.
@@ -895,16 +908,16 @@ function rfiInfo(team,hex){ const own=S.bases[team].find(b=>b.hex===hex), ans=rf
   if(own&&own.landed) return {left:10-answered,cap:10,label:'people on site: ask all remaining',answered};
   let cap;
   if(own) cap=own.rfiMax||5;
-  else if(S.requests.some(q=>q.team===team&&q.st==='pending'&&q.hex===hex&&!q.from)) cap=5;
+  else if(S.requests.some(q=>q.team===team&&q.st==='pending'&&q.hex===hex&&!q.from)) cap=spokePicks(team)<3?5:3;
   else cap=spokeCount2(team)<3?5:3;
   const label=cap===5?'first pick: 5 RFIs':'re-pick: 3 RFIs';
   return {left:Math.max(0,cap-answered),cap,label,answered}; }
-function rollRfiFor(team,hex,i,typed){ if(rfiAns(team,hex)[i]) return; const info=rfiInfo(team,hex); if(info.left<=0) return;
+function rollRfiFor(team,hex,i,typed){ if(rfiAns(team,hex)[i]) return; if(!rfiChosen(team,hex)){ if(!window.__batchRfi) alert('Choose this airfield as a spoke first. RFIs are asked on your chosen spokes.'); return; } const info=rfiInfo(team,hex); if(info.left<=0) return; { const L=lockedSet(team,hex); if(L&&!L.includes(i)) return; }
   const own=S.bases[team].find(b=>b.hex===hex);
   let r=(typed>=1&&typed<=4)?typed:d(4), rolls=[r]; while(r===4&&D4_FOUR==='reroll'){ r=d(4); rolls.push(r); }
   if(!window.__batchRfi&&!typed) pushRoll({team,title:`${TM[team].n} · RFI at hex ${hex}`,note:rolls.length>1?'A 4 is rolled again.':'',dice:[{s:4,v:r,l:RFIQ[i][0],sub:(RFIQ[i][1]||[])[Math.min(r,3)-1]}]});
   ((S.rfi[team]=S.rfi[team]||{})[hex]=S.rfi[team][hex]||{})[i]=r; const [q,ans]=RFIQ[i];
-  applyHN(team);
+  if(!window.__batchRfi) noteRfiSet(team,hex); applyHN(team);
   log(`RFI ${TM[team].n} hex ${hex} · ${q}: D4 ${rolls.join('→')} = ${r} (${ans[r-1]})`); banner(`${TM[team].n.toUpperCase()} · hex ${hex} · RFI ${q}: ${r} · ${ans[r-1]}`,r===1); render(); }
 // Rulebook p.8: teams identify their questions FIRST (5 per base; 3 on a re-pick), then roll a D4 for each.
 // Rulebook p.18: the game master keeps a bank of extra capabilities for teams that request more assets from their main operating bases.
@@ -944,16 +957,17 @@ function iocPanel(team,hex){ const rows=iocSources(team,hex), ok=rows.filter(r=>
    <div class="iocgrid">${rows.map(r=>`<table class="ioctab"><thead><tr><th><span class="tid">${r.T.id}</span>${r.T.n}</th><th class="st ${r.state}">${status[r.state]}</th></tr></thead><tbody>
      ${r.items.map(x=>`<tr><td>${x.name}</td><td class="sv ${x.src}"><i class="sq ${x.src}"></i>${word[x.src]}${x.note&&x.src==='hn'&&x.note.includes('RFI')?' (RFI)':''}</td></tr>`).join('')}</tbody></table>`).join('')}</div>`; }
 function rfiPicks(team,hex){ return (((S.rfiPick=S.rfiPick||{})[team]=S.rfiPick[team]||{})[hex])=S.rfiPick[team][hex]||[]; }
-function rfiToggle(team,hex,i){ const pk=rfiPicks(team,hex), info=rfiInfo(team,hex); const k=pk.indexOf(i);
+function rfiToggle(team,hex,i){ const pk=rfiPicks(team,hex), info=rfiInfo(team,hex); const k=pk.indexOf(i); { const L=lockedSet(team,hex); if(L&&!L.includes(i)) return; }
   if(k>=0) pk.splice(k,1); else if(pk.length<info.left&&!rfiAns(team,hex)[i]) pk.push(i); render(); }
-function rfiRollPicked(team,hex){ const pk=rfiPicks(team,hex).slice(); if(!pk.length) return; const res=[]; window.__batchRfi=true;
+function rfiRollPicked(team,hex){ if(!rfiChosen(team,hex)) return alert('Choose this airfield as a spoke first. RFIs are asked on your chosen spokes.'); const pk=rfiPicks(team,hex).slice(); if(!pk.length) return; const res=[]; window.__batchRfi=true;
   for(const i of pk){ rollRfiFor(team,hex,i); const v=rfiAns(team,hex)[i]; if(v) res.push(`${RFIQ[i][0]} ${v}`); }
-  window.__batchRfi=false; S.rfiPick[team][hex]=[]; pushRoll({team,title:`${TM[team].n} · RFIs at hex ${hex}`,dice:pk.map(i=>({s:4,v:rfiAns(team,hex)[i]||1,l:RFIQ[i][0],sub:(RFIQ[i][1]||[])[(rfiAns(team,hex)[i]||1)-1]}))});
+  window.__batchRfi=false; noteRfiSet(team,hex); S.rfiPick[team][hex]=[]; pushRoll({team,title:`${TM[team].n} · RFIs at hex ${hex}`,dice:pk.map(i=>({s:4,v:rfiAns(team,hex)[i]||1,l:RFIQ[i][0],sub:(RFIQ[i][1]||[])[(rfiAns(team,hex)[i]||1)-1]}))});
   banner(`${TM[team].n.toUpperCase()} · RFIs at hex ${hex}: ${res.join(' · ')}`,res.some(r=>r.endsWith(' 1'))); render(); }
-function rfiPickSheet(team,hex,C){ const ans=rfiAns(team,hex), info=rfiInfo(team,hex), pk=rfiPicks(team,hex), full=pk.length>=info.left;
-  let h=`<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · ${info.left>0?`${info.label} · choose your questions, then roll · <b style="color:var(--ink)">${pk.length} of ${info.left}</b> chosen`:'rolled · move the spoke to roll 3 more'}</div>`;
+function rfiPickSheet(team,hex,C){ const ans=rfiAns(team,hex), info=rfiInfo(team,hex), pk=rfiPicks(team,hex), L=lockedSet(team,hex); if(L){ pk.length=0; for(const i of L) if(!ans[i]&&pk.length<info.left) pk.push(i); } const full=pk.length>=info.left;
+  if(!rfiChosen(team,hex)) return `<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · choose this airfield as a spoke first, then ask its RFIs.</div>`;
+  let h=`<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · ${info.left>0?`${info.label}${L?' · <b style="color:#E3B25C">same 5 questions as your first spoke (locked; the instructor can unlock)</b>':''} · choose your questions, then roll · <b style="color:var(--ink)">${pk.length} of ${info.left}</b> chosen`:'rolled · move the spoke to roll 3 more'}</div>`;
   h+=RFIQ.map(([q,a],i)=>{ const v=ans[i]; if(v) return `<div class="rfirow"><span class="rfiq">${q}</span><span style="background:${RFIC[v-1]};color:#111;font-weight:700;padding:0 7px;border-radius:2px">${v}</span><span style="color:#D5DADF">${a[v-1]}</span></div>`;
-    const on=pk.includes(i), dis=!on&&(full||info.left<=0);
+    const on=pk.includes(i), dis=(!on&&(full||info.left<=0))||(L&&!L.includes(i));
     return `<label class="rfirow pick ${on?'on':''} ${dis?'dis':''}"><input type="checkbox" ${on?'checked':''} ${dis?'disabled':''} onchange="${C}rfiToggle('${team}','${hex}',${i})"><span class="rfiq">${q}</span></label>`; }).join('');
   h+=`<div class="row" style="margin-top:8px"><button class="btn p" ${pk.length?'':'disabled'} onclick="${C}rfiRollPicked('${team}','${hex}')">Roll ${pk.length||''} selected RFI${pk.length===1?'':'s'} (D4 each)</button></div>`;
   return h; }
@@ -1059,6 +1073,7 @@ function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
     save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,120); if(said){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }
     if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args); } }
 if(BC) BC.onmessage=onWingMsg;
+if(MODE==='instructor'){ document.querySelectorAll('#panel [id], #save-status').forEach(el=>{ if(!/^(lg-|set-)/.test(el.id)&&!/^(INPUT|TEXTAREA)$/.test(el.tagName)) morphable(el); }); }
 setTimeout(()=>{
   if(MODE==='instructor'&&ROOM){
     let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
@@ -1135,6 +1150,23 @@ function plate(x,y,txt,c,dashed){ const w=Math.round(txt.length*13.2+30); for(le
 function sortieTagY(so,B){ const lab=`${so.n} × ${FTYPE[so.team]} · ${so.lost?`${so.n-so.lost} of ${so.n} back`:so.mp?`+${so.mp} MP`:(so.conflict?'mission flown':'presence')}`, w=lab.length*11+22; let y=B.y-72;
   for(let k=0;k<5&&__plates.some(p=>Math.abs(p.x-B.x)<(p.w+w)/2+4&&Math.abs(p.y-(y-25))<38);k++) y-=44; return y; }
 function chipSvg(c){return `<circle class="chip" cx="${c.x}" cy="${c.y}" r="15" fill="${CHIPC[c.c]}"/><path d="M${c.x-8},${c.y+8}L${c.x+8},${c.y-8}" stroke="#1d1d1d" stroke-width="3.5" stroke-linecap="round" pointer-events="none"/>`;}
+// Owner 11-10: the screen must never blink. Redraws change only what is different; nothing is torn down and rebuilt.
+function morphEl(a,b){ for(const at of [...a.attributes]) if(!b.hasAttribute(at.name)) a.removeAttribute(at.name);
+  for(const at of b.attributes) if(a.getAttribute(at.name)!==at.value) a.setAttribute(at.name,at.value);
+  const tag=a.tagName, focused=a===a.ownerDocument.activeElement;
+  if(tag==='TEXTAREA'){ if(!focused&&a.value!==b.value) a.value=b.value; return; }
+  morphKids(a,b);
+  if(tag==='INPUT'&&!focused){ if(a.type==='checkbox'||a.type==='radio'){ if(a.checked!==b.checked) a.checked=b.checked; } else if(a.value!==b.value) a.value=b.value; }
+  if(tag==='SELECT'&&!focused&&a.value!==b.value) a.value=b.value; }
+function morphKids(a,b){ const nb=[...b.childNodes];
+  for(let i=0;i<nb.length;i++){ const n=nb[i], o=a.childNodes[i];
+    if(!o){ a.appendChild(n); continue; }
+    if(o.nodeType!==n.nodeType||o.nodeName!==n.nodeName){ a.replaceChild(n,o); continue; }
+    if(o.nodeType===1) morphEl(o,n); else if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; }
+  while(a.childNodes.length>nb.length) a.removeChild(a.lastChild); }
+function morphable(el){ if(!el||el.__mprop) return; el.__mprop=1; const d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
+  Object.defineProperty(el,'innerHTML',{configurable:true,get(){ return d.get.call(this); },set(v){ if(!this.__mo||!this.firstChild){ d.set.call(this,v); this.__mo=1; return; } const t=this.ownerDocument.createElement(this.tagName); d.set.call(t,v); morphKids(this,t); }}); }
+function setHTML(el,html){ if(!el.__mo||!el.firstChild){ el.innerHTML=html; el.__mo=1; return; } const t=el.ownerDocument.createElement(el.tagName); t.innerHTML=html; morphKids(el,t); }
 function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g></defs></svg>`; (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac='';
   const vb=only?[0,VY,W,VH]:[40,150,1960,1350];   // owner 11-10: the class board (instructor and projector) zooms to the play area; wing screens keep the full map
@@ -1283,10 +1315,10 @@ function boardHtml(clickable){
 let proj=null;
 function renderNoSave(){ const sv=save; save=function(){}; try{ render(); } finally { save=sv; } }
 function render(){
-  const host=document.getElementById('boardHost'); ensureStatic(document); host.innerHTML=boardHtml(true);
-  host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>selectHex(p.dataset.id)));
+  const host=document.getElementById('boardHost'); ensureStatic(document); setHTML(host,boardHtml(true));
+  host.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>selectHex(p.dataset.id)));
   for(const id in WINS) if(WINS[id]&&!WINS[id].closed) wingRender(id);
-  if(proj&&!proj.closed){ const b=proj.document.getElementById('b'); if(b){ ensureStatic(proj.document); b.innerHTML=boardHtml(true); b.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>selectHex(p.dataset.id))); } }
+  if(proj&&!proj.closed){ const b=proj.document.getElementById('b'); if(b){ ensureStatic(proj.document); setHTML(b,boardHtml(true)); b.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>selectHex(p.dataset.id))); } }
   renderPanel(); save();
 }
 function renderClockOnly(){ const html=boardHtml(true); // cheap enough; keeps both windows in sync
@@ -1339,7 +1371,7 @@ function openWingOld(team){ const w=window.open('','kfa-wing-'+team,'width=1600,
   log(`${TM[team].n} screen opened`); render(); }
 function wingRender(team){ const w=WINS[team]; const box=w.document.getElementById('w'); if(!box) return;
   const keep=box.querySelector('.wside'); const sc=keep?keep.scrollTop:0;
-  ensureStatic(box.ownerDocument); box.innerHTML=wingHtml(team); box.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>wingHex(team,p.dataset.id)));
+  ensureStatic(box.ownerDocument); setHTML(box,wingHtml(team)); box.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>wingHex(team,p.dataset.id)));
   const ns=box.querySelector('.wside'); if(ns) ns.scrollTop=sc; }
 function wingHex(team,id){ if(S.plot&&S.plot.team===team){ plotClick(id); return; } S.wsel[team]=S.wsel[team]===id?null:id; (S.wselAf=S.wselAf||{})[team]=null; if(MODE==='wing') WSTAB='plan'; render(); }
 // Owner 11-09: aircraft are called "C-17 Chalk 1", "C-17 Chalk 2"... numbered within each type.
@@ -1555,6 +1587,7 @@ function wingRequest(team,role,from){ const hex=S.wsel[team]; if(!hex) return;
   { const cs=MD.chips.filter(c=>c.hex===hex); var af=cs.length===1?cs[0].id:((S.wselAf||{})[team]&&cs.some(c=>c.id===S.wselAf[team])?S.wselAf[team]:null);
     if(cs.length>1&&!af) return alert(`Hex ${hex} has ${cs.length} airfields. Pick which one first.`); }
   if(!MD.chips.some(c=>c.hex===hex)) return alert(`Hex ${hex} has no airfield. Pick a hex with an airfield dot.`);
+  { const tk=TEAMS.find(x=>x.id!==team&&(S.bases[x.id].some(b=>b.hex===hex&&(!b.af||!af||b.af===af))||S.requests.some(q=>q.st==='pending'&&q.team===x.id&&q.hex===hex&&(!q.af||!af||q.af===af)))); if(tk) return alert(`That airfield belongs to ${tk.n}. Pick another airfield or another hex.`); }
   if(S.requests.some(q=>q.st==='pending'&&q.team===team&&q.hex===hex)) return alert(`Your request for hex ${hex} is already waiting for the instructor.`);
   S.requests.push({id:S.reqSeq++,team,hex,af,from:from||null,role:role||'spoke',turn:S.turn,st:'pending'});
   log(`REQUEST ${TM[team].n} (wing screen): ${from?'move '+from+' → ':'base at '}${hex}${from?'':' as '+role}`); banner(`${TM[team].n.toUpperCase()} requests ${from?'a move to':'a base at'} hex ${hex}`,false); render(); }
@@ -1872,7 +1905,7 @@ function banner(text,alarm){ S.ticker={text,alarm}; }
 function assign(team){ const ex=ownerOf(S.sel);
   if(ex&&ex.team===team) return;
   if(ex) S.bases[ex.team]=S.bases[ex.team].filter(b=>b.hex!==S.sel);
-  { const nb={hex:S.sel,st:'selected',role:null,rfi:{},rfiMax:5,since:S.turn}; S.bases[team].push(nb); nb.role=spokeCount(team)>=MAX_SPOKES?'cl':'spoke'; nb.sid=nextSid(team,nb.role); } const chips=MD.chips.filter(c=>c.hex===S.sel);
+  { const nb={hex:S.sel,st:'selected',role:null,rfi:{},rfiMax:spokePicks(team)>=3?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[team]=spokePicks(team)+1; S.bases[team].push(nb); nb.role=spokeCount(team)>=MAX_SPOKES?'cl':'spoke'; nb.sid=nextSid(team,nb.role); } const chips=MD.chips.filter(c=>c.hex===S.sel);
   log(`${TM[team].n} selected hex ${S.sel}${chips.length?' ('+chips.map(c=>({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]).join(', ')+')':''}`);
   banner(`${TM[team].n.toUpperCase()} selects hex ${S.sel}`,false); render(); }
 function setStatus(st){ const o=ownerOf(S.sel); if(!o) return; const b=o.b;
@@ -1901,9 +1934,9 @@ function addRequest(team,from){ team=team||document.getElementById('r-team').val
   log(`REQUEST ${TM[team].n}: ${from?'move '+from+' → ':'new base at '}${S.sel}`); banner(`${TM[team].n.toUpperCase()} requests ${from?'a move to':'a base at'} hex ${S.sel}`,false); render(); }
 function decide(id,ok){ const q=S.requests.find(q=>q.id===id); if(!q) return;
   if(ok&&!S.movesOpen) return alert('Moves happen at the end of the turn. Press "End turn · open move window" first.');
-  if(ok){ const other=ownerOf(q.hex); if(other&&other.team!==q.team){ if(!confirmThen(`${TM[other.team].n} already holds ${q.hex}. Approve anyway and remove their base?`,()=>decide(id,ok),'Approve anyway')) return; S.bases[other.team]=S.bases[other.team].filter(b=>b.hex!==q.hex); }
+  if(ok){ const other=TEAMS.map(x=>({team:x.id,b:S.bases[x.id].find(b=>b.hex===q.hex&&(!b.af||!q.af||b.af===q.af))})).find(o=>o.b&&o.team!==q.team); if(other) return alert(`${TM[other.team].n} already holds that airfield in hex ${q.hex}. Deny this request.`);
     if(q.from){ const ob=S.bases[q.team].find(b=>b.hex===q.from); { const F=(S.fighters||{})[q.team]; if(F&&F[q.from]){ F[q.hex]=(F[q.hex]||0)+F[q.from]; delete F[q.from]; log(`${TM[q.team].n}: fighters at ${q.from} move with the base to ${q.hex}`); } } if(ob){ q.fromRole=ob.role; q.fromSid=ob.sid; const hv=((S.hnInv||{})[q.team]||{})[q.from]; if(hv){ addInv(q.team,q.from,hv,-1); delete S.hnInv[q.team][q.from]; log(`${TM[q.team].n} left ${q.from}: its host-nation support stays behind`); } } S.bases[q.team]=S.bases[q.team].filter(b=>b.hex!==q.from); }
-    if(!S.bases[q.team].some(b=>b.hex===q.hex)){ const nb={hex:q.hex,af:q.af||null,st:q.from?'moving':'selected',role:null,rfi:{},rfiMax:q.from?3:5,since:S.turn}; S.bases[q.team].push(nb);
+    if(!S.bases[q.team].some(b=>b.hex===q.hex)){ const nb={hex:q.hex,af:q.af||null,st:q.from?'moving':'selected',role:null,rfi:{},rfiMax:(q.from||spokePicks(q.team)>=3)?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[q.team]=spokePicks(q.team)+1; S.bases[q.team].push(nb);
       if(q.from&&q.fromRole){ nb.role=q.fromRole; nb.sid=q.fromSid; } else giveRole(q.team,nb,q.role||'spoke'); }
     if(q.from) log(`${TM[q.team].n} moved ${q.from} → ${q.hex}: resources reset, 3 RFIs at the new airfield`); }
   q.st=ok?'approved':'denied'; if(ok) applyHN(q.team);
@@ -2050,8 +2083,8 @@ if(MODE==='login'){
   document.title='Kingfish ACE · '+TM[WING_ID].n;
   const app=document.getElementById('app'); app.classList.add('nopanel','projmode');
   render=function(){ const host=document.getElementById('boardHost'); const keep=grabScroll(host), typed=keepTyping(host);
-    ensureStatic(document); host.innerHTML=wingHtml(WING_ID,'cmd.',WVIEW).replace('<span class="sp"></span>','<span class="sp"></span><span style="border-left:1px solid var(--line);cursor:pointer;color:var(--mute);font-size:13px" onclick="go(\'\')">Sign out</span>');
-    host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>{ const id=p.dataset.id, plotting=!!S.plot;
+    ensureStatic(document); setHTML(host,wingHtml(WING_ID,'cmd.',WVIEW).replace('<span class="sp"></span>','<span class="sp"></span><span style="border-left:1px solid var(--line);cursor:pointer;color:var(--mute);font-size:13px" onclick="go(\'\')">Sign out</span>'));
+    host.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>{ const id=p.dataset.id, plotting=!!S.plot;
       cmd.wingHex(WING_ID,id);
       if(!plotting&&S.bases[WING_ID].some(b=>b.hex===id)){ WRES=id; WVIEW='res'; render(); } }));   // click your hub or a spoke: its resources open
     putScroll(host,keep); typed(); if(window.__gid!==S.gid){ if(window.__gid!==undefined) document.querySelectorAll('.rlx').forEach(x=>x.remove()); window.__gid=S.gid; } };
@@ -2063,8 +2096,8 @@ if(MODE==='login'){
 } else if(MODE==='projector'){
   document.title='Kingfish ACE · Projector';
   const app=document.getElementById('app'); app.classList.add('nopanel','projmode','hint'); setTimeout(()=>app.classList.remove('hint'),9000);
-  render=function(){ const host=document.getElementById('boardHost'); ensureStatic(document); host.innerHTML=boardHtml(true);
-    host.querySelectorAll('.hex.click').forEach(p=>p.addEventListener('click',()=>{ try{ localStorage.setItem('kfa-cmd',JSON.stringify({hex:p.dataset.id,t:Date.now()})); }catch(x){} })); };
+  render=function(){ const host=document.getElementById('boardHost'); ensureStatic(document); setHTML(host,boardHtml(true));
+    host.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>{ try{ localStorage.setItem('kfa-cmd',JSON.stringify({hex:p.dataset.id,t:Date.now()})); }catch(x){} })); };
   const pull=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g){ const keep={clock:S.clock,running:S.running,hidden:S.hidden}; { const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); } } }
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.clock=v.clock; S.hidden=v.hidden; S.running=v.running; S.endsAt=v.endsAt; } }catch(x){} };
   window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; pull(); render(); } else if(e.key==='kfa-tick'){ pull(); renderClockOnly(); animateFlights(); } });
