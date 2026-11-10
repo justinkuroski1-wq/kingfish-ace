@@ -934,7 +934,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.9.1';   // shown on every screen; bump on each release
+const APP_VER='1.9.2';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1115,9 +1115,9 @@ function rfiRollPicked(team,hex){ if(!rfiChosen(team,hex)) return alert('RFIs op
   banner(`${TM[team].n.toUpperCase()} · RFIs at hex ${hex}: ${res.join(' · ')}`,res.some(r=>r.endsWith(' 1'))); render(); }
 function rfiPickSheet(team,hex,C){ { const own=S.bases[team].find(b=>b.hex===hex); if(own&&(own.role==='mob'||own.role==='hub')) return `<div class="hint" style="margin:6px 0 4px">Home base: full capacity. No RFIs are needed here.</div>`; } const ans=rfiAns(team,hex), info=rfiInfo(team,hex), pk=rfiPicks(team,hex), L=lockedSet(team,hex); if(L){ pk.length=0; for(const i of L) if(!ans[i]&&pk.length<info.left) pk.push(i); } const full=pk.length>=info.left;
   if(!rfiChosen(team,hex)) return `<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · request this airfield as a spoke. Its RFIs open once the instructor approves it.</div>`;
-  let h=`<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · ${info.left>0?`${info.label}${L?' · <b style="color:#E3B25C">same 5 questions as your first spoke (locked; the instructor can unlock)</b>':''} · choose your questions, then roll · <b style="color:var(--ink)">${pk.length} of ${info.left}</b> chosen`:'rolled · move the spoke to roll 3 more'}</div>`;
+  let h=`<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · ${info.left>0?`${info.label}${L?' · <b style="color:#E3B25C">same questions as your first spoke are ticked: press Roll to get this base\'s answers</b>':''} · ${L?'':'choose your questions, then roll · '} <b style="color:var(--ink)">${pk.length} of ${info.left}</b> chosen`:'rolled · move the spoke to roll 3 more'}</div>`;
   h+=RFIQ.map(([q,a],i)=>{ const v=ans[i]; if(v) return `<div class="rfirow"><span class="rfiq">${q}</span><span style="background:${RFIC[v-1]};color:#111;font-weight:700;padding:0 7px;border-radius:2px">${v}</span><span style="color:#D5DADF">${a[v-1]}</span></div>`;
-    const on=pk.includes(i), dis=(!on&&(full||info.left<=0))||!!L;
+    const on=pk.includes(i), dis=(!on&&(full||info.left<=0))||(!!L&&!on);
     return `<label class="rfirow pick ${on?'on':''} ${dis?'dis':''}" title="${a.map((x,k)=>(k+1)+': '+x).join('&#10;')}"><input type="checkbox" ${on?'checked':''} ${dis?'disabled':''} onchange="${C}rfiToggle('${team}','${hex}',${i})"><span class="rfiq">${q}<span class="rfia">${a.map((x,k)=>`<i style="background:${RFIC[k]}"></i>${x.replace(/:.*$/,'').replace(/^(No credible support|No support)( \/ fuel)?$/,'None')}`).join(' ')}</span></span></label>`; }).join('');
   h+=`<div class="row" style="margin-top:8px"><button class="btn p" ${pk.length?'':'disabled'} onclick="${C}rfiRollPicked('${team}','${hex}')">Roll ${pk.length||''} selected RFI${pk.length===1?'':'s'} (D4 each)</button></div>`;
   return h; }
@@ -1771,6 +1771,7 @@ function wingRequest(team,role,from){ const hex=S.wsel[team]; if(!hex) return;
     if(cs.length>1&&!af) return alert(`Hex ${hex} has ${cs.length} airfields. Pick which one first.`); }
   if(!MD.chips.some(c=>c.hex===hex)) return alert(`Hex ${hex} has no airfield. Pick a hex with an airfield dot.`);
   { const tk=TEAMS.find(x=>x.id!==team&&(S.bases[x.id].some(b=>b.hex===hex&&(!b.af||!af||b.af===af))||S.requests.some(q=>q.st==='pending'&&q.team===x.id&&q.hex===hex&&(!q.af||!af||q.af===af)))); if(tk) return alert(`That airfield belongs to ${tk.n}. Pick another airfield or another hex.`); }
+  { const co=airfieldCountry(hex,af), ac=accessOf(co); if(ac!=='granted') return alert(`${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today. You cannot open a base there. Pick an airfield in an open country.`); }
   if(S.requests.some(q=>q.st==='pending'&&q.team===team&&q.hex===hex)) return alert(`Your request for hex ${hex} is already waiting for the instructor.`);
   S.requests.push({id:S.reqSeq++,team,hex,af,from:from||null,role:role||'spoke',turn:S.turn,st:'pending'});
   log(`REQUEST ${TM[team].n} (wing screen): ${from?'move '+from+' → ':'base at '}${hex}${from?'':' as '+role}`); banner(`${TM[team].n.toUpperCase()} requests ${from?'a move to':'a base at'} hex ${hex}`,false); render(); }
@@ -1835,6 +1836,7 @@ function renderPanel(){
 function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o.team!==only) continue; L.push(longId(o.team,o.b)+(o.b.st==='struck'?' · STRUCK':'')); const f=((S.fighters||{})[o.team]||{})[hex]; if(f) L.push(`  ${f} × ${FTYPE[o.team]}`); }
   const by={}; for(const f of (S.flights||[])) if(['requested','approved','enroute'].includes(f.st)&&f.moved===0&&f.path[0]===hex&&(!only||f.team===only)){ const k=TM[f.team].n+' '+ACFT[f.acft].n; by[k]=(by[k]||0)+(f.n||1); }
   for(const k in by) L.push(`  ${by[k]} × ${k.split(' ').slice(-1)[0]} (${k.split(' ').slice(0,2).join(' ')})`);
+  { const co=airfieldCountry(hex); if(co&&ACCESS[co]&&S.access){ const a=accessOf(co); L.unshift(`${co}: ${a==='granted'?'base access open':a==='overflight'?'overflight only (no bases)':'DENIED (no bases, no overflight)'} today`); } }
   if((S.targets||[]).includes(hex)) L.unshift(`Mission hex (${(S.orders.intent||'').replace(/^.*: /,'')}) · 5 MP per fighter sent from a spoke`);
   const z=(S.redz||{})[hex]; if(z){ const Z=REDZ[z]; L.unshift(`Red ${Z.die===20?'strong':Z.die===12?'medium':'light'} defense · each fighter rolls D${FDIE} vs D${Z.die}, one at a time; tie goes to Red; a loss shoots the fighter down; the first win clears it`); }
   if((S.redJam||{})[hex]) L.unshift('Red jammer · Red +2 in fighter combat nearby · may cut base comms within 2 hexes');
@@ -2150,6 +2152,8 @@ function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false
   if(S.bases[f.team].some(b=>b.hex===from&&b.st==='struck')){ out.push(`<span class="ck-bad">NO</span> Hex ${from} is struck: nothing can depart until it recovers.`); block=true; }
   const ownTo=S.bases[f.team].find(b=>b.hex===to); const chips=MD.chips.filter(c=>c.hex===to&&(!ownTo||!ownTo.af||c.id===ownTo.af)), mine=!!ownTo;
   if(!chips.length&&!mine) out.push(`<span class="ck-warn">CHECK</span> No airfield in destination hex ${to}.`);
+  { const co=airfieldCountry(to,ownTo&&ownTo.af), ac=accessOf(co); if(ac!=='granted'){ out.push(`<span class="ck-bad">NO</span> ${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today: no landing at hex ${to}.`); block=true; } }
+  { const over=[...new Set(path.slice(1,-1).map(hexCountry).filter(c=>c&&accessOf(c)==='denied'))]; if(over.length){ out.push(`<span class="ck-bad">NO</span> Route crosses ${over.join(', ')}: overflight denied today. Plot around it.`); block=true; } }
   const effTo=afEff(f.team,to);
   if(f.acft==='c5'&&effTo&&effTo.c==='r'){ out.push(`<span class="ck-bad">NO</span> C-5 cannot land at hex ${to}: red fields are C-17/C-130 only.`); block=true; }
   if(effTo&&effTo.c==='y') out.push(`<span class="ck-warn">CHECK</span> Hex ${to} is a yellow field: day only. A night arrival needs runway lighting (1 PP).`);
@@ -2247,6 +2251,7 @@ function addRequest(team,from){ team=team||document.getElementById('r-team').val
 function decide(id,ok){ const q=S.requests.find(q=>q.id===id); if(!q) return;
   if(ok&&!S.movesOpen) return alert('Moves happen at the end of the turn. Press "End turn · open move window" first.');
   if(ok){ const other=TEAMS.map(x=>({team:x.id,b:S.bases[x.id].find(b=>b.hex===q.hex&&(!b.af||!q.af||b.af===q.af))})).find(o=>o.b&&o.team!==q.team); if(other) return alert(`${TM[other.team].n} already holds that airfield in hex ${q.hex}. Deny this request.`);
+    { const co=airfieldCountry(q.hex,q.af), ac=accessOf(co); if(ac!=='granted'&&!window.__yesNow) return alert(`${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today. Deny this request, or use Game master to place the base anyway.`); }
     if(q.from){ const ob=S.bases[q.team].find(b=>b.hex===q.from); { const F=(S.fighters||{})[q.team]; if(F&&F[q.from]){ F[q.hex]=(F[q.hex]||0)+F[q.from]; delete F[q.from]; log(`${TM[q.team].n}: fighters at ${q.from} move with the base to ${q.hex}`); } } if(ob){ q.fromRole=ob.role; q.fromSid=ob.sid; const hv=((S.hnInv||{})[q.team]||{})[q.from]; if(hv){ addInv(q.team,q.from,hv,-1); delete S.hnInv[q.team][q.from]; log(`${TM[q.team].n} left ${q.from}: its host-nation support stays behind`); } } S.bases[q.team]=S.bases[q.team].filter(b=>b.hex!==q.from); }
     if(!S.bases[q.team].some(b=>b.hex===q.hex)){ const nb={hex:q.hex,af:q.af||null,st:q.from?'moving':'selected',role:null,rfi:{},rfiMax:(q.from||spokePicks(q.team)>=3)?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[q.team]=spokePicks(q.team)+1; S.bases[q.team].push(nb);
       if(q.from&&q.fromRole){ nb.role=q.fromRole; nb.sid=q.fromSid; } else giveRole(q.team,nb,q.role||'spoke'); }
@@ -2310,10 +2315,19 @@ function rollAcftFor(team,typed){ if(S.opening&&!spokesChosen(team)) return aler
   out(`${TM[team].n} aircraft today: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`); banner(`${TM[team].n.toUpperCase()} AIRCRAFT TODAY: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`,false); render(); }
 // R8.3 Base access and overflight (rulebook p.8): each day and each situation change the game master rolls a D10 for every
 //      country. Access if the roll meets the country's number; overflight only if it beats the lower number; otherwise denied.
+// R8.3a Access is enforced (owner 11-10): no spoke and no landing in a country that denied base access today;
+//       no route over a country that denied overflight. Countries not in the access table (Japan, Guam, Australia...) are open.
+const __ctry={}; let __cpaths=null;
+function countryAt(x,y){ try{ if(!__cpaths){ const c=document.createElement('canvas'); __cpaths={ctx:c.getContext('2d'),list:MD.land.map(l=>({n:l.n,p:new Path2D(l.d)}))}; } for(const l of __cpaths.list) if(__cpaths.ctx.isPointInPath(l.p,x,y)) return l.n; }catch(e){} return null; }
+function airfieldCountry(hex,af){ const k=hex+':'+(af||''); if(k in __ctry) return __ctry[k]; const c=(af&&MD.chips.find(x=>x.id===af))||MD.chips.find(x=>x.hex===hex); const h=HX[hex]; const x=c?c.x:(h?h.x:0), y=c?c.y:(h?h.y:0); let co=countryAt(x,y); for(let r=6;!co&&r<=60;r+=6) for(let a=0;a<16&&!co;a++) co=countryAt(x+r*Math.cos(a*Math.PI/8),y+r*Math.sin(a*Math.PI/8));   // coastal airfields sit just offshore on the outline
+  return __ctry[k]=co; }
+function hexCountry(hex){ const k='h'+hex; if(k in __ctry) return __ctry[k]; const h=HX[hex]; return __ctry[k]=h?countryAt(h.x,h.y):null; }
+function accessOf(country){ if(!country||!ACCESS[country]||!S.access) return 'granted'; return S.access[country]||'granted'; }
 function rollAllAccess(quiet){ const dice=[], parts=[]; S.access={};
   for(const c in ACCESS){ const [acc,ovf]=ACCESS[c], r=d(10), st=r>=acc?'granted':r>ovf?'overflight':'denied'; S.access[c]=st;
     dice.push({s:10,v:r,l:c,sub:st==='granted'?'ACCESS':st==='overflight'?'OVERFLIGHT ONLY':'DENIED'}); parts.push(`${c} ${st==='granted'?'granted':st==='overflight'?'overflight only':'denied'}`); }
   S.orders.access=parts.join(' · '); S.accessDay=day();
+  { const hit=[]; for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.role==='hub') continue; const co=airfieldCountry(b.hex,b.af); if(accessOf(co)!=='granted') hit.push(`${TM[tm.id].n} ${b.hex} (${co})`); } if(hit.length) setTimeout(()=>banner(`ACCESS REVOKED at ${hit.join(', ')} · game master decides how long operations there are restricted`,true),1600); }
   log('BASE ACCESS · '+parts.join(' · ')); if(!quiet) pushRoll({team:null,title:`Day ${day()} base access and overflight`,note:'D10 per country. Access: use bases there. Overflight only: fly over, no bases. Denied: stay out.',dice});
   banner(`BASE ACCESS · DENIED: ${Object.keys(S.access).filter(c=>S.access[c]==='denied').join(', ')||'none'} · OVERFLIGHT ONLY: ${Object.keys(S.access).filter(c=>S.access[c]==='overflight').join(', ')||'none'}`,false); render(); }
 function rollAccess(){ const c=document.getElementById('d-country').value; const [acc,ovf]=ACCESS[c]; const {r,typed}=val('d-acc',10); if(!typed) pushRoll({team:null,title:`${c} · base access`,note:`Access needs ${acc} or more · overflight needs more than ${ovf}`,dice:[{s:10,v:r,l:c,sub:r>=acc?'ACCESS GRANTED':r>ovf?'OVERFLIGHT ONLY':'DENIED'}]});
