@@ -614,7 +614,7 @@ body{font-size:15px}
 /* R10.10 software feel (owner 11-10): instant pressed state, one hover/focus/disabled look, no text selection on controls */
 #app,#panel,.board,.wing,#gm,.cfx,.rlx,#kfa-cards{-webkit-user-select:none;user-select:none}
 input,textarea,select,.selectable,#i-log{-webkit-user-select:text;user-select:text}
-button,.btn,label.btn,summary{cursor:pointer}
+button,.btn,label.btn,summary{cursor:default}
 img,image,svg{-webkit-user-drag:none}
 *{-webkit-tap-highlight-color:transparent}
 .btn,button{transition:none}
@@ -632,9 +632,17 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 #kfa-ctx{position:fixed;z-index:9600;min-width:236px;background:#1B2128;border:1px solid #3A4652;border-radius:3px;box-shadow:0 10px 28px rgba(0,0,0,.55);padding:4px 0;font-size:13px;-webkit-user-select:none;user-select:none}
 #kfa-ctx button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:6px 14px;font:inherit;cursor:default}#kfa-ctx button:hover,#kfa-ctx button:focus-visible{background:#2B4E6E;color:#fff;outline:none}
 #kfa-ctx hr{border:0;border-top:1px solid #2A323B;margin:4px 0}#kfa-ctx .cxh{padding:5px 14px 4px;color:var(--mute);font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+.mapbox{overflow:hidden}.mstack{transform-origin:0 0;will-change:auto}.mapbox.zpan,.mapbox.zpan *{cursor:grabbing!important}
+.zctl{position:absolute;right:16px;bottom:16px;z-index:4;display:flex;flex-direction:column;gap:4px}.zctl button{width:30px;height:30px;padding:0;background:rgba(21,26,31,.92);border:1px solid #36404B;color:var(--ink);font-size:17px;line-height:1;border-radius:3px}
+.zctl button:hover{background:#232A32;border-color:#4A5562}.zctl .zf{font-size:9.5px;letter-spacing:.5px;font-weight:600}html[data-mode=projector] .zctl{display:none}
+#kfa-btip{position:fixed;z-index:9700;display:none;max-width:320px;background:#0F1419;border:1px solid #3A4652;color:#E8ECEF;font-size:12px;line-height:1.35;padding:6px 9px;border-radius:3px;box-shadow:0 6px 18px rgba(0,0,0,.5);pointer-events:none;white-space:pre-line}
+*{scrollbar-width:thin;scrollbar-color:#36404B transparent}
+#kfa-splash{position:fixed;inset:0;z-index:99999;background:#0E1114;display:flex;align-items:center;justify-content:center;transition:opacity .22s}#kfa-splash.out{opacity:0;pointer-events:none}
+.sp-in{text-align:center;color:#E8ECEF}.sp-in b{display:block;font-size:34px;font-weight:600;letter-spacing:12px;padding-left:12px}.sp-in i{display:block;width:200px;height:2px;margin:16px auto;background:linear-gradient(90deg,transparent,#F2C14E,transparent)}.sp-in span{font-size:12px;letter-spacing:3px;color:#9AA5AF;text-transform:uppercase}
 </style>
 </head>
 <body>
+<div id="kfa-splash" aria-hidden="true"><div class="sp-in"><b>KINGFISH ACE</b><i></i><span>21A Maintenance Officer Intermediate Course</span></div></div>
 <div id="login" style="display:none">
   <div class="lg-left">
     <div id="lg-map" class="lg-map"></div>
@@ -983,7 +991,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.10.3';   // shown on every screen; bump on each release
+const APP_VER='1.11.0';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1354,7 +1362,8 @@ function sortieTagY(so,B){ const lab=`${so.n} × ${FTYPE[so.team]} · ${so.lost?
   for(let k=0;k<5&&__plates.some(p=>Math.abs(p.x-B.x)<(p.w+w)/2+4&&Math.abs(p.y-(y-25))<38);k++) y-=44; return y; }
 function chipSvg(c){return `<circle class="chip" cx="${c.x}" cy="${c.y}" r="15" fill="${CHIPC[c.c]}"/><path d="M${c.x-8},${c.y+8}L${c.x+8},${c.y-8}" stroke="#1d1d1d" stroke-width="3.5" stroke-linecap="round" pointer-events="none"/>`;}
 // Owner 11-10: the screen must never blink. Redraws change only what is different; nothing is torn down and rebuilt.
-function morphEl(a,b){ { const k=b.getAttribute('data-k'); if(k&&a.getAttribute('data-k')===k) return; } { const h=b.getAttribute('data-h'); if(h&&a.getAttribute('data-h')===h) return; }   // R10.9 unchanged region: skip
+function morphEl(a,b){ if(a.hasAttribute&&a.hasAttribute('data-tip')&&b.getAttribute('title')===a.getAttribute('data-tip')){ b.removeAttribute('title'); b.setAttribute('data-tip',a.getAttribute('data-tip')); }
+  { const k=b.getAttribute('data-k'); if(k&&a.getAttribute('data-k')===k) return; } { const h=b.getAttribute('data-h'); if(h&&a.getAttribute('data-h')===h) return; }   // R10.9 unchanged region: skip
   for(const at of [...a.attributes]) if(!b.hasAttribute(at.name)&&!(at.name==='style'&&a.__fitz)) a.removeAttribute(at.name);
   for(const at of b.attributes) if(a.getAttribute(at.name)!==at.value) a.setAttribute(at.name,at.value);
   const tag=a.tagName, focused=a===a.ownerDocument.activeElement;
@@ -1384,16 +1393,44 @@ function fillLayers(root){ root.querySelectorAll('g[data-fill]').forEach(g=>{ if
 function hsh(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36)+'.'+s.length.toString(36); }
 function hsplit(h){ const a=h.indexOf('<div class="topbar">'), b=h.indexOf('<div class="boardbody">'), c=h.indexOf('<div class="side">'); if(a<0||b<a||c<b) return h;
   return h.slice(0,a)+'<div class="topbar" data-h="'+hsh(h.slice(a,b))+'">'+h.slice(a+20,c)+'<div class="side" data-h="'+hsh(h.slice(c))+'">'+h.slice(c+18); }
-function setHTML(el,html){ if(el.__last===html&&el.firstChild) return; el.__last=html; if(!el.__mo||!el.firstChild){ el.innerHTML=html; el.__mo=1; fillLayers(el); return; } const t=el.ownerDocument.createElement(el.tagName); t.innerHTML=html; morphKids(el,t); fillLayers(el); }
+function setHTML(el,html){ if(el.__last===html&&el.firstChild) return; el.__last=html; if(!el.__mo||!el.firstChild){ el.innerHTML=html; el.__mo=1; fillLayers(el); zreIn(el); return; } const t=el.ownerDocument.createElement(el.tagName); t.innerHTML=html; morphKids(el,t); fillLayers(el); zreIn(el); }
+function zreIn(el){ try{ const w=el.ownerDocument.defaultView; if(w&&w.__zre) w.__zre(); }catch(e){} }
 // R10.8 Aircraft pictures are defined once per window (SVG symbols + CSS classes) and referenced by id, instead of
 //       embedding a 15-30 KB picture in every badge on every redraw (owner 11-10: shave every ms).
 const kid=(g,k)=>'ki-'+g+'-'+String(k).replace(/[^A-Za-z0-9]/g,'');
 let __kdefs=null, __kcss=null;
 function kimgDefs(){ if(__kdefs) return __kdefs; let s='', c='.kimg{display:inline-block;background:center/contain no-repeat;vertical-align:middle}'; for(const [g,o] of [['SILIMG',SILIMG],['SILBADGE',SILBADGE],['FSIL',FSIL]]) for(const k in o){ s+=`<symbol id="${kid(g,k)}" viewBox="0 0 100 100"><image href="${o[k]}" width="100" height="100"/></symbol>`; c+=`.${kid(g,k)}{background-image:url(${o[k]})}`; } __kcss=c; return __kdefs=s; }
-function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g>${kimgDefs()}</defs></svg>`; { const st=doc.createElement('style'); st.id='kimg-css'; st.textContent=__kcss; (doc.head||doc.documentElement).appendChild(st); } (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
+// R10.14 Map zoom and pan (owner 11-10: behave like map software). Mouse wheel zooms at the cursor, drag pans when
+//       zoomed in, + / - / Fit buttons in the map corner, keys + - 0. Each window keeps its own view. The map is moved
+//       by GPU transform, never redrawn, so zooming never blinks.
+const ZCTL='<div class="zctl" data-k="zctl"><button onclick="zoomBy(1.4)" title="Zoom in (+)">+</button><button onclick="zoomBy(1/1.4)" title="Zoom out (-)">&minus;</button><button class="zf" onclick="zoomFit()" title="Fit the whole map (0)">FIT</button></div>';
+const Z={k:1,x:0,y:0};
+function zre(){ document.querySelectorAll('.mstack').forEach(ms=>{ ms.__fitz=1; const v=Z.k===1&&!Z.x&&!Z.y?'':`translate(${Z.x.toFixed(1)}px,${Z.y.toFixed(1)}px) scale(${Z.k.toFixed(3)})`; if(ms.style.transform!==v) ms.style.transform=v; }); }
+window.__zre=zre;
+function zClamp(ms){ const w=ms.offsetWidth, h=ms.offsetHeight; Z.x=Math.min(0,Math.max(w-w*Z.k,Z.x)); Z.y=Math.min(0,Math.max(h-h*Z.k,Z.y)); }
+function zApply(){ zre(); uiSave(); }
+function zoomAt(ms,cx,cy,f){ const r=ms.getBoundingClientRect(), l0=r.left-Z.x, t0=r.top-Z.y, px=cx-l0, py=cy-t0, k2=Math.max(1,Math.min(6,Z.k*f)); if(k2===Z.k) return; Z.x=px-(px-Z.x)*(k2/Z.k); Z.y=py-(py-Z.y)*(k2/Z.k); Z.k=k2; zClamp(ms); zApply(); }
+function zoomBy(f){ const box=document.querySelector('.mapbox'), ms=box&&box.querySelector('.mstack'); if(!ms) return; const b=box.getBoundingClientRect(); zoomAt(ms,b.left+b.width/2,b.top+b.height/2,f); }
+function zoomFit(){ Z.k=1; Z.x=0; Z.y=0; zApply(); }
+addEventListener('wheel',e=>{ const box=e.target.closest&&e.target.closest('.mapbox'), ms=box&&box.querySelector('.mstack'); if(!ms) return; e.preventDefault(); zoomAt(ms,e.clientX,e.clientY,Math.exp(-e.deltaY*0.0016)); },{passive:false});
+let __zp=null, __zMoved=false;
+addEventListener('pointerdown',e=>{ const box=e.target.closest&&e.target.closest('.mapbox'), ms=box&&box.querySelector('.mstack'); if(!ms||e.target.closest('.zctl')) return; if(!(e.button===1||(e.button===0&&Z.k>1))) return; __zp={box,ms,sx:e.clientX,sy:e.clientY,x:Z.x,y:Z.y,on:false}; __zMoved=false; if(e.button===1) e.preventDefault(); },true);
+addEventListener('pointermove',e=>{ if(!__zp) return; const dx=e.clientX-__zp.sx, dy=e.clientY-__zp.sy; if(!__zp.on&&Math.hypot(dx,dy)<5) return; __zp.on=true; __zMoved=true; __zp.box.classList.add('zpan'); Z.x=__zp.x+dx; Z.y=__zp.y+dy; zClamp(__zp.ms); zre(); },true);
+addEventListener('pointerup',()=>{ if(!__zp) return; if(__zp.on) uiSave(); __zp.box.classList.remove('zpan'); __zp=null; setTimeout(()=>{ __zMoved=false; },0); },true);
+addEventListener('click',e=>{ if(__zMoved){ e.stopPropagation(); e.preventDefault(); __zMoved=false; } },true);   // a drag never counts as a click
+
+// R10.16 Each window remembers its own setup (tab, panel, wing view, map zoom) across reloads (owner 11-10).
+const UIKEY='kfa-ui-'+MODE+(typeof WING_ID!=='undefined'&&WING_ID?WING_ID:'');
+let __uiLast='';
+function uiSave(){ try{ const o={z:Z,ws:window.WSTAB||null,wv:window.WVIEW||null,rt:window.RTAB||null,wr:window.WRES||null,np:!!(document.getElementById('app')&&document.getElementById('app').classList.contains('nopanel')&&MODE==='instructor')}; const s=JSON.stringify(o); if(s!==__uiLast){ __uiLast=s; localStorage.setItem(UIKEY,s); } }catch(e){} }
+function uiLoad(){ try{ return JSON.parse(localStorage.getItem(UIKEY)||'null'); }catch(e){ return null; } }
+{ const u=uiLoad(); if(u&&u.z&&u.z.k>=1&&u.z.k<=6){ Z.k=u.z.k; Z.x=u.z.x||0; Z.y=u.z.y||0; } }
+// R10.17 Window titles name the role and the turn, so windows are easy to tell apart on the taskbar.
+setInterval(()=>{ try{ if(MODE==='login') return; const role=MODE==='instructor'?'Instructor':MODE==='projector'?'Projector':(typeof WING_ID!=='undefined'&&WING_ID&&TM[WING_ID]?TM[WING_ID].n:'Wing'); const tt=`Kingfish ACE · ${role} · ${S.opening?'Planning':`Turn ${S.turn} of ${S.turns}`}`; if(document.title!==tt) document.title=tt; uiSave(); }catch(e){} },1000);
+function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g>${kimgDefs()}</defs></svg>`; { const st=doc.createElement('style'); st.id='kimg-css'; st.textContent=__kcss+`.mstack.vb0{aspect-ratio:1960/1350;width:min(100%,calc(100cqh * 1960 / 1350))}.mstack.vb1{aspect-ratio:${W}/${VH};width:min(100%,calc(100cqh * ${W} / ${VH}))}`; (doc.head||doc.documentElement).appendChild(st); } (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac='';
   const vb=only?[0,VY,W,VH]:[40,150,1960,1350];   // owner 11-10: the class board (instructor and projector) zooms to the play area; wing screens keep the full map
-  let s=`<div class="mstack" style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%,calc(100cqh * ${vb[2]} / ${vb[3]}))"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
+  let s=`<div class="mstack ${only?'vb1':'vb0'}"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
      <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`}`;
   for(const id of S.targets) if(HX[id]) s+=`<polygon class="tgt" points="${hexPts(HX[id])}"/>`;
   s+=`<g data-k="hexes${clickable?1:0}" data-fill="hexes${clickable?1:0}"></g>`;   // filled once, then kept (R10.1 speed)
@@ -1457,7 +1494,7 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
   s+=pl;
   const __cut2=s.length; { const sh=only?(S.wsel||{})[only]:S.sel; if(sh&&HX[sh]) s+=`<polygon class="sel" points="${hexPts(HX[sh])}"/>`; }
   { const tail=s.slice(__cut,__cut2), top=s.slice(__cut2); s=s.slice(0,__cut)+`</g></svg><svg class="ovl" viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><clipPath id="mc2"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc2)"><g data-h="`+hsh(tail)+'">'+tail+'</g>'+top; }   // R10.9/R10.11 a hex click redraws only the selection outline, on the top layer
-  return s+"</g></svg></div>";
+  return s+"</g></svg></div>"+ZCTL;
 }
 
 function flightPos(f,extra){ let left=Math.min(f.moved+(extra||0),f.dist); const P=f.path;
@@ -2245,6 +2282,15 @@ function showCtx(x,y,id){ closeCtx(); const o=ownerOf(id), red=(S.redz||{})[id];
   m.addEventListener('click',ev=>{ const b=ev.target.closest('button[data-go]'); if(!b) return; closeCtx(); try{ (new Function(b.dataset.go))(); }catch(x){ console.error(x); } }); }
 addEventListener('contextmenu',e=>{ const p=e.target.closest&&e.target.closest('polygon.hex'); if(!p) return; e.preventDefault(); if(MODE!=='instructor') return; const id=p.dataset.id; if(S.sel!==id){ S.sel=id; S.selTeam=null; render(); } showCtx(e.clientX,e.clientY,id); });
 addEventListener('pointerdown',e=>{ if(document.getElementById('kfa-ctx')&&!(e.target.closest&&e.target.closest('#kfa-ctx'))) closeCtx(); },true);
+// R10.15 One tooltip style everywhere (owner 11-10): every title becomes the game's own dark tooltip, shown fast,
+//       instead of the browser's slow yellow one.
+(function(){ let tip=null, cur=null, tm=null;
+  const show=el=>{ const txt=el.getAttribute('data-tip'); if(!txt||!el.isConnected) return; if(!tip){ tip=document.createElement('div'); tip.id='kfa-btip'; document.body.appendChild(tip); } tip.textContent=txt; tip.style.display='block';
+    const r=el.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight; let x=r.left+r.width/2-w/2, y=r.bottom+6; if(y+h>innerHeight-4) y=r.top-h-6; tip.style.left=Math.max(4,Math.min(x,innerWidth-w-4))+'px'; tip.style.top=Math.max(4,y)+'px'; };
+  const hide=()=>{ clearTimeout(tm); if(tip) tip.style.display='none'; };
+  addEventListener('mouseover',e=>{ const el=e.target.closest&&e.target.closest('[title],[data-tip]'); if(!el||el===cur) return; if(el.namespaceURI==='http://www.w3.org/2000/svg') return; cur=el; const ti=el.getAttribute('title'); if(ti){ el.setAttribute('data-tip',ti); el.removeAttribute('title'); } hide(); tm=setTimeout(()=>show(el),220); },true);
+  addEventListener('mouseout',e=>{ if(!cur) return; if(e.relatedTarget&&cur.contains(e.relatedTarget)) return; cur=null; hide(); },true);
+  addEventListener('pointerdown',hide,true); addEventListener('wheel',hide,{passive:true,capture:true}); })();
 function placeRed(kind){ if(!S.sel) return alert('Select a hex first.'); { const o=ownerOf(S.sel); if(kind&&o&&!confirmThen(`Hex ${S.sel} is a ${TM[o.team].n} base. Place Red on it anyway?`,()=>placeRed(kind),'Place Red')) return; } if(kind) S.redz[S.sel]=kind; else delete S.redz[S.sel]; log(kind?`Red capability placed at ${S.sel}: ${REDZ[kind].n} (D${REDZ[kind].die})`:`Red capability removed at ${S.sel}`); render(); }
 function payLogisticsTax(){ const lines=[];
   for(const t of TEAMS) for(const hex of Object.keys(S.inv[t.id]||{})){ const b=S.bases[t.id].find(x=>x.hex===hex); if(b&&b.role==='mob') continue;
@@ -2562,13 +2608,14 @@ function newGame(){ if(!confirmThen('Start a new game? The current game is kept 
 const PTABS=[['turn','Turn'],['map','Map'],['air','Airlift'],['wings','Wings'],['dice','Dice'],['save','Save game']];
 const SEC_TAB={'TODAY:':'turn','RESOURCE REQUESTS':'turn','TURN':'turn','TEAM BASE REQUESTS':'turn','SELECTED HEX':'map','AIRLIFT PLANS':'air','WINGS':'wings','DICE':'dice',"TODAY'S ORDERS":'dice','SAVE':'save'};
 function setupTabs(){ const panel=document.getElementById('panel'); panel.querySelectorAll('.sec').forEach(s=>{ const h=s.querySelector('h3'); const txt=h?h.childNodes[0].textContent.trim().toUpperCase():''; const key=Object.keys(SEC_TAB).find(k=>txt.startsWith(k)); s.dataset.tab=key?SEC_TAB[key]:'save'; });
-  let cur='turn'; try{ cur=sessionStorage.getItem('kfa-ptab')||'turn'; }catch(e){}
-  window.setPTab=k=>{ cur=k; try{ sessionStorage.setItem('kfa-ptab',k); }catch(e){} panel.querySelectorAll('.sec').forEach(s=>s.style.display=s.dataset.tab===k?'':'none'); flushPend(); const waiting=(S.requests||[]).filter(q=>q.st==='pending').length+(S.resReq||[]).filter(r=>r.st==='pending').length; document.getElementById('ptabs').innerHTML=PTABS.map(([id,n])=>`<button class="${id===k?'on':''}" onclick="setPTab('${id}')">${n}</button>`).join(''); };
+  let cur='turn'; try{ cur=sessionStorage.getItem('kfa-ptab')||localStorage.getItem('kfa-ptab')||'turn'; }catch(e){}
+  window.setPTab=k=>{ cur=k; try{ sessionStorage.setItem('kfa-ptab',k); localStorage.setItem('kfa-ptab',k); }catch(e){} panel.querySelectorAll('.sec').forEach(s=>s.style.display=s.dataset.tab===k?'':'none'); flushPend(); const waiting=(S.requests||[]).filter(q=>q.st==='pending').length+(S.resReq||[]).filter(r=>r.st==='pending').length; document.getElementById('ptabs').innerHTML=PTABS.map(([id,n])=>`<button class="${id===k?'on':''}" onclick="setPTab('${id}')">${n}</button>`).join(''); };
   setPTab(cur); }
-function togglePanel(){ document.getElementById('app').classList.toggle('nopanel'); }
-function keys(e){ if(MODE==='projector') return; if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(document.querySelector('.cfx')){ if(e.key===' '||e.key==='h'||e.key==='H') e.preventDefault(); if(e.key==='Escape'){ const n=document.querySelector('.cfx [data-a=no]'); if(n) n.click(); } return; }
+function togglePanel(){ document.getElementById('app').classList.toggle('nopanel'); uiSave(); }
+function keys(e){ if(MODE==='projector'){ if(e.target.tagName!=='INPUT'){ if(e.key==='+'||e.key==='=') zoomBy(1.4); else if(e.key==='-') zoomBy(1/1.4); else if(e.key==='0') zoomFit(); } return; } if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(document.querySelector('.cfx')){ if(e.key===' '||e.key==='h'||e.key==='H') e.preventDefault(); if(e.key==='Escape'){ const n=document.querySelector('.cfx [data-a=no]'); if(n) n.click(); } return; }
   if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ if(MODE==='instructor'){ e.preventDefault(); gmUndo(); } return; }   // R10.10 Ctrl+Z undoes the last game-master action
   if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key==='+'||e.key==='='){ zoomBy(1.4); return; } if(e.key==='-'||e.key==='_'){ zoomBy(1/1.4); return; } if(e.key==='0'){ zoomFit(); return; }
   if(e.key==='h'||e.key==='H') togglePanel(); else if(e.key===' '){ e.preventDefault(); clockStartPause(); }
   else if(e.key==='Escape'){ let closed=false; if(document.getElementById('kfa-cards')){ closeCards(); closed=true; } document.querySelectorAll('.rlx').forEach(o=>{ o.click(); closed=true; }); const gm=document.getElementById('gm'); if(gm&&gm.style.display!=='none'){ gm.style.display='none'; closed=true; } if(closeCtx()) closed=true; if(!closed){ S.sel=null; S.plot=null; render(); } } }
 document.addEventListener('keydown',keys);
@@ -2616,7 +2663,7 @@ if(MODE==='login'){
   render=function(){};
 } else if(MODE==='wing'){
   const _wr=()=>{};
-  window.WVIEW='map'; window.WRES=null; window.setWView=v=>{ WVIEW=v; render(); };
+  window.WVIEW='map'; window.WRES=null; window.setWView=v=>{ WVIEW=v; render(); }; { const u=uiLoad(); if(u){ if(u.wv==='map'||u.wv==='res') window.WVIEW=u.wv; if(u.ws) window.WSTAB=u.ws; if(u.rt) window.RTAB=u.rt; if(u.wr) window.WRES=u.wr; } }   // R10.16
   document.title='Kingfish ACE · '+TM[WING_ID].n;
   const app=document.getElementById('app'); app.classList.add('nopanel','projmode');
   render=function(){ const host=document.getElementById('boardHost'); const keep=grabScroll(host), typed=keepTyping(host);
@@ -2645,5 +2692,6 @@ if(MODE==='login'){
 }
 setInterval(()=>{ if(S.flash&&Date.now()-S.flash.t>6000&&Date.now()-S.flash.t<7200) render(); },1000);
 </script>
+<script>document.documentElement.setAttribute('data-mode',typeof MODE!=='undefined'?MODE:'');requestAnimationFrame(()=>requestAnimationFrame(()=>{ const s=document.getElementById('kfa-splash'); if(s){ s.classList.add('out'); setTimeout(()=>s.remove(),260); } }));</script>
 </body>
 </html>
