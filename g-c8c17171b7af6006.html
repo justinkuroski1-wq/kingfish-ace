@@ -570,6 +570,10 @@ body{font-size:15.5px}
 /* owner 11-10: Resources tables never cut off (fall to one column when narrow); no pulsing ring on moving aircraft */
 .rst2{grid-template-columns:repeat(auto-fit,minmax(440px,1fr))!important}.rst2 .rst .st{width:auto!important;white-space:nowrap;padding-right:10px}.rst2 .rst .q{width:56px!important}.rst .st{white-space:nowrap}
 .flping{display:none!important}
+/* owner 11-10: strikes and jamming never flash or pulse; a struck base is a steady red outline */
+.struck{animation:none!important;opacity:1!important}.flash{animation:none!important;stroke-width:10;stroke-opacity:.9}
+.gm{position:absolute;right:0;top:calc(100% + 6px);z-index:80;width:300px;background:#151A1F;border:1px solid #2E3843;box-shadow:0 14px 34px rgba(0,0,0,.5);padding:6px}.gm button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:9px 10px;border-radius:3px;cursor:pointer;font:inherit}.gm button:hover{background:#1F2730}.gm b{display:block;font-size:14px;font-weight:600}.gm span{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+.ph{height:auto!important;min-height:52px;flex-wrap:wrap;row-gap:6px;padding-top:6px!important;padding-bottom:6px!important}
 </style>
 </head>
 <body>
@@ -605,6 +609,12 @@ body{font-size:15.5px}
     <div class="ph"><b>INSTRUCTOR</b><span class="sp"></span>
       <button class="btn sm p" onclick="openProjector()" title="Opens the board in a second window. Drag it onto the projector and press F11.">Projector</button>
       <button class="btn sm" onclick="togglePanel()" title="Hide this panel (H)">Hide panel</button>
+      <span style="position:relative"><button class="btn sm" id="gm-btn" onclick="gameMenu(event)">Game ▾</button><div id="gm" class="gm" style="display:none">
+        <button onclick="gmDo('pause')"><b id="gm-pause">Pause timer</b><span>Stops the shift timer on every screen</span></button>
+        <button onclick="gmDo('save')"><b>Save to file</b><span>Downloads a backup of this game now</span></button>
+        <button onclick="gmDo('exit')"><b>Pause, save and exit</b><span>Stops the timer, downloads a backup, signs out. Sign back in to continue.</span></button>
+        <button onclick="gmDo('restart')"><b>Restart game</b><span>Starts a new game. A backup of this one downloads first.</span></button>
+      </div></span>
       <button class="btn sm" onclick="go('')">Sign out</button></div>
     <div class="ptabs" id="ptabs"></div>
 
@@ -784,7 +794,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.7.3';   // shown on every screen; bump on each release
+const APP_VER='1.7.5';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1073,7 +1083,7 @@ function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
     save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,120); if(said){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }
     if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args); } }
 if(BC) BC.onmessage=onWingMsg;
-if(MODE==='instructor'){ document.querySelectorAll('#panel [id], #save-status').forEach(el=>{ if(!/^(lg-|set-)/.test(el.id)&&!/^(INPUT|TEXTAREA)$/.test(el.tagName)) morphable(el); }); }
+if(MODE==='instructor') setTimeout(()=>{ document.querySelectorAll('#panel [id], #save-status').forEach(el=>{ if(!/^(lg-|set-)/.test(el.id)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) if(window.morphable) window.morphable(el); }); },0);
 setTimeout(()=>{
   if(MODE==='instructor'&&ROOM){
     let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
@@ -1158,14 +1168,19 @@ function morphEl(a,b){ for(const at of [...a.attributes]) if(!b.hasAttribute(at.
   morphKids(a,b);
   if(tag==='INPUT'&&!focused){ if(a.type==='checkbox'||a.type==='radio'){ if(a.checked!==b.checked) a.checked=b.checked; } else if(a.value!==b.value) a.value=b.value; }
   if(tag==='SELECT'&&!focused&&a.value!==b.value) a.value=b.value; }
-function morphKids(a,b){ const nb=[...b.childNodes];
-  for(let i=0;i<nb.length;i++){ const n=nb[i], o=a.childNodes[i];
-    if(!o){ a.appendChild(n); continue; }
-    if(o.nodeType!==n.nodeType||o.nodeName!==n.nodeName){ a.replaceChild(n,o); continue; }
-    if(o.nodeType===1) morphEl(o,n); else if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; }
+function mKey(n){ if(n.nodeType!==1) return n.nodeName; const id=n.getAttribute('id'); if(id) return n.nodeName+'#'+id; const d=n.getAttribute('data-id'); if(d) return n.nodeName+'@'+d; const c=n.getAttribute('class'); return n.nodeName+'.'+(c||''); }
+function morphKids(a,b){ const nb=[...b.childNodes]; let i=0;
+  for(const n of nb){ let o=a.childNodes[i];
+    if(o&&mKey(o)!==mKey(n)){ const k=mKey(n); let f=null; for(let s=o.nextSibling,c=0;s&&c<40;s=s.nextSibling,c++) if(mKey(s)===k){ f=s; break; }
+      if(f){ a.insertBefore(f,o); o=f; }      // same element further down: move it up instead of rebuilding everything in between
+      else{ a.insertBefore(n,o); i++; continue; } }
+    if(!o){ a.appendChild(n); i++; continue; }
+    if(o.nodeType===1) morphEl(o,n); else if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue;
+    i++; }
   while(a.childNodes.length>nb.length) a.removeChild(a.lastChild); }
 function morphable(el){ if(!el||el.__mprop) return; el.__mprop=1; const d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');
   Object.defineProperty(el,'innerHTML',{configurable:true,get(){ return d.get.call(this); },set(v){ if(!this.__mo||!this.firstChild){ d.set.call(this,v); this.__mo=1; return; } const t=this.ownerDocument.createElement(this.tagName); d.set.call(t,v); morphKids(this,t); }}); }
+window.morphable=morphable;
 function setHTML(el,html){ if(!el.__mo||!el.firstChild){ el.innerHTML=html; el.__mo=1; return; } const t=el.ownerDocument.createElement(el.tagName); t.innerHTML=html; morphKids(el,t); }
 function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g></defs></svg>`; (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac='';
@@ -1173,16 +1188,25 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
   let s=`<svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%,calc(100cqh * ${vb[2]} / ${vb[3]}));height:auto" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
      <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`}`;
   for(const id of S.targets) if(HX[id]) s+=`<polygon class="tgt" points="${hexPts(HX[id])}"/>`;
-  for(const h of HEXES) s+=`<polygon class="hex${clickable?' click':''}" data-id="${h.id}" points="${hexPts(h)}"/>`;
+  for(const h of HEXES) s+=`<polygon class="hex${clickable?' click':''}" data-id="${h.id}" points="${hexPts(h)}">${hexTip(h.id,only)}</polygon>`;
   for(const id of S.highlights) if(HX[id]) s+=`<polygon class="hl" points="${hexPts(HX[id])}"/>`;
   for(const c of MD.chips) s+=chipSvg(c);   // chips under base labels so labels stay readable
   // owner 11-09: no hub-to-spoke lines; the only lines on the board are aircraft flying routes
   for(const t of vis) for(const b of S.bases[t.id]){ const h=HX[b.hex]; if(!h) continue; const st=b.st;
     // owner 11-09: hubs shaded, spokes outline only (less color on the board)
     const isHub=(b.role==='mob'||b.role==='hub'); const fill=isHub?(st==='struck'?'rgba(229,83,61,.45)':t.c+'66'):(st==='struck'?'rgba(229,83,61,.10)':'none'); const stroke=st==='struck'?'#E5533D':t.c;
-    s+=`<polygon class="base ${st==='struck'?'struck':''}" points="${hexPts(h)}" fill="${fill}" stroke="${stroke}" stroke-width="${isHub?10:8}"/>`;
+    const on=ownersOf(b.hex).length, si=shareIdx(t.id,b.hex);
+    if(on>1){ const V=[[h.x,h.y-R],[h.x+HW,h.y-R/2],[h.x+HW,h.y+R/2],[h.x,h.y+R],[h.x-HW,h.y+R/2],[h.x-HW,h.y-R/2]];
+      const os=ownersOf(b.hex).map(o=>({team:o.team,c:(MD.chips.find(c=>c.id===o.b.af)||MD.chips.find(c=>c.hex===b.hex)||h)})), k2=on===2;
+      os.sort((p,q)=>k2?(p.c.x-q.c.x):(p.c.y-q.c.y)); const rank=os.findIndex(o=>o.team===t.id);
+      const PATH=k2?[[3,4,5,0],[0,1,2,3]][rank]:[[5,0,1],[1,2,4,5],[2,3,4]][rank];   // 2 wings: west half / east half · 3: top two, middle two (sides), bottom two
+      const pts=(k2||rank!==1?PATH.map(i=>V[i].join(',')).join(' '):null);
+      const sw=isHub?10:8, cls=`base ${st==='struck'?'struck':''}`;
+      if(pts) s+=`<polyline class="${cls}" points="${pts}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      else s+=`<polyline class="${cls}" points="${V[1].join(',')} ${V[2].join(',')}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/><polyline class="${cls}" points="${V[4].join(',')} ${V[5].join(',')}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`; }
+    else s+=`<polygon class="base ${st==='struck'?'struck':''}" points="${hexPts(h)}" fill="${fill}" stroke="${stroke}" stroke-width="${isHub?10:8}"/>`;
     const extra=st==='struck'?(b.recUntil?` · STRUCK ${Math.max(0,b.recUntil-S.turn)}`:' · STRUCK'):st==='moving'?' · moving in':'';
-    if(st==='struck'||st==='moving'||b.hex===(only?(S.wsel||{})[only]:S.sel)) pl+=plate(h.x,h.y+30,longId(t.id,b)+extra,st==='struck'?'#B8402F':t.c,st==='selected'); }
+    if((st==='struck'||st==='moving')&&!(on>1&&si>0)) pl+=plate(h.x,h.y+30,(on>1?ownersOf(b.hex).map(o=>longId(o.team,o.b)).join(' · '):longId(t.id,b))+extra,st==='struck'?'#B8402F':t.c,st==='selected'); }
   for(const t of vis) for(const b of S.bases[t.id]){ const e=afEff(t.id,b.hex); if(e&&e.c!==e.base) s+=chipSvg({...e.chip,c:e.c}); }
   for(const t of vis) for(const b of S.bases[t.id]){ if(!b.af) continue; const c=MD.chips.find(x=>x.id===b.af); if(c) s+=`<circle cx="${c.x}" cy="${c.y}" r="24" fill="none" stroke="#fff" stroke-width="5" pointer-events="none"/><circle cx="${c.x}" cy="${c.y}" r="24" fill="none" stroke="${t.c}" stroke-width="2.5" pointer-events="none"/>`; }
   for(const q of S.requests) if(q.st==='pending'&&HX[q.hex]&&(only?q.team===only:S.show[q.team]!==false)){ const h=HX[q.hex], t=TM[q.team];
@@ -1217,13 +1241,12 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
     P.forEach((h,i)=>{ s+=`<circle cx="${h.x}" cy="${h.y}" r="20" fill="${t.c}" stroke="#fff" stroke-width="4" pointer-events="none"/><text x="${h.x}" y="${h.y+8}" font-size="22" font-weight="800" fill="#fff" text-anchor="middle" pointer-events="none">${i+1}</text>`; }); }
   for(const hx in (S.redz||{})){ const h=HX[hx]; if(!h) continue; const Z=REDZ[S.redz[hx]]; const op={20:.42,12:.28,10:.15}[Z.die]; s+=`<polygon points="${hexPts(h)}" fill="rgba(200,40,40,${op})" stroke="#C8463A" stroke-width="6" pointer-events="none"/><text pointer-events="none" class="blab" x="${h.x}" y="${h.y+52}" style="font-size:20px;fill:#FFB4A8">RED D${Z.die}</text>`; }
   for(const hx in (S.redJam||{})){ const h=HX[hx]; if(!h) continue; s+=`<g pointer-events="none"><circle cx="${h.x}" cy="${h.y}" r="300" fill="none" stroke="#C8463A" stroke-width="2" stroke-dasharray="6 8"/><rect x="${h.x-46}" y="${h.y+12}" width="92" height="24" rx="3" fill="#3A1512" stroke="#C8463A"/><text x="${h.x}" y="${h.y+29}" text-anchor="middle" font-size="15" font-weight="700" fill="#FFB4A8">${S.redJam[hx]==='sat'?'SAT JAM':'AIR JAM'}</text></g>`; }
-  for(const tm of (only?[TM[only]]:VIS())) for(const hx in (S.fighters||{})[tm.id]||{}){ const h=HX[hx]; if(!h) continue; const n=S.fighters[tm.id][hx]; s+=`<g pointer-events="none"><rect x="${h.x+22}" y="${h.y-84}" width="124" height="54" rx="4" fill="#12171C" stroke="${tm.c}" stroke-width="3"/><image href="${SILBADGE[FTYPE[tm.id]]}" x="${h.x+27}" y="${h.y-81}" width="48" height="48"/><text x="${h.x+112}" y="${h.y-48}" text-anchor="middle" font-size="27" font-weight="700" fill="#F2F4F6">${n}</text></g>`; }
+  for(const tm of (only?[TM[only]]:VIS())) for(const hx in (S.fighters||{})[tm.id]||{}){ const h=HX[hx]; if(!h) continue; const n=S.fighters[tm.id][hx]; const bx=shareIdx(tm.id,hx)?h.x-176:h.x+22; s+=`<g pointer-events="none"><rect x="${bx}" y="${h.y-84}" width="124" height="54" rx="4" fill="#12171C" stroke="${tm.c}" stroke-width="3"/><image href="${SILBADGE[FTYPE[tm.id]]}" x="${bx+5}" y="${h.y-81}" width="48" height="48"/><text x="${bx+90}" y="${h.y-48}" text-anchor="middle" font-size="27" font-weight="700" fill="#F2F4F6">${n}</text></g>`; }
   for(const key in stk){ const [team,hx]=key.split(':'), h=HX[hx]; if(!h) continue; const c=TM[team].c; let row=((S.fighters||{})[team]||{})[hx]?1:0; const by={};
     for(const f of stk[key]){ const b=by[f.acft]=by[f.acft]||{n:0,req:false}; b.n+=(f.n||1); b.req=b.req||f.st==='requested'; }
-    for(const a of ['c5','c17','c130']) if(by[a]){ const y=h.y-84+58*row++; s+=`<g pointer-events="none"><rect x="${h.x+22}" y="${y}" width="124" height="54" rx="4" fill="#12171C" stroke="${c}" stroke-width="3" ${by[a].req?'stroke-dasharray="7 5"':''}/><image href="${SILBADGE[a]}" x="${h.x+27}" y="${y+3}" width="48" height="48"/><text x="${h.x+112}" y="${y+36}" text-anchor="middle" font-size="27" font-weight="700" fill="#F2F4F6">${by[a].n}</text></g>`; } }
+    for(const a of ['c5','c17','c130']) if(by[a]){ const y=h.y-84+58*row++, bx=shareIdx(team,hx)?h.x-176:h.x+22; s+=`<g pointer-events="none"><rect x="${bx}" y="${y}" width="124" height="54" rx="4" fill="#12171C" stroke="${c}" stroke-width="3" ${by[a].req?'stroke-dasharray="7 5"':''}/><image href="${SILBADGE[a]}" x="${bx+5}" y="${y+3}" width="48" height="48"/><text x="${bx+90}" y="${y+36}" text-anchor="middle" font-size="27" font-weight="700" fill="#F2F4F6">${by[a].n}</text></g>`; } }
   s+=pl;
   { const sh=only?(S.wsel||{})[only]:S.sel; if(sh&&HX[sh]) s+=`<polygon class="sel" points="${hexPts(HX[sh])}"/>`; }
-  if(S.flash&&HX[S.flash.hex]&&Date.now()-S.flash.t<6000) s+=`<polygon class="flash" points="${hexPts(HX[S.flash.hex])}" fill="none" stroke="#E5533D"/>`;
   return s+"</g></svg>";
 }
 
@@ -1609,7 +1632,7 @@ function renderPanel(){
   const box=document.getElementById('i-hex'), act=document.getElementById('i-hexactions');
   if(!S.sel){ box.textContent='No hex selected. Click any hex on the board.'; act.style.display='none'; }
   else{ const chips=MD.chips.filter(c=>c.hex===S.sel); const owner=ownerOf(S.sel);
-    box.innerHTML=`<b>Hex ${S.sel}</b> · ${chips.length?chips.length+' airfield'+(chips.length>1?'s':'')+': '+chips.map(c=>`<span style="color:${CHIPC[c.c]}">●</span> ${({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]}`).join(', '):'no airfield chip'}${owner?`<br>Held by <b style="font-size:15px;color:${TM[owner.team].c}">${TM[owner.team].n}</b> (${owner.b.st})`:''}${S.targets.includes(S.sel)?'<br>Marked as a target hex':''}`;
+    box.innerHTML=`<b>Hex ${S.sel}</b> · ${chips.length?chips.length+' airfield'+(chips.length>1?'s':'')+': '+chips.map(c=>`<span style="color:${CHIPC[c.c]}">●</span> ${({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]}`).join(', '):'no airfield chip'}${(()=>{ const os=ownersOf(S.sel); if(os.length>1) return `<br>Shared hex · acting on: `+os.map(x=>`<button class="btn sm${x.team===owner.team?' p':''}" style="margin:4px 4px 0 0" onclick="S.selTeam='${x.team}';render()">${TM[x.team].n}</button>`).join('')+`<span class="hint"> (${owner.b.st})</span>`; return owner?`<br>Held by <b style="font-size:15px;color:${TM[owner.team].c}">${TM[owner.team].n}</b> (${owner.b.st})`:''; })()}${S.targets.includes(S.sel)?'<br>Marked as a target hex':''}`;
     act.style.display='block';
     document.getElementById('b-hl').classList.toggle('on',S.highlights.includes(S.sel)); document.getElementById('b-hl').textContent=S.highlights.includes(S.sel)?'Remove highlight':'Highlight';
     document.getElementById('b-tgt').textContent=S.targets.includes(S.sel)?'Unmark target':'Mark as target hex';
@@ -1649,10 +1672,17 @@ function renderPanel(){
   document.getElementById('i-log').innerHTML=S.log.slice(-200).reverse().map(l=>`<div>${l}</div>`).join('');
   const o=S.orders; for(const k of ['intent','targets','acft','access']){ const el=document.getElementById('o-'+k); if(document.activeElement!==el) el.value=o[k]; }
 }
-function ownerOf(hex){ for(const t of TEAMS){ const b=S.bases[t.id].find(b=>b.hex===hex); if(b) return {team:t.id,b}; } return null; }
+function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o.team!==only) continue; L.push(longId(o.team,o.b)+(o.b.st==='struck'?' · STRUCK':'')); const f=((S.fighters||{})[o.team]||{})[hex]; if(f) L.push(`  ${f} × ${FTYPE[o.team]}`); }
+  const by={}; for(const f of (S.flights||[])) if(['requested','approved','enroute'].includes(f.st)&&f.moved===0&&f.path[0]===hex&&(!only||f.team===only)){ const k=TM[f.team].n+' '+ACFT[f.acft].n; by[k]=(by[k]||0)+(f.n||1); }
+  for(const k in by) L.push(`  ${by[k]} × ${k.split(' ').slice(-1)[0]} (${k.split(' ').slice(0,2).join(' ')})`);
+  return L.length?`<title>Hex ${hex}&#10;${L.join('&#10;')}</title>`:`<title>Hex ${hex}</title>`; }
+function ownersOf(hex){ const o=[]; for(const t of TEAMS){ const b=S.bases[t.id].find(b=>b.hex===hex); if(b) o.push({team:t.id,b}); } return o; }
+function ownerOf(hex){ const o=ownersOf(hex); if(!o.length) return null; if(o.length>1&&hex===S.sel&&S.selTeam){ const m=o.find(x=>x.team===S.selTeam); if(m) return m; } return o[0]; }
+function shareIdx(team,hex){ return Math.max(0,ownersOf(hex).findIndex(x=>x.team===team)); }
+function hexPtsK(h,k){ return [[h.x,h.y-R*k],[h.x+HW*k,h.y-R*k/2],[h.x+HW*k,h.y+R*k/2],[h.x,h.y+R*k],[h.x-HW*k,h.y+R*k/2],[h.x-HW*k,h.y-R*k/2]].map(p=>p.join(',')).join(' '); }
 
 // ================= ACTIONS =================
-function selectHex(id){ if(S.plot){ plotClick(id); return; } S.sel=(S.sel===id?null:id); if(S.sel&&window.setPTab&&MODE==='instructor') setPTab('map'); render(); }
+function selectHex(id){ if(S.plot){ plotClick(id); return; } if(S.sel!==id) S.selTeam=null; S.sel=(S.sel===id?null:id); if(S.sel&&window.setPTab&&MODE==='instructor') setPTab('map'); render(); }
 function renderRfi(o){ const info=rfiInfo(o.team,S.sel);
   document.getElementById('i-rficount').innerHTML=`<b style="color:var(--ink)">${info.left} left</b> · ${info.label}${o.b.landed?'':` · <button class="btn sm" onclick="assessRfi()" title="People are on site: ask all remaining RFIs">People landed: ask the rest</button>`}`;
   document.getElementById('i-rfi').innerHTML=rfiPickSheet(o.team,S.sel,'').replace(/^<div class="hint"[^]*?<\/div>/,''); }
@@ -1903,8 +1933,8 @@ function clearHighlights(){ S.highlights=[]; render(); }
 function clearTicker(){ S.ticker={text:'',alarm:false}; render(); }
 function banner(text,alarm){ S.ticker={text,alarm}; }
 function assign(team){ const ex=ownerOf(S.sel);
-  if(ex&&ex.team===team) return;
-  if(ex) S.bases[ex.team]=S.bases[ex.team].filter(b=>b.hex!==S.sel);
+  if(S.bases[team].some(b=>b.hex===S.sel)) return;
+  if(ex&&MD.chips.filter(c=>c.hex===S.sel).length<2) return alert(`${TM[ex.team].n} already holds the only airfield in hex ${S.sel}.`);
   { const nb={hex:S.sel,st:'selected',role:null,rfi:{},rfiMax:spokePicks(team)>=3?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[team]=spokePicks(team)+1; S.bases[team].push(nb); nb.role=spokeCount(team)>=MAX_SPOKES?'cl':'spoke'; nb.sid=nextSid(team,nb.role); } const chips=MD.chips.filter(c=>c.hex===S.sel);
   log(`${TM[team].n} selected hex ${S.sel}${chips.length?' ('+chips.map(c=>({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]).join(', ')+')':''}`);
   banner(`${TM[team].n.toUpperCase()} selects hex ${S.sel}`,false); render(); }
@@ -2012,6 +2042,14 @@ function rollAny(){ const n=+document.getElementById('d-any').value; const {r,ty
 function download(name,text,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
 function stamp(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}${z(d.getMinutes())}`; }
 function saveFile(){ S.fileSavedAt=Date.now(); S.fileSavedTurn=S.turn; download(`Kingfish ACE - Day ${day()} Turn ${S.turn} - ${stamp(new Date())}.json`,JSON.stringify({...S,v:SAVE_V,running:false},null,1),'application/json'); log(`Saved to file (day ${day()}, turn ${S.turn})`); render(); }
+function fitPanelTabs(){ try{ const ph=document.querySelector('#panel .ph'), pt=document.getElementById('ptabs'); if(ph&&pt){ const h=ph.offsetHeight+'px'; if(pt.style.top!==h) pt.style.top=h; } }catch(e){} }
+if(MODE==='instructor'){ addEventListener('resize',fitPanelTabs); setInterval(fitPanelTabs,1000); setTimeout(fitPanelTabs,50); }
+function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm'); const on=m.style.display==='none'; m.style.display=on?'block':'none'; const p=document.getElementById('gm-pause'); if(p) p.textContent=S.running?'Pause timer':'Resume timer'; if(on) setTimeout(()=>document.addEventListener('click',()=>{ m.style.display='none'; },{once:true}),0); }
+function gmDo(k){ document.getElementById('gm').style.display='none';
+  if(k==='pause'){ clockStartPause(); render(); }
+  else if(k==='save'){ saveFile(); banner('GAME SAVED TO FILE',false); render(); }
+  else if(k==='exit'){ if(S.running) clockStartPause(); save(); saveFile(); setTimeout(()=>go(''),700); }
+  else if(k==='restart') newGame(); }
 function pauseAndSave(){ if(S.running) clockStartPause(); saveFile(); banner('GAME PAUSED AND SAVED',false); }
 function saveStatus(){ const t=x=>new Date(x).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}).replace(' ','\u00A0'); return `Day ${day()} · turn ${S.turn} of ${S.turns}${S.opening?' · planning':''}. Saved on this laptop at ${t(S.savedAt||Date.now())}. ${S.fileSavedAt?`Last saved to a file at ${t(S.fileSavedAt)} (turn ${S.fileSavedTurn}).`:'<b style="color:#F2D28A">Not saved to a file yet.</b>'}`; }
 function loadFile(inp){ const f=inp.files[0]; if(!f) return; f.text().then(t=>{ try{ const n=JSON.parse(t); if(!n||typeof n!=='object'||!n.bases||!n.pts||!TEAMS.every(x=>Array.isArray(n.bases[x.id])&&n.pts[x.id])||!(n.turn>=1)) throw 0; S={...blank(),...n,running:false,endsAt:null}; upgradeState(); log(`Game resumed from file (day ${day()}, turn ${S.turn})`); render(); banner(`GAME RESUMED · DAY ${day()} · TURN ${S.turn}`,false); }catch(e){ alert('That file is not a Kingfish ACE save.'); } }); inp.value=''; }
