@@ -588,6 +588,11 @@ body{font-size:15.5px}
 #kfa-tcard{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:9400;background:rgba(12,16,20,.94);border:1px solid #2E3843;border-top:4px solid #F2C14E;padding:22px 44px;text-align:center;pointer-events:none;opacity:0}
 #kfa-tcard.on{animation:tcard 2.6s ease forwards}@keyframes tcard{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
 #kfa-tcard small{display:block;font-size:13px;letter-spacing:3px;color:#9AA5AF}#kfa-tcard b{display:block;font-size:40px;letter-spacing:4px;margin:6px 0}#kfa-tcard span{font-size:15px;letter-spacing:4px;font-weight:700}#kfa-tcard span.conflict{color:#F08A7E}#kfa-tcard span.crisis{color:#F2C14E}
+#kfa-cards{position:fixed;inset:0;z-index:9300;background:rgba(5,8,11,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.kwrap{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:94vw;max-height:84vh;overflow:auto}
+.kcard{width:290px;padding:14px 16px;border-radius:8px;color:#F2F4F6;box-shadow:0 12px 30px rgba(0,0,0,.5);border:3px solid #fff}.kcard.event{background:#24305E}.kcard.risk{background:#7E1A22}
+.kcard .kh{display:flex;justify-content:space-between;gap:8px;font-size:12px;letter-spacing:2px;margin-bottom:8px}.kcard .kh span{font-weight:700;letter-spacing:.5px}.kcard p{font-size:15px;line-height:1.4;margin:0 0 8px}.kcard .kc{font-size:12.5px;color:#FFD9D9;margin-bottom:4px}.kcard .kd{font-size:12px;color:#C9D1D8;border-top:1px solid rgba(255,255,255,.25);padding-top:6px}
+.kx{margin-top:12px;color:#C9D1D8;font-size:13px}
 </style>
 </head>
 <body>
@@ -917,7 +922,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.8.5';   // shown on every screen; bump on each release
+const APP_VER='1.8.6';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1896,11 +1901,89 @@ function checkIdleDP(){ const lines=[]; // Deployed vs tasked (scenario card): 2
     if(ratio>=3){ const r=Math.min(d(10),10-(cap[tm.id]||0)); cap[tm.id]=(cap[tm.id]||0)+r; S.pts[tm.id].dp+=r; pushRoll({team:tm.id,title:`${longId(tm.id,b)} · too many people`,note:`${people} people for ${tasked} tasked (3 to 1): roll D10 for Demoralization Points`,dice:[{s:10,v:r,l:'Demoralization',sub:`+${r} DP`}]}); lines.push(`${tm.n} ${b.hex}: ${people} people, ${tasked} tasked, 3:1, D10 = +${r} DP`); }
     else if(ratio>=2){ const r=Math.min(d(4),10-(cap[tm.id]||0)); cap[tm.id]=(cap[tm.id]||0)+r; S.pts[tm.id].dp+=r; pushRoll({team:tm.id,title:`${longId(tm.id,b)} · too many people`,note:`${people} people for ${tasked} tasked (2 to 1): roll D4 for Demoralization Points`,dice:[{s:4,v:r,l:'Demoralization',sub:`+${r} DP`}]}); lines.push(`${tm.n} ${b.hex}: ${people} people, ${tasked} tasked, 2:1, D4 = +${r} DP`); } }
   if(lines.length) log('DEPLOYED VS TASKED · '+lines.join(' | ')); return lines; }
-function drawCards(){ const out=[]; // rulebook: each team pulls an event card and a risk card per turn; D4 picks which airfield
-  for(const tm of TEAMS){ const fields=S.bases[tm.id].filter(b=>b.role!=='mob'); const ev=d(4), rk=d(4);
-    pushRoll({team:tm.id,title:`${tm.n} · event and risk cards`,note:'Draw one of each from the decks. The D4 says which airfield the event card hits.',dice:[{s:4,v:ev,l:'Event card',sub:fields[ev-1]?longId(tm.id,fields[ev-1]):'no airfield: free pass'},{s:4,v:rk,l:'Risk card',sub:'check its country'}]});
-    out.push(`${tm.n}: event card → ${fields.length?('airfield #'+ev+(fields[ev-1]?' ('+longId(tm.id,fields[ev-1])+')':' (no airfield: free pass)')):'no airfield open: free pass'} · risk card → draw and check its country`); }
-  S.cardDraw={turn:S.turn,lines:out}; log('CARDS · '+out.join(' | ')); return out; }
+
+/* R9  CARDS (transcribed from the physical decks, owner photos 2026-11-10)
+   R9.1 Each wing draws one Event and one Risk card per turn when the turn ends; a D4 picks which of its airfields
+        (spokes first; no airfield = free pass, rulebook p.9-10). The instructor can also draw one at a selected hex.
+   R9.2 A Risk card applies only if its category is a risk in that airfield's country (rulebook p.10). Until the
+        country risk table is entered, the card shows its category and the instructor confirms.
+   R9.3 fx = what the program applies by itself. Cards without fx are shown to the class and the instructor applies them. */
+const EVENT_DECK=[
+ {t:'Citing human rights violations, the US issues a demarche to a host nation. In response, the host nation has issued a vacate order for all US forces within 4 turns.'},
+ {t:'Proactive Country Team efforts secured lodging for all deploying members. Bed down task complete.',fx:{taskDone:1}},
+ {t:'An arriving aircraft lost a tire upon landing and departed the runway surface. Suspend flight operations for 2 turns to allow for aircraft recovery.'},
+ {t:'The Department of State has negotiated base access and overflight in a strategic location. Select a country you would like access and overflight.'},
+ {t:'Host nation provided shower facilities, but failure to check sanitation levels led to 10 members showering in water with extremely high fecal contamination. 5 members are ill and considered unusable for 4 turns.'},
+ {t:'Incorrect equipment inventory has led to a critical piece of Command and Control (C2) equipment being inoperable. No C2 until another arrives.'},
+ {t:'Unit members are suspected victims of directed energy attacks after displaying "Havana Syndrome" symptoms. Assign 10 personnel to Rest / Recovery for 5 turns.'},
+ {t:'The host nation has suffered from crippling economic coercion and retracted previous base access permissions.'},
+ {t:'1 aircraft has tripped the runway arresting gear. Suspend fighter operations for 1 turn to reset.'},
+ {t:'A skilled military liaison has coordinated for 4 additional vehicles.',fx:{add:{vehicle:4}}},
+ {t:'Incorrect spotting procedures led to 2 pieces of equipment colliding with each other. 2 vehicles are considered inoperable for 2 turns.'},
+ {t:'Unit members are suspected victims of biological weapon attacks. Assign 10 personnel to Rest / Recovery for 5 turns.'},
+ {t:'1 aircraft currently on the ramp has a maintenance issue requiring a specialized part. The aircraft is unusable until another part arrives.'},
+ {t:'Citing increased flight operations, host nation Air Traffic Controllers have demanded a pay raise. The Airfield Manager refused, causing a strike. Assign qualified personnel to conduct Landing Zone Safety Officer duties or ATC to support ATC operations.'},
+ {t:'While loading, incorrect spotting procedures and an inexperienced driver led to a piece of loading equipment striking the aircraft. 1 aircraft is considered grounded for 5 turns.'},
+ {t:'Visa waivers were not passed to host nation customs agents. All passengers are held on the aircraft for 1 turn to clear up the miscommunication.'},
+ {t:'A lack of unit physical fitness focus has led to higher than average fatigue. Assign 20 personnel to Rest / Recovery for 2 turns.'},
+ {t:'Commercial drones are flying over the ramp and runway, causing risks to flight and taxi operations. Suspend arrivals and departures for 1 turn.'},
+ {t:'Inaccurate testing of the parking apron weight-bearing capacity has led to extreme rutting. All mobility aircraft (except C-130) must download on the runway. Shut down all additional flight operations while mobility aircraft are at the location.'},
+ {t:'A deployed member is suffering from crippling anxiety. Assign 2 personnel to Rest / Recovery for 5 turns.'},
+ {t:'Prudent planning has coordinated prepositioned food, water, and fuel stocks at 1 location. Task teams to recover the material.',fx:{add:{food:1,water:1,fuel:1}}},
+ {t:'One member responded to a fake online date that ended in a kidnapping. Remove 1 member and add 20 Demoralization Points.',fx:{dp:20}},
+ {t:'Infrastructure damage has eliminated all approach lighting for the airfield. Cease night operations or establish airfield lighting (if available).'},
+ {t:'Fuel delivered to the airfield contained hazardous additives. 2 pieces of equipment are unusable for 2 turns while the systems are drained.'},
+ {t:'Miscommunication at higher headquarters has led to a mistaken tasking. Divert 1 aircraft 3 hexes while en route.'},
+ {t:'Sanitation services continue to be delayed, causing health and morale issues. Add 20 Demoralization Points.',fx:{dp:20}},
+ {t:'Wild animals are threatening safe flight operations. Suspend flight operations for 1 turn.'},
+ {t:'A series of aircraft have landed without proper coordination, overwhelming ramp space. Remove 1 available parking spot for 1 turn.'},
+ {t:'An AMMO specialist has an allergic reaction to protective equipment, causing a loss of productivity. Double AMMO personnel for Integrated Combat Turns.'},
+ {t:'1 aircraft had an in-flight emergency forcing it to land at the closest operational runway. The aircraft must be moved to the nearest runway and is considered unusable for 6 turns.'},
+ {t:'A group of deployed members sneak off base, become drunk and disorderly, and are arrested by local officials. Remove 5 deployers and subtract 10 Resource Points.',fx:{rp:-10}},
+ {t:'Desperate locals siphoned gas from a parked vehicle or piece of MHE. 1 vehicle or MHE is considered unusable for 1 turn.'},
+ {t:'Outdated and convoluted installation deployment plans have delayed departures from home station. Delay all departures from 1 base for 1 turn.'},
+];
+const RISK_DECK=[
+ {cat:'Health',t:'Preventative health measures have been taken to reduce health risk. No health impacts this turn.'},
+ {cat:'Health',t:'Roll a 12-sided die to determine how many forces are considered sick and unusable for 4 turns.',fx:{sickD12:1}},
+ {cat:'Terrorism',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.'},
+ {cat:'Terrorism',t:'Partnering with the host nation and sharing intel has increased trust. Gain 10 Resource Points.',fx:{rp:10}},
+ {cat:'Terrorism',t:'An improvised explosive device has detonated near an Entry Control Point. Assign 1 Force Protection team to the medical task.'},
+ {cat:'Civil unrest',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.'},
+ {cat:'Civil unrest',t:'Contracts are not available due to protests in the local community.'},
+ {cat:'Crime',t:'A local thief evaded security and stole fuel from parked vehicles. Reduce fuel commodities by one.',fx:{add:{fuel:-1}}},
+ {cat:'Crime',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.'},
+ {cat:'Kidnapping',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.'},
+];
+function drawFrom(kind){ const deck=kind==='risk'?RISK_DECK:EVENT_DECK; const key=kind==='risk'?'riskPile':'eventPile';
+  if(!S[key]||!S[key].length){ S[key]=deck.map((_,i)=>i); for(let i=S[key].length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [S[key][i],S[key][j]]=[S[key][j],S[key][i]]; } }
+  return S[key].pop(); }
+function applyCard(kind,idx,team,hex){ const c=(kind==='risk'?RISK_DECK:EVENT_DECK)[idx], fx=c.fx||{}, done=[];
+  if(fx.dp){ S.pts[team].dp+=fx.dp; done.push(`+${fx.dp} DP`); }
+  if(fx.rp){ S.pts[team].rp=Math.max(0,S.pts[team].rp+fx.rp); done.push(`${fx.rp>0?'+':''}${fx.rp} RP`); }
+  if(fx.add&&hex){ const pos={}, neg={}; for(const k in fx.add){ if(fx.add[k]>0) pos[k]=fx.add[k]; else neg[k]=-fx.add[k]; } if(Object.keys(pos).length) addInv(team,hex,pos,1); if(Object.keys(neg).length){ const inv=invAt(team,hex); for(const k in neg){ const n=Math.min(neg[k],inv[k]||0); if(n) addInv(team,hex,{[k]:n},-1); } } done.push(Object.entries(fx.add).map(([k,n])=>`${n>0?'+':''}${n} ${CHIT[k]?CHIT[k].name:k}`).join(', ')+` at ${hex}`); }
+  if(fx.taskDone&&hex){ const ts=((S.tasks[team]=S.tasks[team]||{})[hex]=S.tasks[team][hex]||{}); ts[fx.taskDone]={...(ts[fx.taskDone]||{}),done:true,a:{},on:false}; done.push(`task ${fx.taskDone} complete at ${hex}`); }
+  if(fx.sickD12){ const r=d(12); done.push(`D12 = ${r} personnel sick for 4 turns (instructor removes them from tasks)`); }
+  return done; }
+function cardFor(kind,team,hexWanted){ const spokes=S.bases[team].filter(b=>b.role!=='mob'&&b.role!=='hub'); const r=d(4);
+  const b=hexWanted?S.bases[team].find(x=>x.hex===hexWanted):spokes[r-1];
+  if(!b&&!hexWanted) return {kind,team,free:true,d4:r,t:Date.now()};
+  const idx=drawFrom(kind), c=(kind==='risk'?RISK_DECK:EVENT_DECK)[idx];
+  const done=applyCard(kind,idx,team,b?b.hex:null);
+  const rec={kind,team,hex:b?b.hex:hexWanted,d4:hexWanted?null:r,idx,text:c.t,cat:c.cat||null,done,t:Date.now(),turn:S.turn};
+  (S.cardLog=S.cardLog||[]).push(rec); if(S.cardLog.length>60) S.cardLog.shift();
+  log(`${kind==='risk'?'RISK':'EVENT'} CARD ${TM[team].n}${rec.hex?' at '+rec.hex:''}: ${c.t}${done.length?' ['+done.join('; ')+']':''}`);
+  return rec; }
+function showCards(recs){ S.cardShow={recs,t:Date.now()}; }
+function cardHtml(r){ const T=TM[r.team]; if(r.free) return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK':'EVENT'} CARD</b><span style="color:${T.c}">${T.n}</span></div><p>D4 = ${r.d4}: no airfield there. Free pass.</p></div>`;
+  return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK CARD':'EVENT CARD'}</b><span style="color:${T.c}">${T.n}${r.hex?' · hex '+r.hex:''}</span></div>${r.cat?`<div class="kc">If ${r.cat} is a risk in this country:</div>`:''}<p>${r.text}</p>${r.done&&r.done.length?`<div class="kd">Applied: ${r.done.join(' · ')}</div>`:`<div class="kd">Instructor applies this card.</div>`}</div>`; }
+function cardOverlay(){ const cs=S.cardShow; let el=document.getElementById('kfa-cards'); if(!cs||Date.now()-cs.t>20000||(window.__cardSeen===cs.t&&el&&el.dataset.closed)){ if(el&&!el.dataset.closed){ el.remove(); } return; }
+  if(!el){ el=document.createElement('div'); el.id='kfa-cards'; el.onclick=()=>{ el.dataset.closed='1'; el.remove(); window.__cardSeen=cs.t; }; document.body.appendChild(el); }
+  if(el.dataset.t!==String(cs.t)){ el.dataset.t=String(cs.t); const real=cs.recs.filter(r=>!r.free), free=cs.recs.filter(r=>r.free); el.innerHTML=`<div class="kwrap">${real.map(cardHtml).join('')||'<div class="kcard event"><p>No cards apply this turn.</p></div>'}</div>${free.length?`<div class="kx">Free pass (no airfield on the D4): ${free.map(r=>TM[r.team].n+' '+r.kind).join(' · ')}</div>`:''}<div class="kx">click anywhere to close</div>`; } }
+if(MODE==='instructor'||MODE==='projector') setInterval(()=>{ try{ cardOverlay(); }catch(e){} },500);
+
+function drawCards(){ const recs=[]; for(const tm of TEAMS){ recs.push(cardFor('event',tm.id)); recs.push(cardFor('risk',tm.id)); }
+  S.cardDraw={turn:S.turn,lines:recs.map(r=>`${TM[r.team].n} ${r.kind}: ${r.free?'free pass':(r.hex?r.hex+' · ':'')+r.text}`)}; showCards(recs); return S.cardDraw.lines; }
 function fightersAt(team,hex){ return ((S.fighters||{})[team]||{})[hex]||0; }
 function fighterMog(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b&&b.role==='mob') return 99; const r=rfiAns(team,hex)[4]; return r?[2,7,42][r-1]:0; }
 function sortiePreview(team,from,target,n){ const dist=hexDist(from,target); if(dist>FRANGE) return `<span style="color:#E0C066">Out of range: ${dist} hexes (fighters reach ${FRANGE})</span>`;
@@ -2118,7 +2201,7 @@ function setStatus(st){ const o=ownerOf(S.sel); if(!o) return; gmSnap('base stat
   else banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} · ${({selected:'selected',moving:'forces moving in',ioc:'INITIAL OPERATING CAPABILITY',foc:'FULL OPERATING CAPABILITY'})[st]}`,false);
   render(); }
 function removeBase(){ const o=ownerOf(S.sel); if(!o) return; gmSnap('remove base'); if(o.b.role==='mob') return alert('A home hub cannot be removed.'); S.bases[o.team]=S.bases[o.team].filter(b=>b.hex!==S.sel); for(const k of ['inv','fighters','tasks']) if(S[k]&&S[k][o.team]) delete S[k][o.team][S.sel]; log(`${TM[o.team].n} left hex ${S.sel}`); render(); }
-function inject(kind){ gmSnap(kind); const o=ownerOf(S.sel); const who=o?` (${TM[o.team].n})`:'';
+function inject(kind){ gmSnap(kind); if(kind==='Event card'||kind==='Risk card'){ const o=ownerOf(S.sel); if(!o) return alert('Select a wing base first. The card is drawn for that wing at that airfield.'); const r=cardFor(kind==='Risk card'?'risk':'event',o.team,S.sel); showCards([r]); render(); return; } const o=ownerOf(S.sel); const who=o?` (${TM[o.team].n})`:'';
   log(`INJECT ${kind} → hex ${S.sel}${who}`); S.flash={hex:S.sel,t:Date.now()};
   if(kind==='Airfield strike'&&o){ setStatus('struck'); return; }
   if(o&&/Jamming|Cyber/.test(kind)){ (S.comms=S.comms||{})[o.team]=S.turn+1; log(`${TM[o.team].n} comms cut until turn ${S.turn+1} (${kind})`); }
