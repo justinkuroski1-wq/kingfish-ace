@@ -694,7 +694,7 @@ body{font-size:15.5px}
     <div class="sec">
       <h3>TODAY: ACCESS, MISSION HEXES, RED <span class="r">no hex selection needed</span></h3>
       <div class="hint" style="margin-bottom:6px" id="i-today"></div>
-      <div class="row" style="margin-bottom:8px"><button class="btn p" onclick="rollAllAccess()" title="Rulebook: at the start and each day or situation change, roll a D10 for every country. Access, overflight only, or denied.">Roll base access (all countries)</button></div>
+      <div class="row" style="margin-bottom:8px"><button class="btn p" id="b-access" onclick="forceAccess()" title="Base access rolls once a day by itself. Use this to force a new D10 roll for every country now.">Roll base access (all countries)</button></div>
       <div class="hint" style="margin:4px 0"><b style="color:#F2C14E">Mission hexes</b> · set by the day's intent at the Situation roll (5 MP per fighter sent from a spoke)</div>
       <div class="row" style="margin-bottom:8px"><button class="btn" onclick="redTool('mission')" id="rt-mission" title="Then click hexes on the map to add or remove Mission hexes. Click again to stop.">Edit Mission hexes</button></div>
       <div class="hint" style="margin:8px 0 4px"><b style="color:#F08A7E">Red</b> · placed automatically on conflict days, hidden on crisis days</div>
@@ -934,7 +934,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.9.2';   // shown on every screen; bump on each release
+const APP_VER='1.9.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2302,7 +2302,7 @@ function val(id,n){ const v=parseInt(document.getElementById(id).value,10); cons
 function out(t){ document.getElementById('d-out').textContent=t; log('ROLL '+t); }
 function rollSit(){ S.sitDay=day(); const {r,typed}=val('d-sit',12); const max=day()===1?10:day()===2?8:6; const sit=r<=max?'crisis':'conflict';
   const lad=INTENT[sit]; const w4=d(4); const rung=lad[w4-1]; S.orders.sit=sit; S.orders.intent=`${sit==='crisis'?'Crisis':'Conflict'}: ${rung[0]}`; pushRoll({team:null,title:`Day ${day()} situation`,dice:[{s:12,v:r,l:'Situation',sub:sit==='crisis'?'CRISIS':'CONFLICT'},{s:4,v:w4,l:'Mission intent',sub:rung[0]}]}); S.targets=rung[1].split(' ').filter(h=>HX[h]); S.orders.targets=S.targets.join(' '); S.orders.risk=RISK[rung[0]];
-  { const prev=S.lastSit; S.lastSit=sit; if(S.accessDay!==day()||prev!==sit) setTimeout(()=>rollAllAccess(),1200); }
+  S.lastSit=sit; if(S.accessDay!==day()) setTimeout(()=>rollAllAccess(),1200);   // R8.3b once per day only
   if(sit==='conflict'){ if(S.redHidden){ S.redz=S.redHidden.z; S.redJam=S.redHidden.j; S.redHidden=null; } if(!Object.keys(S.redz||{}).length) placeRedDefaults(); }
   else if(Object.keys(S.redz||{}).length||Object.keys(S.redJam||{}).length){ S.redHidden={z:S.redz,j:S.redJam}; S.redz={}; S.redJam={}; }
   out(`Situation D12 ${typed?'(table) ':''}= ${r} → ${sit.toUpperCase()} (Day ${day()}: crisis on 1–${max}) · mission intent D4 = ${w4} → ${rung[0]} · ${RISK[rung[0]]} risk token${RISK[rung[0]]===1?'':'s'} per wing · Mission hexes ${S.orders.targets}`);
@@ -2313,8 +2313,11 @@ function rollAcftFor(team,typed){ if(S.opening&&!spokesChosen(team)) return aler
   S.acft[team]={c17:a,c130:b,c5:c,day:day()}; pushRoll({team,title:`${TM[team].n} · aircraft for Day ${day()}`,dice:[{s:12,v:a,l:'C-17'},{s:12,v:b,l:'C-130'},{s:4,v:c,l:'C-5'}]});
   S.orders.acft=TEAMS.filter(x=>S.acft[x.id]&&S.acft[x.id].day===day()).map(x=>`W${wingNo(x.id)} ${S.acft[x.id].c17}/${S.acft[x.id].c130}/${S.acft[x.id].c5}`).join(' · ')+' (C-17/C-130/C-5)';
   out(`${TM[team].n} aircraft today: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`); banner(`${TM[team].n.toUpperCase()} AIRCRAFT TODAY: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`,false); render(); }
-// R8.3 Base access and overflight (rulebook p.8): each day and each situation change the game master rolls a D10 for every
-//      country. Access if the roll meets the country's number; overflight only if it beats the lower number; otherwise denied.
+// R8.3 Base access and overflight (rulebook p.8): the game master rolls a D10 for every country.
+// R8.3b Owner 11-10: access rolls ONCE PER GAME DAY (at planning for Day 1, then with the day's Situation roll).
+//       It never re-rolls on a new turn or a same-day situation re-roll. The instructor may force a new roll any time
+//       with "Roll base access again" in the Turn tab (TODAY box).
+//      Per country: Access if the roll meets the country's number; overflight only if it beats the lower number; otherwise denied.
 // R8.3a Access is enforced (owner 11-10): no spoke and no landing in a country that denied base access today;
 //       no route over a country that denied overflight. Countries not in the access table (Japan, Guam, Australia...) are open.
 const __ctry={}; let __cpaths=null;
@@ -2323,6 +2326,7 @@ function airfieldCountry(hex,af){ const k=hex+':'+(af||''); if(k in __ctry) retu
   return __ctry[k]=co; }
 function hexCountry(hex){ const k='h'+hex; if(k in __ctry) return __ctry[k]; const h=HX[hex]; return __ctry[k]=h?countryAt(h.x,h.y):null; }
 function accessOf(country){ if(!country||!ACCESS[country]||!S.access) return 'granted'; return S.access[country]||'granted'; }
+function forceAccess(){ if(S.accessDay===day()&&!confirmThen(`Base access was already rolled for Day ${day()}. Roll every country again now?`,()=>forceAccess(),'Roll again')) return; rollAllAccess(); }
 function rollAllAccess(quiet){ const dice=[], parts=[]; S.access={};
   for(const c in ACCESS){ const [acc,ovf]=ACCESS[c], r=d(10), st=r>=acc?'granted':r>ovf?'overflight':'denied'; S.access[c]=st;
     dice.push({s:10,v:r,l:c,sub:st==='granted'?'ACCESS':st==='overflight'?'OVERFLIGHT ONLY':'DENIED'}); parts.push(`${c} ${st==='granted'?'granted':st==='overflight'?'overflight only':'denied'}`); }
@@ -2369,7 +2373,7 @@ function runSteps(){ const pend=S.requests.filter(q=>q.st==='pending').length, l
   L.push({k:'tim',t:'Start the shift timer',sub:`${CLOCK_MIN(S.turn)} minutes · wings act`,done:started,go:S.running?'':'clockStartPause()'});
   L.push({k:'end',t:'End the turn',sub:S.orders.sit==='conflict'?'Red attacks and cards roll by themselves':'cards roll by themselves',done:false,go:'nextTurn()'});
   return L; }
-function renderRun(){ const el=document.getElementById('i-run'); if(!el) return; const L=runSteps(); const nx=L.findIndex(s=>!s.done);
+function renderRun(){ { const b=document.getElementById('b-access'); if(b){ const s=S.accessDay===day()?`Roll base access again (rolled for Day ${day()})`:'Roll base access (all countries)'; if(b.textContent!==s) b.textContent=s; } } const el=document.getElementById('i-run'); if(!el) return; const L=runSteps(); const nx=L.findIndex(s=>!s.done);
   const h=`<div class="rl-h">${S.opening?'PLANNING':S.movesOpen?'MOVE WINDOW':'THIS TURN'} · do these in order</div>`+L.map((s,i)=>`<button class="rl ${s.done?'done':''} ${i===nx?'next':''}" ${s.go?`onclick="${s.go}"`:'disabled'}><i>${s.done?'&#10003;':i+1}</i><span><b>${s.t}</b>${s.sub?`<small>${s.sub}</small>`:''}</span></button>`).join('');
   if(el.innerHTML!==h) el.innerHTML=h; }
 if(MODE==='instructor') setInterval(()=>{ try{ renderRun(); }catch(e){} },600);
