@@ -975,6 +975,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
          grounded aircraft, revoked access, a 4-turn vacate order). Cards that need a judgment call (pick a
          country, divert an aircraft, ATC strike, runway rutting, night operations, ramp spot, AMMO crews) stay
          with the instructor. "5 members ill" takes the smallest team of 5 or more out of action.
+   R9.4a Owner 11-10: at the vacate deadline the spoke closes and everything still there returns to the wing's hub.
    R8.2b Owner 11-10 (rulebook p.13-14): a struck SPOKE stays closed until the wing staffs Base recovery (task 15:
          engineering + ADR kit, 3 turns = UXO sweep 1 + repair 2). It does not reopen on its own. Struck hubs reopen
          by themselves after 3 turns. For a struck spoke, task 15 needs no other task first.
@@ -1004,7 +1005,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.12.0';   // shown on every screen; bump on each release
+const APP_VER='1.12.1';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2139,7 +2140,7 @@ function applyCard(kind,idx,team,hex){ const c=(kind==='risk'?RISK_DECK:EVENT_DE
   if(fx.hold&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b){ b.hold={until:S.turn+fx.hold.n,k:fx.hold.k}; done.push(`${({all:'all flight operations',ftr:'fighter operations',arr:'arrivals',dep:'departures'})[fx.hold.k]} suspended${where} through turn ${S.turn+fx.hold.n}`); } }
   if(fx.grounded){ const free=x=>((S.acft[team]||{}).day===day()?((S.acft[team]||{})[x]||0):0)-acftUsed(x,team); const k=['c17','c130','c5'].find(x=>free(x)>0); if(!k) done.push('every aircraft is already flying or not rolled yet: no effect'); else { (S.grounded=S.grounded||[]).push({team,k,until:S.turn+fx.grounded.n}); done.push(`1 ${ACFT[k].n} grounded through turn ${S.turn+fx.grounded.n}`); } }
   if(fx.revoke&&hex){ const co=airfieldCountry(hex); if(co&&ACCESS[co]){ (S.access=S.access||{})[co]='denied'; S.orders.access=accessText(); done.push(`${co} base access revoked`); setTimeout(()=>banner(`ACCESS REVOKED · ${co.toUpperCase()} · ${TM[team].n.toUpperCase()} HEX ${hex} · game master decides how long operations there are restricted`,true),1600); } else done.push(`${co||'this country'} is not in the access table: no effect`); }
-  if(fx.vacate&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b&&b.role!=='mob'&&b.role!=='hub'){ b.vacateBy=S.turn+fx.vacate; done.push(`vacate hex ${hex} by the end of turn ${b.vacateBy}; anything left there is lost`); } else done.push('hubs are not affected'); }
+  if(fx.vacate&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b&&b.role!=='mob'&&b.role!=='hub'){ b.vacateBy=S.turn+fx.vacate; done.push(`vacate hex ${hex} by the end of turn ${b.vacateBy}; the base then closes and anything left there returns to the hub`); } else done.push('hubs are not affected'); }
   return done; }
 // R9.4 Owner 11-10: cards apply their own effects. People and equipment taken out of action come back by themselves
 //      when their turns are up; removed or lost ones do not. A team taken out pauses any task it was working.
@@ -2359,7 +2360,7 @@ function payLogisticsTax(){ const lines=[];
     else { rec.hungry=0; lines.push(`${t.n} ${hex}: paid 1 food, 1 water${short.includes('fuel')?' (NO FUEL)':', 1 fuel'}`); } }
   if(lines.length){ log('LOGISTICS TAX · '+lines.join(' | ')); S.taxReport={day:day(),lines}; const bad=lines.filter(l=>/OUT OF|NO FUEL/.test(l)); banner(bad.length?`LOGISTICS TAX · DAY ${day()} · ${bad.join(' · ')}`:`LOGISTICS TAX PAID · DAY ${day()} · ${lines.length} airfield${lines.length>1?'s':''}`,bad.length>0); } }
 function cardUpkeep(){ for(const tm of TEAMS){ const L=((S.out||{})[tm.id]||[]); const back=L.filter(x=>!x.gone&&x.until===S.turn-1); for(const x of back) log(`${tm.n} ${x.hex}: ${CHIT[x.c].name} back in action`); S.out&&(S.out[tm.id]=L.filter(x=>x.gone||x.until>=S.turn));
-    for(const b of S.bases[tm.id].slice()){ if(!b.vacateBy) continue; if(S.turn>b.vacateBy){ S.bases[tm.id]=S.bases[tm.id].filter(x=>x!==b); if(S.inv[tm.id]) delete S.inv[tm.id][b.hex]; if(S.fighters[tm.id]) delete S.fighters[tm.id][b.hex]; if(S.tasks[tm.id]) delete S.tasks[tm.id][b.hex]; log(`${tm.n} ${b.hex}: vacate deadline passed; base closed and everything left there lost`); setTimeout(()=>banner(`VACATE DEADLINE · ${tm.n.toUpperCase()} HEX ${b.hex} CLOSED · assets left there are lost`,true),1500); } else if(S.turn===b.vacateBy) setTimeout(()=>banner(`LAST TURN TO VACATE · ${tm.n.toUpperCase()} HEX ${b.hex}`,true),1500); } } }
+    for(const b of S.bases[tm.id].slice()){ if(!b.vacateBy) continue; if(S.turn>b.vacateBy){ const hub=HOME[tm.id], left=invAt(tm.id,b.hex), fl=(S.fighters[tm.id]||{})[b.hex]||0; S.bases[tm.id]=S.bases[tm.id].filter(x=>x!==b); if(Object.keys(left).length) addInv(tm.id,hub,{...left},1); if(S.inv[tm.id]) delete S.inv[tm.id][b.hex]; if(fl){ S.fighters[tm.id][hub]=(S.fighters[tm.id][hub]||0)+fl; delete S.fighters[tm.id][b.hex]; } if(S.tasks[tm.id]) delete S.tasks[tm.id][b.hex]; if(S.out&&S.out[tm.id]) S.out[tm.id]=S.out[tm.id].filter(x=>x.hex!==b.hex); log(`${tm.n} ${b.hex}: vacate deadline passed; base closed; people, equipment${fl?' and fighters':''} returned to the hub at ${hub}`); setTimeout(()=>banner(`VACATE DEADLINE · ${tm.n.toUpperCase()} HEX ${b.hex} CLOSED · assets returned to the hub`,true),1500); }   /* R9.4a owner 11-10: returned, not lost */ else if(S.turn===b.vacateBy) setTimeout(()=>banner(`LAST TURN TO VACATE · ${tm.n.toUpperCase()} HEX ${b.hex}`,true),1500); } } }
 function recoverBases(){ try{ cardUpkeep(); }catch(e){ console.error(e); } for(const k in S.bases) for(const b of S.bases[k]) if(b.st==='struck'&&b.recUntil&&S.turn>=b.recUntil){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${TM[k].n} ${b.hex}: airfield operations restored`); } }
 function setRole(role){ const o=ownerOf(S.sel); if(!o) return; role=giveRole(o.team,o.b,role); log(`${TM[o.team].n} ${S.sel} set as ${role==='cl'?'contingency location':role}`);
   banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} is now a ${role==='cl'?'contingency location':role.toUpperCase()}`,false); render(); }
