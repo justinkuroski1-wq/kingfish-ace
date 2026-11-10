@@ -971,6 +971,10 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
          (jamming within 2 hexes of a Red jammer, or cyber) cuts comms a turn; missile attack inside the DF-26 ring:
          D20 vs D10 (+2 missile defense, +1 hardening). 2nd hit restarts recovery; 3rd hit destroys everything
          on the spoke. Hubs are never attacked (owner 11-10).
+   R9.4  Owner 11-10: cards apply their own effects (flight holds, teams or equipment out of action, removals,
+         grounded aircraft, revoked access, a 4-turn vacate order). Cards that need a judgment call (pick a
+         country, divert an aircraft, ATC strike, runway rutting, night operations, ramp spot, AMMO crews) stay
+         with the instructor. "5 members ill" takes the smallest team of 5 or more out of action.
    R8.2b Owner 11-10 (rulebook p.13-14): a struck SPOKE stays closed until the wing staffs Base recovery (task 15:
          engineering + ADR kit, 3 turns = UXO sweep 1 + repair 2). It does not reopen on its own. Struck hubs reopen
          by themselves after 3 turns. For a struck spoke, task 15 needs no other task first.
@@ -1000,7 +1004,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.11.2';   // shown on every screen; bump on each release
+const APP_VER='1.12.0';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1440,7 +1444,7 @@ setInterval(()=>{ try{ if(MODE==='login') return; const role=MODE==='instructor'
 function ensureStatic(doc){ try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g>${kimgDefs()}</defs></svg>`; { const st=doc.createElement('style'); st.id='kimg-css'; st.textContent=__kcss+`.mstack.vb0{aspect-ratio:1960/var(--vbh,1350);width:min(100%,calc(100cqh * 1960 / var(--vbh,1350)))}.mstack.vb1{aspect-ratio:${W}/${VH};width:min(100%,calc(100cqh * ${W} / ${VH}))}`; (doc.head||doc.documentElement).appendChild(st); } (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac='';
   const vb=only?[0,VY,W,VH]:(window.__vb0||[40,150,1960,1350]);   // owner 11-10: the class board (instructor and projector) zooms to the play area; wing screens keep the full map
-  let s=`<div class="mstack ${only?'vb1':'vb0'}"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
+  let s=`<div class="mstack ${only?'vb1':'vb0'}"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${accessHatch()}${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
      <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`}`;
   for(const id of S.targets) if(HX[id]) s+=`<polygon class="tgt" points="${hexPts(HX[id])}"/>`;
   s+=`<g data-k="hexes${clickable?1:0}" data-fill="hexes${clickable?1:0}"></g>`;   // filled once, then kept (R10.1 speed)
@@ -1597,7 +1601,7 @@ function boardHtml0(clickable){
   return `<div class="score total"><i style="background:transparent;border:1px solid var(--mute)"></i>Class total<b style="display:flex;gap:14px"><span style="color:#F2D28A;min-width:34px;text-align:right">${sc}</span><span style="color:var(--mute)">${mp}</span><span style="color:${dp?'#FF9C8C':'var(--mute)'}">${dp}</span><span style="color:#A8E6C1">${rp}</span></b></div>`; })()}<div class="sbnote">Score = Mission Points − 1 per 5 Demoralization. Win: ${S.winPts||200} plus 1 hub and 3 spokes.</div></div>
    ${(()=>{ const o=S.orders, rows=[['Mission intent',o.intent],['Mission hexes',o.targets],['Base access',o.access],['Risk tokens',o.risk===undefined?'':o.risk+' per wing']].filter(r=>r[1]&&r[1]!=='—'&&r[1]!=='roll at start of day');
      return rows.length?`<div class="sbox ord"><h4>SITUATION AND MISSION INTENT</h4>${rows.map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}${sitRolled()?`<div class="sitx">${sitExplain()}</div>`:(!S.opening&&S.turn<(S.sitStart||3)?`<div class="sitx">Setting the theater: open bases and move forces. No Mission hexes yet. The first Situation roll is at the start of ${sitStartLabel()}.</div>`:'')}</div>`:`<div class="sbox ord"><h4>SITUATION AND MISSION INTENT</h4><div class="hint" style="border:0">${S.opening?`Wings are planning. The first Situation roll is at the start of ${sitStartLabel()}.`:S.turn<(S.sitStart||3)?`Setting the theater: open bases and move forces. No Mission hexes yet. The first Situation roll is at the start of ${sitStartLabel()}.`:'Waiting on the Situation roll.'}</div></div>`; })()}
-   <div class="sbox legend"><h4>AIRFIELDS</h4>${Object.entries(CHIPC).map(([k,c])=>`<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:1px 0"><i style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:1px solid #fff;flex-shrink:0"></i>${CHIPN[k]}</div>`).join('')}<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0 1px"><svg width="26" height="12" viewBox="0 0 26 12" style="flex-shrink:0"><rect x="1" y="1" width="10" height="10" fill="#9AA5AF" fill-opacity=".6" stroke="#9AA5AF" stroke-width="2"/><rect x="15" y="1" width="10" height="10" fill="none" stroke="#9AA5AF" stroke-width="2"/></svg>Solid hex = wing hub · outline = spoke (wing color)</div>${(S.targets||[]).length?`<div class="lgd"><i style="border:3px solid #F2C14E;background:rgba(242,193,78,.18)"></i>Mission hex: 5 MP per fighter sent from a spoke</div>`:''}${(Object.keys(S.redz||{}).length||Object.keys(S.redJam||{}).length)?`<div class="lgd"><i style="background:rgba(200,40,40,.55);border:2px solid #C8463A"></i>Red strong defense (D20)</div><div class="lgd"><i style="background:rgba(200,40,40,.35);border:2px solid #C8463A"></i>Red medium defense (D12)</div><div class="lgd"><i style="background:rgba(200,40,40,.18);border:2px solid #C8463A"></i>Red light defense (D10)</div><div class="lgd"><i style="border:2px dashed #C8463A;border-radius:50%"></i>Red jammer reach</div>`:''}</div>
+   <div class="sbox legend"><h4>AIRFIELDS</h4>${Object.entries(CHIPC).map(([k,c])=>`<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:1px 0"><i style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:1px solid #fff;flex-shrink:0"></i>${CHIPN[k]}</div>`).join('')}<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0 1px"><svg width="26" height="12" viewBox="0 0 26 12" style="flex-shrink:0"><rect x="1" y="1" width="10" height="10" fill="#9AA5AF" fill-opacity=".6" stroke="#9AA5AF" stroke-width="2"/><rect x="15" y="1" width="10" height="10" fill="none" stroke="#9AA5AF" stroke-width="2"/></svg>Solid hex = wing hub · outline = spoke (wing color)</div>${Object.values(S.access||{}).includes('denied')?'<div class="lgd"><i style="background:repeating-linear-gradient(45deg,rgba(200,70,58,.55) 0 2px,rgba(200,70,58,.12) 2px 6px);border:1px solid #C8463A"></i>Denied: no bases, no overflight</div>':''}${Object.values(S.access||{}).includes('overflight')?'<div class="lgd"><i style="background:repeating-linear-gradient(45deg,rgba(217,162,58,.5) 0 2px,rgba(217,162,58,.08) 2px 6px);border:1px solid #D9A23A"></i>Overflight only: no bases</div>':''}${(S.targets||[]).length?`<div class="lgd"><i style="border:3px solid #F2C14E;background:rgba(242,193,78,.18)"></i>Mission hex: 5 MP per fighter sent from a spoke</div>`:''}${(Object.keys(S.redz||{}).length||Object.keys(S.redJam||{}).length)?`<div class="lgd"><i style="background:rgba(200,40,40,.55);border:2px solid #C8463A"></i>Red strong defense (D20)</div><div class="lgd"><i style="background:rgba(200,40,40,.35);border:2px solid #C8463A"></i>Red medium defense (D12)</div><div class="lgd"><i style="background:rgba(200,40,40,.18);border:2px solid #C8463A"></i>Red light defense (D10)</div><div class="lgd"><i style="border:2px dashed #C8463A;border-radius:50%"></i>Red jammer reach</div>`:''}</div>
    <div class="ticker ${S.ticker.alarm?'':'calm'}">${S.ticker.text}</div></div></div></div>`;
 }
 let proj=null;
@@ -1969,7 +1973,7 @@ function renderPanel(){
   document.getElementById('i-log').innerHTML=S.log.slice(-200).reverse().map(l=>`<div>${l}</div>`).join('');
   const o=S.orders; for(const k of ['intent','targets','acft','access']){ const el=document.getElementById('o-'+k); if(document.activeElement!==el) el.value=o[k]; }
 }
-function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o.team!==only) continue; L.push(longId(o.team,o.b)+(o.b.st==='struck'?' · STRUCK':'')); const f=((S.fighters||{})[o.team]||{})[hex]; if(f) L.push(`  ${f} × ${FTYPE[o.team]}`); }
+function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o.team!==only) continue; L.push(longId(o.team,o.b)+(o.b.st==='struck'?' · STRUCK':'')); { const h=holdOf(o.team,hex); if(h) L.push(`  ${({all:'Flight operations',ftr:'Fighter operations',arr:'Arrivals',dep:'Departures'})[h.k]} suspended through turn ${h.until}`); if(o.b.vacateBy) L.push(`  VACATE by the end of turn ${o.b.vacateBy}`); const ob=outAt(o.team,hex), k=Object.keys(ob); if(k.length) L.push('  Out of action: '+k.map(c=>`${ob[c]>1?ob[c]+' × ':''}${CHIT[c].name}`).join(', ')); } const f=((S.fighters||{})[o.team]||{})[hex]; if(f) L.push(`  ${f} × ${FTYPE[o.team]}`); }
   const by={}; for(const f of (S.flights||[])) if(['requested','approved','enroute'].includes(f.st)&&f.moved===0&&f.path[0]===hex&&(!only||f.team===only)){ const k=TM[f.team].n+' '+ACFT[f.acft].n; by[k]=(by[k]||0)+(f.n||1); }
   for(const k in by) L.push(`  ${by[k]} × ${k.split(' ').slice(-1)[0]} (${k.split(' ').slice(0,2).join(' ')})`);
   { const co=airfieldCountry(hex); if(co&&ACCESS[co]&&S.access){ const a=accessOf(co); L.unshift(`${co}: ${a==='granted'?'base access open':a==='overflight'?'overflight only (no bases)':'DENIED (no bases, no overflight)'} today`); } }
@@ -1977,7 +1981,7 @@ function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o
   const z=(S.redz||{})[hex]; if(z){ const Z=REDZ[z]; L.unshift(`Red ${Z.die===20?'strong':Z.die===12?'medium':'light'} defense · each fighter rolls D${FDIE} vs D${Z.die}, one at a time; tie goes to Red; a loss shoots the fighter down; the first win clears it`); }
   if((S.redJam||{})[hex]) L.unshift('Red jammer · Red +2 in fighter combat nearby · may cut base comms within 2 hexes');
   return L.length?`<title>Hex ${hex}&#10;${L.join('&#10;')}</title>`:`<title>Hex ${hex}</title>`; }
-function baseLine(team,b){ if(b.role==='mob'||b.role==='hub') return 'Home base · full capacity'; if(b.st==='struck') return 'Struck · closed'+(b.recUntil?` until turn ${b.recUntil}`:' · staff Base recovery (task 15) to reopen');
+function baseLine(team,b){ if(b.role==='mob'||b.role==='hub') return 'Home base · full capacity'; if(b.st==='struck') return 'Struck · closed'+(b.recUntil?` until turn ${b.recUntil}`:' · staff Base recovery (task 15) to reopen'); if(b.vacateBy) return `Vacate by the end of turn ${b.vacateBy}`; { const h=holdOf(team,b.hex); if(h) return `${({all:'Flight operations',ftr:'Fighter operations',arr:'Arrivals',dep:'Departures'})[h.k]} suspended through turn ${h.until}`; }
   const done=IOC_TASKS.filter(id=>taskDone(team,b.hex,id)).length; if(b.st==='ioc'||b.st==='foc') return b.st.toUpperCase()+' reached';
   const short=[]; for(const id of IOC_TASKS){ const T=TASK[id]; if(taskDone(team,b.hex,id)||taskRunning(team,b.hex,id)) continue; for(const g of taskGap(team,b.hex,T)) if(short.length<2) short.push(g.replace(/ \(have.*$/,'')); }
   return `${done} of ${IOC_TASKS.length} IOC tasks${short.length?' · short '+short.join(', '):''}`; }
@@ -2015,7 +2019,7 @@ function startRecovery(){ const o=ownerOf(S.sel); if(!o||o.b.st!=='struck') retu
 // Scenario card: a day without food or water = 10 DP; 2+ days = 30 DP per day.
 function taskState(team,hex){ return (((S.tasks[team]=S.tasks[team]||{})[hex])=S.tasks[team][hex]||{}); }
 function assignedAt(team,hex){ const out={}; const ts=taskState(team,hex); for(const id in ts){ const a=ts[id].a||{}; for(const c in a) out[c]=(out[c]||0)+a[c]; } return out; }
-function availAt(team,hex){ const inv=invAt(team,hex), as=assignedAt(team,hex), out={}; for(const c in inv){ const v=inv[c]-(as[c]||0); if(v>0) out[c]=v; } return out; }
+function availAt(team,hex){ const inv=invAt(team,hex), as=assignedAt(team,hex), ob=outAt(team,hex), out={}; for(const c in inv){ const v=inv[c]-(as[c]||0)-(ob[c]||0); if(v>0) out[c]=v; } return out; }
 function peopleAt(team,hex){ return cargoTotals(invAt(team,hex)).pax; }
 function taskTurns(team,hex,T){ if(T.turns!=='people') return T.turns; const p=peopleAt(team,hex);
   if(T.id===1) return p>=21?2:p>=11?4:p>=5?8:99; return p>=21?1:p>=11?2:4; }
@@ -2072,51 +2076,51 @@ function checkIdleDP(){ const lines=[]; // Deployed vs tasked (scenario card): 2
         country risk table is entered, the card shows its category and the instructor confirms.
    R9.3 fx = what the program applies by itself. Cards without fx are shown to the class and the instructor applies them. */
 const EVENT_DECK=[
- {t:'Citing human rights violations, the US issues a demarche to a host nation. In response, the host nation has issued a vacate order for all US forces within 4 turns.'},
+ {t:'Citing human rights violations, the US issues a demarche to a host nation. In response, the host nation has issued a vacate order for all US forces within 4 turns.',fx:{vacate:4}},
  {t:'Proactive Country Team efforts secured lodging for all deploying members. Bed down task complete.',fx:{taskDone:1}},
- {t:'An arriving aircraft lost a tire upon landing and departed the runway surface. Suspend flight operations for 2 turns to allow for aircraft recovery.'},
+ {t:'An arriving aircraft lost a tire upon landing and departed the runway surface. Suspend flight operations for 2 turns to allow for aircraft recovery.',fx:{hold:{n:2,k:'all'}}},
  {t:'The Department of State has negotiated base access and overflight in a strategic location. Select a country you would like access and overflight.'},
- {t:'Host nation provided shower facilities, but failure to check sanitation levels led to 10 members showering in water with extremely high fecal contamination. 5 members are ill and considered unusable for 4 turns.'},
- {t:'Incorrect equipment inventory has led to a critical piece of Command and Control (C2) equipment being inoperable. No C2 until another arrives.'},
- {t:'Unit members are suspected victims of directed energy attacks after displaying "Havana Syndrome" symptoms. Assign 10 personnel to Rest / Recovery for 5 turns.'},
- {t:'The host nation has suffered from crippling economic coercion and retracted previous base access permissions.'},
- {t:'1 aircraft has tripped the runway arresting gear. Suspend fighter operations for 1 turn to reset.'},
+ {t:'Host nation provided shower facilities, but failure to check sanitation levels led to 10 members showering in water with extremely high fecal contamination. 5 members are ill and considered unusable for 4 turns.',fx:{out:{pax:5,n:4}}},
+ {t:'Incorrect equipment inventory has led to a critical piece of Command and Control (C2) equipment being inoperable. No C2 until another arrives.',fx:{eqGone:{ids:['satcom','phone'],cnt:1}}},
+ {t:'Unit members are suspected victims of directed energy attacks after displaying "Havana Syndrome" symptoms. Assign 10 personnel to Rest / Recovery for 5 turns.',fx:{out:{pax:10,n:5}}},
+ {t:'The host nation has suffered from crippling economic coercion and retracted previous base access permissions.',fx:{revoke:1}},
+ {t:'1 aircraft has tripped the runway arresting gear. Suspend fighter operations for 1 turn to reset.',fx:{hold:{n:1,k:'ftr'}}},
  {t:'A skilled military liaison has coordinated for 4 additional vehicles.',fx:{add:{vehicle:4}}},
- {t:'Incorrect spotting procedures led to 2 pieces of equipment colliding with each other. 2 vehicles are considered inoperable for 2 turns.'},
- {t:'Unit members are suspected victims of biological weapon attacks. Assign 10 personnel to Rest / Recovery for 5 turns.'},
- {t:'1 aircraft currently on the ramp has a maintenance issue requiring a specialized part. The aircraft is unusable until another part arrives.'},
+ {t:'Incorrect spotting procedures led to 2 pieces of equipment colliding with each other. 2 vehicles are considered inoperable for 2 turns.',fx:{eq:{ids:['vehicle','truck'],cnt:2,n:2}}},
+ {t:'Unit members are suspected victims of biological weapon attacks. Assign 10 personnel to Rest / Recovery for 5 turns.',fx:{out:{pax:10,n:5}}},
+ {t:'1 aircraft currently on the ramp has a maintenance issue requiring a specialized part. The aircraft is unusable until another part arrives.',fx:{grounded:{n:3}}},
  {t:'Citing increased flight operations, host nation Air Traffic Controllers have demanded a pay raise. The Airfield Manager refused, causing a strike. Assign qualified personnel to conduct Landing Zone Safety Officer duties or ATC to support ATC operations.'},
- {t:'While loading, incorrect spotting procedures and an inexperienced driver led to a piece of loading equipment striking the aircraft. 1 aircraft is considered grounded for 5 turns.'},
- {t:'Visa waivers were not passed to host nation customs agents. All passengers are held on the aircraft for 1 turn to clear up the miscommunication.'},
- {t:'A lack of unit physical fitness focus has led to higher than average fatigue. Assign 20 personnel to Rest / Recovery for 2 turns.'},
- {t:'Commercial drones are flying over the ramp and runway, causing risks to flight and taxi operations. Suspend arrivals and departures for 1 turn.'},
+ {t:'While loading, incorrect spotting procedures and an inexperienced driver led to a piece of loading equipment striking the aircraft. 1 aircraft is considered grounded for 5 turns.',fx:{grounded:{n:5}}},
+ {t:'Visa waivers were not passed to host nation customs agents. All passengers are held on the aircraft for 1 turn to clear up the miscommunication.',fx:{hold:{n:1,k:'arr'}}},
+ {t:'A lack of unit physical fitness focus has led to higher than average fatigue. Assign 20 personnel to Rest / Recovery for 2 turns.',fx:{out:{pax:20,n:2}}},
+ {t:'Commercial drones are flying over the ramp and runway, causing risks to flight and taxi operations. Suspend arrivals and departures for 1 turn.',fx:{hold:{n:1,k:'all'}}},
  {t:'Inaccurate testing of the parking apron weight-bearing capacity has led to extreme rutting. All mobility aircraft (except C-130) must download on the runway. Shut down all additional flight operations while mobility aircraft are at the location.'},
- {t:'A deployed member is suffering from crippling anxiety. Assign 2 personnel to Rest / Recovery for 5 turns.'},
+ {t:'A deployed member is suffering from crippling anxiety. Assign 2 personnel to Rest / Recovery for 5 turns.',fx:{out:{pax:2,n:5}}},
  {t:'Prudent planning has coordinated prepositioned food, water, and fuel stocks at 1 location. Task teams to recover the material.',fx:{add:{food:1,water:1,fuel:1}}},
- {t:'One member responded to a fake online date that ended in a kidnapping. Remove 1 member and add 20 Demoralization Points.',fx:{dp:20}},
+ {t:'One member responded to a fake online date that ended in a kidnapping. Remove 1 member and add 20 Demoralization Points.',fx:{dp:20,gone:{pax:1}}},
  {t:'Infrastructure damage has eliminated all approach lighting for the airfield. Cease night operations or establish airfield lighting (if available).'},
- {t:'Fuel delivered to the airfield contained hazardous additives. 2 pieces of equipment are unusable for 2 turns while the systems are drained.'},
+ {t:'Fuel delivered to the airfield contained hazardous additives. 2 pieces of equipment are unusable for 2 turns while the systems are drained.',fx:{eq:{ids:['vehicle','truck','loader','refueler','firetruck','generator'],cnt:2,n:2}}},
  {t:'Miscommunication at higher headquarters has led to a mistaken tasking. Divert 1 aircraft 3 hexes while en route.'},
  {t:'Sanitation services continue to be delayed, causing health and morale issues. Add 20 Demoralization Points.',fx:{dp:20}},
- {t:'Wild animals are threatening safe flight operations. Suspend flight operations for 1 turn.'},
+ {t:'Wild animals are threatening safe flight operations. Suspend flight operations for 1 turn.',fx:{hold:{n:1,k:'all'}}},
  {t:'A series of aircraft have landed without proper coordination, overwhelming ramp space. Remove 1 available parking spot for 1 turn.'},
  {t:'An AMMO specialist has an allergic reaction to protective equipment, causing a loss of productivity. Double AMMO personnel for Integrated Combat Turns.'},
- {t:'1 aircraft had an in-flight emergency forcing it to land at the closest operational runway. The aircraft must be moved to the nearest runway and is considered unusable for 6 turns.'},
- {t:'A group of deployed members sneak off base, become drunk and disorderly, and are arrested by local officials. Remove 5 deployers and subtract 10 Resource Points.',fx:{rp:-10}},
- {t:'Desperate locals siphoned gas from a parked vehicle or piece of MHE. 1 vehicle or MHE is considered unusable for 1 turn.'},
- {t:'Outdated and convoluted installation deployment plans have delayed departures from home station. Delay all departures from 1 base for 1 turn.'},
+ {t:'1 aircraft had an in-flight emergency forcing it to land at the closest operational runway. The aircraft must be moved to the nearest runway and is considered unusable for 6 turns.',fx:{grounded:{n:6}}},
+ {t:'A group of deployed members sneak off base, become drunk and disorderly, and are arrested by local officials. Remove 5 deployers and subtract 10 Resource Points.',fx:{rp:-10,gone:{pax:5}}},
+ {t:'Desperate locals siphoned gas from a parked vehicle or piece of MHE. 1 vehicle or MHE is considered unusable for 1 turn.',fx:{eq:{ids:['vehicle','truck','loader'],cnt:1,n:1}}},
+ {t:'Outdated and convoluted installation deployment plans have delayed departures from home station. Delay all departures from 1 base for 1 turn.',fx:{hold:{n:1,k:'dep'}}},
 ];
 const RISK_DECK=[
  {cat:'Health',t:'Preventative health measures have been taken to reduce health risk. No health impacts this turn.'},
- {cat:'Health',t:'Roll a 12-sided die to determine how many forces are considered sick and unusable for 4 turns.',fx:{sickD12:1}},
- {cat:'Terrorism',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.'},
+ {cat:'Health',t:'Roll a 12-sided die to determine how many forces are considered sick and unusable for 4 turns.',fx:{out:{pax:'d12',n:4}}},
+ {cat:'Terrorism',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.',fx:{out:{pax:5,n:1}}},
  {cat:'Terrorism',t:'Partnering with the host nation and sharing intel has increased trust. Gain 10 Resource Points.',fx:{rp:10}},
- {cat:'Terrorism',t:'An improvised explosive device has detonated near an Entry Control Point. Assign 1 Force Protection team to the medical task.'},
- {cat:'Civil unrest',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.'},
+ {cat:'Terrorism',t:'An improvised explosive device has detonated near an Entry Control Point. Assign 1 Force Protection team to the medical task.',fx:{eq:{ids:['fp'],cnt:1,n:1}}},
+ {cat:'Civil unrest',t:'Add 5 Multi-Capable Airmen to Perimeter and Ramp Security tasks.',fx:{out:{pax:5,n:1}}},
  {cat:'Civil unrest',t:'Contracts are not available due to protests in the local community.'},
  {cat:'Crime',t:'A local thief evaded security and stole fuel from parked vehicles. Reduce fuel commodities by one.',fx:{add:{fuel:-1}}},
- {cat:'Crime',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.'},
- {cat:'Kidnapping',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.'},
+ {cat:'Crime',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.',fx:{out:{pax:5,n:1}}},
+ {cat:'Kidnapping',t:'Add 5 Multi-Capable Airmen to Contracting and Community Relationships tasks.',fx:{out:{pax:5,n:1}}},
 ];
 function drawFrom(kind){ const deck=kind==='risk'?RISK_DECK:EVENT_DECK; const key=kind==='risk'?'riskPile':'eventPile';
   if(!S[key]||!S[key].length){ S[key]=deck.map((_,i)=>i); for(let i=S[key].length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [S[key][i],S[key][j]]=[S[key][j],S[key][i]]; } }
@@ -2127,7 +2131,29 @@ function applyCard(kind,idx,team,hex){ const c=(kind==='risk'?RISK_DECK:EVENT_DE
   if(fx.add&&hex){ const pos={}, neg={}; for(const k in fx.add){ if(fx.add[k]>0) pos[k]=fx.add[k]; else neg[k]=-fx.add[k]; } if(Object.keys(pos).length) addInv(team,hex,pos,1); if(Object.keys(neg).length){ const inv=invAt(team,hex); for(const k in neg){ const n=Math.min(neg[k],inv[k]||0); if(n) addInv(team,hex,{[k]:n},-1); } } done.push(Object.entries(fx.add).map(([k,n])=>`${n>0?'+':''}${n} ${CHIT[k]?CHIT[k].name:k}`).join(', ')+` at ${hex}`); }
   if(fx.taskDone&&hex){ const ts=((S.tasks[team]=S.tasks[team]||{})[hex]=S.tasks[team][hex]||{}); ts[fx.taskDone]={...(ts[fx.taskDone]||{}),done:true,a:{},on:false}; done.push(`task ${fx.taskDone} complete at ${hex}`); }
   if(fx.sickD12){ const r=d(12); done.push(`D12 = ${r} personnel sick for 4 turns (instructor removes them from tasks)`); }
+  const where=hex?` at ${hex}`:'';
+  if(fx.out&&hex){ let need=fx.out.pax, rolled=''; if(need==='d12'){ need=d(12); rolled=`D12 = ${need}: `; } const got=takeOut(team,hex,need,fx.out.n,false); done.push(rolled+(got.length?`${got.join(', ')} out of action for ${fx.out.n} turn${fx.out.n>1?'s':''}${where}`:`no people${where}: no effect`)); }
+  if(fx.gone&&hex){ const got=takeOut(team,hex,fx.gone.pax,0,true); done.push(got.length?`${got.join(', ')} removed${where}`:`no people${where}: no effect`); }
+  if(fx.eq&&hex){ const got=takeEq(team,hex,fx.eq.ids,fx.eq.cnt,fx.eq.n,false); done.push(got.length?`${got.join(', ')} unusable for ${fx.eq.n} turn${fx.eq.n>1?'s':''}${where}`:`none on hand${where}: no effect`); }
+  if(fx.eqGone&&hex){ const got=takeEq(team,hex,fx.eqGone.ids,fx.eqGone.cnt,0,true); done.push(got.length?`${got.join(', ')} lost${where} until a replacement is airlifted in`:`none on hand${where}: no effect`); }
+  if(fx.hold&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b){ b.hold={until:S.turn+fx.hold.n,k:fx.hold.k}; done.push(`${({all:'all flight operations',ftr:'fighter operations',arr:'arrivals',dep:'departures'})[fx.hold.k]} suspended${where} through turn ${S.turn+fx.hold.n}`); } }
+  if(fx.grounded){ const free=x=>((S.acft[team]||{}).day===day()?((S.acft[team]||{})[x]||0):0)-acftUsed(x,team); const k=['c17','c130','c5'].find(x=>free(x)>0); if(!k) done.push('every aircraft is already flying or not rolled yet: no effect'); else { (S.grounded=S.grounded||[]).push({team,k,until:S.turn+fx.grounded.n}); done.push(`1 ${ACFT[k].n} grounded through turn ${S.turn+fx.grounded.n}`); } }
+  if(fx.revoke&&hex){ const co=airfieldCountry(hex); if(co&&ACCESS[co]){ (S.access=S.access||{})[co]='denied'; S.orders.access=accessText(); done.push(`${co} base access revoked`); setTimeout(()=>banner(`ACCESS REVOKED · ${co.toUpperCase()} · ${TM[team].n.toUpperCase()} HEX ${hex} · game master decides how long operations there are restricted`,true),1600); } else done.push(`${co||'this country'} is not in the access table: no effect`); }
+  if(fx.vacate&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b&&b.role!=='mob'&&b.role!=='hub'){ b.vacateBy=S.turn+fx.vacate; done.push(`vacate hex ${hex} by the end of turn ${b.vacateBy}; anything left there is lost`); } else done.push('hubs are not affected'); }
   return done; }
+// R9.4 Owner 11-10: cards apply their own effects. People and equipment taken out of action come back by themselves
+//      when their turns are up; removed or lost ones do not. A team taken out pauses any task it was working.
+function outAt(team,hex){ const o={}; for(const x of ((S.out||{})[team]||[])) if(x.hex===hex&&(x.gone||x.until>=S.turn)) o[x.c]=(o[x.c]||0)+x.n; return o; }
+function freeChips(team,hex){ const inv=invAt(team,hex), out=outAt(team,hex), as=assignedAt(team,hex), L=[]; for(const c in inv){ const n=(inv[c]||0)-(out[c]||0); for(let i=0;i<n;i++) L.push({c,assigned:i>=n-(as[c]||0)}); } return L; }
+function benchChip(team,hex,c,n,gone,why){ if(gone){ const inv=invAt(team,hex); inv[c]=Math.max(0,(inv[c]||0)-1); if(!inv[c]) delete inv[c]; } else ((S.out=S.out||{})[team]=S.out[team]||[]).push({hex,c,n:1,until:S.turn+n,why});
+  const ts=taskState(team,hex), short=()=>(invAt(team,hex)[c]||0)-(outAt(team,hex)[c]||0)-(assignedAt(team,hex)[c]||0)<0; for(const id in ts){ if(!short()) break; const a=ts[id].a||{}; if(a[c]){ ts[id].a={}; ts[id].on=false; log(`${TM[team].n} ${hex}: task ${id} ${TASK[id].n} paused (${CHIT[c].name} out of action)`); } } }
+function takeOut(team,hex,pax,n,gone){ const L=freeChips(team,hex).filter(x=>CHIT[x.c]&&CHIT[x.c].pax>0); if(!L.length) return [];
+  L.sort((a,b)=>(a.assigned-b.assigned)||(CHIT[a.c].pax-CHIT[b.c].pax)); let pick=L.find(x=>CHIT[x.c].pax>=pax); const got=[];
+  if(pick){ benchChip(team,hex,pick.c,n,gone); got.push(`${CHIT[pick.c].name} team (${CHIT[pick.c].pax})`); return got; }
+  let sum=0; for(const x of L.slice().sort((a,b)=>CHIT[b.c].pax-CHIT[a.c].pax)){ if(sum>=pax) break; benchChip(team,hex,x.c,n,gone); got.push(`${CHIT[x.c].name} team (${CHIT[x.c].pax})`); sum+=CHIT[x.c].pax; } return got; }
+function takeEq(team,hex,ids,cnt,n,gone){ const L=freeChips(team,hex).filter(x=>ids.includes(x.c)).sort((a,b)=>a.assigned-b.assigned), got=[]; for(const x of L.slice(0,cnt)){ benchChip(team,hex,x.c,n,gone); got.push(`1 ${CHIT[x.c].name}`); } return got; }
+function holdOf(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); return b&&b.hold&&b.hold.until>=S.turn?b.hold:null; }
+function grounded(type,team){ const n=(S.grounded||[]).filter(g=>g.team===team&&g.k===type&&g.until>=S.turn).length, r=S.acft[team]; return Math.min(n,r&&r.day===day()?(r[type]||0):0); }
 function cardFor(kind,team,hexWanted){ const spokes=S.bases[team].filter(b=>b.role!=='mob'&&b.role!=='hub'); const r=d(4);
   const b=hexWanted?S.bases[team].find(x=>x.hex===hexWanted):spokes[r-1];
   if(!b&&!hexWanted) return {kind,team,free:true,d4:r,t:Date.now()};
@@ -2158,7 +2184,7 @@ function sortiePreview(team,from,target,n){ const dist=hexDist(from,target); if(
   return L.join(' · '); }
 function fUi(team,hx){ const W=(window.__fui=window.__fui||{}), k=team+':'+hx, have=fightersAt(team,hx)||1; const u=W[k]=W[k]||{s:Math.min(4,have),r:Math.min(4,have),d:''}; u.s=Math.max(1,Math.min(u.s,have)); u.r=Math.max(1,Math.min(u.r,have)); return u; }
 function fSet(team,hx,k,dv){ const u=fUi(team,hx); u[k]+=dv; fUi(team,hx); render(); }
-function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return; if(baseStruck(team,from)) return alert(`Hex ${from} is struck and closed. Fighters cannot leave until Base recovery is done.`); if(baseStruck(team,to)) return alert(`Hex ${to} is struck and closed. Fighters cannot move there until Base recovery is done.`);   // R8.2c
+function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return; if(baseStruck(team,from)) return alert(`Hex ${from} is struck and closed. Fighters cannot leave until Base recovery is done.`); { const h=holdOf(team,from)||holdOf(team,to); if(h&&(h.k==='all'||h.k==='ftr')) return alert(`Fighter operations are suspended there through turn ${h.until}.`); } if(baseStruck(team,to)) return alert(`Hex ${to} is struck and closed. Fighters cannot move there until Base recovery is done.`);   // R8.2c
   if(hexDist(from,to)>FRANGE) return alert(`Fighters move ${FRANGE} hexes at most.`);
   { const e=afEff(team,to); if(e&&e.c==='r') return alert(`Hex ${to} is a red airfield: C-17 and C-130 only. Fly in a Mobile Arresting System (4 PP) first, then fighters can use it.`); }
   const inbound=S.fmoves.filter(m=>m.team===team&&m.to===to).reduce((s,m)=>s+m.n,0);
@@ -2166,13 +2192,13 @@ function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base
   S.fighters[team][from]-=n; if(!S.fighters[team][from]) delete S.fighters[team][from]; S.fmoves.push({team,from,to,n});
   log(`${TM[team].n}: ${n} ${FTYPE[team]} repositioning ${from} → ${to} (arrive end of turn)`); render(); }
 function moveFighters(){ for(const m of S.fmoves){ S.fighters[m.team][m.to]=(S.fighters[m.team][m.to]||0)+m.n; log(`${TM[m.team].n}: ${m.n} ${FTYPE[m.team]} arrived at ${m.to}`); } S.fmoves=[]; }
-function sortieReady(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(!b) return 'not your base'; if(b.st==='struck') return 'the airfield is struck and closed until Base recovery is done';   // R8.2c
+function sortieReady(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(!b) return 'not your base'; if(b.st==='struck') return 'the airfield is struck and closed until Base recovery is done'; { const h=holdOf(team,hex); if(h&&(h.k==='all'||h.k==='ftr')) return `fighter operations are suspended here through turn ${h.until}`; }   // R8.2c
   if(b.st==='struck') return 'airfield is struck';
   if(b.role!=='mob'&&!(taskDone(team,hex,11)||taskRunning(team,hex,11))) return 'needs Integrated combat turn staffed';
   if(b.role!=='mob'&&!(taskDone(team,hex,12)||taskRunning(team,hex,12))) return 'needs Specialized refueling staffed';
   return ''; }
 function sortiedThisTurn(team,hex){ return (S.sorties||[]).filter(s=>s.team===team&&s.from===hex&&s.turn===S.turn).reduce((a,s)=>a+s.n,0); }
-function wingSortie(team,from,target,n){ const why=sortieReady(team,from); if(why) return alert('Cannot launch: '+why+'.');
+function wingSortie(team,from,target,n){ const why=sortieReady(team,from); if(why) return alert('Cannot launch: '+why+'.'); { const den=deniedAlong(from,target); if(den.length) return alert(`Cannot launch: ${den.join(', ')} denied overflight today. Pick a target that does not cross ${den.length>1?'them':'it'}.`); }
   const ready=fightersAt(team,from)-sortiedThisTurn(team,from); if(ready<=0) return alert('Every fighter at '+from+' has already flown this turn. Each fighter flies one sortie per turn.');   // owner 11-09 stress test: no repeat sorties
   n=Math.max(1,Math.min(n|0,ready));
   if(hexDist(from,target)>FRANGE) return alert(`Target is beyond ${FRANGE} hexes.`);
@@ -2319,6 +2345,9 @@ addEventListener('pointerdown',e=>{ if(document.getElementById('kfa-ctx')&&!(e.t
   const up=()=>{ if(cur){ off(cur); cur=null; } }; addEventListener('pointerup',up,true); addEventListener('pointercancel',up,true); addEventListener('dragstart',up,true);
   addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('button,.btn,summary')&&!e.repeat){ t0=performance.now(); cur=on(e.target); } },true);
   addEventListener('keyup',e=>{ if((e.key==='Enter'||e.key===' ')) up(); },true); })();
+// R8.3d Owner 11-10: overflight rules apply to fighters too. Sample the straight line from the spoke to the target.
+function deniedAlong(from,to){ const A=HX[from], B=HX[to]; if(!A||!B||!S.access) return []; const seen=new Set(), steps=Math.max(4,Math.ceil(Math.hypot(B.x-A.x,B.y-A.y)/40));
+  for(let i=1;i<=steps;i++){ const c=countryAt(A.x+(B.x-A.x)*i/steps,A.y+(B.y-A.y)*i/steps); if(c&&accessOf(c)==='denied') seen.add(c); } return [...seen]; }
 function placeRed(kind){ if(!S.sel) return alert('Select a hex first.'); { const o=ownerOf(S.sel); if(kind&&o&&!confirmThen(`Hex ${S.sel} is a ${TM[o.team].n} base. Place Red on it anyway?`,()=>placeRed(kind),'Place Red')) return; } if(kind) S.redz[S.sel]=kind; else delete S.redz[S.sel]; log(kind?`Red capability placed at ${S.sel}: ${REDZ[kind].n} (D${REDZ[kind].die})`:`Red capability removed at ${S.sel}`); render(); }
 function payLogisticsTax(){ const lines=[];
   for(const t of TEAMS) for(const hex of Object.keys(S.inv[t.id]||{})){ const b=S.bases[t.id].find(x=>x.hex===hex); if(b&&b.role==='mob') continue;
@@ -2329,7 +2358,9 @@ function payLogisticsTax(){ const lines=[];
     if(short.includes('food')||short.includes('water')){ rec.hungry++; const dp=(b&&b.st==='struck')?0:(rec.hungry>=2?30:10); S.pts[t.id].dp+=dp; lines.push(`${t.n} ${hex}: OUT OF ${short.join(', ').toUpperCase()} · +${dp} DP`); }
     else { rec.hungry=0; lines.push(`${t.n} ${hex}: paid 1 food, 1 water${short.includes('fuel')?' (NO FUEL)':', 1 fuel'}`); } }
   if(lines.length){ log('LOGISTICS TAX · '+lines.join(' | ')); S.taxReport={day:day(),lines}; const bad=lines.filter(l=>/OUT OF|NO FUEL/.test(l)); banner(bad.length?`LOGISTICS TAX · DAY ${day()} · ${bad.join(' · ')}`:`LOGISTICS TAX PAID · DAY ${day()} · ${lines.length} airfield${lines.length>1?'s':''}`,bad.length>0); } }
-function recoverBases(){ for(const k in S.bases) for(const b of S.bases[k]) if(b.st==='struck'&&b.recUntil&&S.turn>=b.recUntil){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${TM[k].n} ${b.hex}: airfield operations restored`); } }
+function cardUpkeep(){ for(const tm of TEAMS){ const L=((S.out||{})[tm.id]||[]); const back=L.filter(x=>!x.gone&&x.until===S.turn-1); for(const x of back) log(`${tm.n} ${x.hex}: ${CHIT[x.c].name} back in action`); S.out&&(S.out[tm.id]=L.filter(x=>x.gone||x.until>=S.turn));
+    for(const b of S.bases[tm.id].slice()){ if(!b.vacateBy) continue; if(S.turn>b.vacateBy){ S.bases[tm.id]=S.bases[tm.id].filter(x=>x!==b); if(S.inv[tm.id]) delete S.inv[tm.id][b.hex]; if(S.fighters[tm.id]) delete S.fighters[tm.id][b.hex]; if(S.tasks[tm.id]) delete S.tasks[tm.id][b.hex]; log(`${tm.n} ${b.hex}: vacate deadline passed; base closed and everything left there lost`); setTimeout(()=>banner(`VACATE DEADLINE · ${tm.n.toUpperCase()} HEX ${b.hex} CLOSED · assets left there are lost`,true),1500); } else if(S.turn===b.vacateBy) setTimeout(()=>banner(`LAST TURN TO VACATE · ${tm.n.toUpperCase()} HEX ${b.hex}`,true),1500); } } }
+function recoverBases(){ try{ cardUpkeep(); }catch(e){ console.error(e); } for(const k in S.bases) for(const b of S.bases[k]) if(b.st==='struck'&&b.recUntil&&S.turn>=b.recUntil){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${TM[k].n} ${b.hex}: airfield operations restored`); } }
 function setRole(role){ const o=ownerOf(S.sel); if(!o) return; role=giveRole(o.team,o.b,role); log(`${TM[o.team].n} ${S.sel} set as ${role==='cl'?'contingency location':role}`);
   banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} is now a ${role==='cl'?'contingency location':role.toUpperCase()}`,false); render(); }
 
@@ -2337,7 +2368,7 @@ function setRole(role){ const o=ownerOf(S.sel); if(!o) return; role=giveRole(o.t
 function planForm(){ return {team:document.getElementById('a-team').value, acft:document.getElementById('a-acft').value,
   n:Math.max(1,parseInt(document.getElementById('a-n').value,10)||1), pp:Math.max(0,parseInt(document.getElementById('a-pp').value,10)||0), pax:Math.max(0,parseInt(document.getElementById('a-pax').value,10)||0)}; }
 function acftToday(type,team){ const r=S.acft&&S.acft[team]; return r&&r.day===day()?r[type]:null; }
-function acftUsed(type,team,skipId){ return S.flights.filter(x=>x.id!==skipId&&x.team===team&&x.day===day()&&x.acft===type&&x.st!=='denied').reduce((a,x)=>a+x.n,0); }
+function acftUsed(type,team,skipId){ return S.flights.filter(x=>x.id!==skipId&&x.team===team&&x.day===day()&&x.acft===type&&x.st!=='denied').reduce((a,x)=>a+x.n,0)+grounded(type,team); }
 function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false;
   if(path.length<2) return {out:['Click at least a start hex and a destination.'],block:true,dist:0,turns:0};
   const dist=pathDist(path), turns=Math.ceil(dist/A.range);
@@ -2349,6 +2380,7 @@ function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false
   if(!chips.length&&!mine) out.push(`<span class="ck-warn">CHECK</span> No airfield in destination hex ${to}.`);
   { const co=airfieldCountry(to,ownTo&&ownTo.af), ac=accessOf(co); if(ac!=='granted'){ out.push(`<span class="ck-bad">NO</span> ${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today: no landing at hex ${to}.`); block=true; } }
   { const over=[...new Set(path.slice(1,-1).map(hexCountry).filter(c=>c&&accessOf(c)==='denied'))]; if(over.length){ out.push(`<span class="ck-bad">NO</span> Route crosses ${over.join(', ')}: overflight denied today. Plot around it.`); block=true; } }
+  { const hT=holdOf(f.team,to), hF=holdOf(f.team,path[0]); if(hF&&(hF.k==='all'||hF.k==='dep')) out.push(`<span class="ck-warn">CHECK</span> Departures from ${path[0]} are suspended through turn ${hF.until}: the chalk waits.`); if(hT&&(hT.k==='all'||hT.k==='arr')) out.push(`<span class="ck-warn">CHECK</span> Arrivals at ${to} are suspended through turn ${hT.until}: the chalk holds until then.`); }
   const effTo=afEff(f.team,to);
   if(f.acft==='c5'&&effTo&&effTo.c==='r'){ out.push(`<span class="ck-bad">NO</span> C-5 cannot land at hex ${to}: red fields are C-17/C-130 only.`); block=true; }
   if(effTo&&effTo.c==='y') out.push(`<span class="ck-warn">CHECK</span> Hex ${to} is a yellow field: day only. A night arrival needs runway lighting (1 PP).`);
@@ -2384,7 +2416,8 @@ function decideFlight(id,ok){ const f=S.flights.find(x=>x.id===id); if(!f) retur
 // a wing can cancel its own chalk until it starts flying; the cargo goes back to where it was loaded
 function wingCancelFlight(team,id){ const f=S.flights.find(x=>x.id===id); if(!f||f.team!==team||f.moved>0||f.st==='arrived') return alert('That chalk has already left. It cannot be cancelled.'); log(`${TM[team].n} cancelled ${f.n}× ${ACFT[f.acft].n} ${f.path[0]} → ${f.path[f.path.length-1]}`); removeFlight(id); }
 function removeFlight(id){ const f=S.flights.find(x=>x.id===id); if(f&&f.cargo&&f.moved===0&&f.st!=='arrived') addInv(f.team,f.path[0],f.cargo,1); S.flights=S.flights.filter(x=>x.id!==id); render(); }
-function moveFlights(){ for(const f of S.flights) if(f.st==='approved'||f.st==='enroute'){ if(f.moved===0&&S.bases[f.team].some(b=>b.hex===f.path[0]&&b.st==='struck')){ log(`${TM[f.team].n}: ${ACFT[f.acft].n} held at ${f.path[0]} (airfield struck)`); continue; } f.moved+=ACFT[f.acft].range;
+function moveFlights(){ for(const f of S.flights) if(f.st==='approved'||f.st==='enroute'){ if(f.moved===0&&S.bases[f.team].some(b=>b.hex===f.path[0]&&b.st==='struck')){ log(`${TM[f.team].n}: ${ACFT[f.acft].n} held at ${f.path[0]} (airfield struck)`); continue; }
+    { const h0=f.moved===0&&holdOf(f.team,f.path[0]), h1=holdOf(f.team,f.path[f.path.length-1]); if(h0&&(h0.k==='all'||h0.k==='dep')){ log(`${TM[f.team].n}: ${ACFT[f.acft].n} held at ${f.path[0]} (departures suspended)`); continue; } if(h1&&(h1.k==='all'||h1.k==='arr')){ log(`${TM[f.team].n}: ${ACFT[f.acft].n} holding (arrivals suspended at ${f.path[f.path.length-1]})`); continue; } }   /* R9.4 card holds */ f.moved+=ACFT[f.acft].range;
     if(f.moved>=f.dist){ f.moved=f.dist; f.st='arrived'; f.arrTurn=S.turn; f.arrAt=Date.now(); const to=f.path[f.path.length-1]; if(f.ci!=null){ const C=((S.chalkLoc=S.chalkLoc||{})[f.team]=S.chalkLoc[f.team]||{}); (C[f.acft]=C[f.acft]||{})[f.ci]=to; } log(`ARRIVED ${TM[f.team].n} ${f.n}× ${ACFT[f.acft].n} at ${to} (${f.pp} PP, ${f.pax} pax)`);
       if(f.cargo){ addInv(f.team,to,f.cargo,1); log(`${TM[f.team].n} offloaded at ${to}: ${Object.entries(f.cargo).map(([id,n])=>n+' '+CHIT[id].name).join(', ')}`); }
       const ownB=S.bases[f.team].find(b=>b.hex===to); if(ownB&&f.pax>0&&!ownB.landed){ ownB.landed=true; log(`${TM[f.team].n} people landed at ${to}: remaining RFIs open`); }
@@ -2513,6 +2546,7 @@ function rollAcftFor(team,typed){ if(S.opening&&!spokesChosen(team)) return aler
 //       It never re-rolls on a new turn or a same-day situation re-roll. The instructor may force a new roll any time
 //       with "Roll base access again" in the Turn tab (TODAY box).
 //      Per country: Access if the roll meets the country's number; overflight only if it beats the lower number; otherwise denied.
+// R8.3d Fighters too: no sortie into or across a denied country (straight-line check). R8.3c: closed countries hatched on the map.
 // R8.3a Access is enforced (owner 11-10): no spoke and no landing in a country that denied base access today;
 //       no route over a country that denied overflight. Countries not in the access table (Japan, Guam, Australia...) are open.
 const __ctry={}; let __cpaths=null;
@@ -2521,6 +2555,12 @@ function airfieldCountry(hex,af){ const k=hex+':'+(af||''); if(k in __ctry) retu
   return __ctry[k]=co; }
 function hexCountry(hex){ const k='h'+hex; if(k in __ctry) return __ctry[k]; const h=HX[hex]; return __ctry[k]=h?countryAt(h.x,h.y):null; }
 function accessOf(country){ if(!country||!ACCESS[country]||!S.access) return 'granted'; return S.access[country]||'granted'; }
+// R8.3c Owner 11-10: closed countries are hatched on every map: faint red lines = denied (no bases, no overflight),
+//       faint amber lines = overflight only (no bases). Redrawn only when base access changes.
+let __hatchKey='', __hatchHtml='';
+function accessHatch(){ const A=S.access||{}, key=JSON.stringify(A); if(key===__hatchKey) return __hatchHtml; __hatchKey=key;
+  let s=''; for(const l of MD.land){ const a=A[l.n]; if(a==='denied') s+=`<path d="${l.d}" fill="url(#hD)" stroke="#C8463A" stroke-opacity=".55" stroke-width="2"/>`; else if(a==='overflight') s+=`<path d="${l.d}" fill="url(#hO)" stroke="#D9A23A" stroke-opacity=".45" stroke-width="2"/>`; }
+  return __hatchHtml=s?`<defs><pattern id="hD" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="22" height="22" fill="#C8463A" fill-opacity=".10"/><line x1="0" y1="0" x2="0" y2="22" stroke="#C8463A" stroke-opacity=".5" stroke-width="3"/></pattern><pattern id="hO" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="22" height="22" fill="#D9A23A" fill-opacity=".07"/><line x1="0" y1="0" x2="0" y2="22" stroke="#D9A23A" stroke-opacity=".42" stroke-width="2.5"/></pattern></defs><g pointer-events="none">${s}</g>`:''; }
 function accessText(){ const A=S.access||{}, g={granted:[],overflight:[],denied:[]}; for(const c in ACCESS) if(A[c]) g[A[c]].push(c); if(!Object.keys(A).length) return '—'; const p=[]; if(g.denied.length) p.push('Denied: '+g.denied.join(', ')); if(g.overflight.length) p.push('Overflight only: '+g.overflight.join(', ')); p.push(p.length?'all others open':'all countries open'); return p.join(' · '); }
 function forceAccess(){ if(S.accessDay===day()&&!confirmThen(`Base access was already rolled for Day ${day()}. Roll every country again now?`,()=>forceAccess(),'Roll again')) return; rollAllAccess(); }
 function rollAllAccess(quiet){ const dice=[], parts=[]; S.access={};
