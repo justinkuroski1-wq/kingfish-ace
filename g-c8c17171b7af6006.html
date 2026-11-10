@@ -794,7 +794,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.7.5';   // shown on every screen; bump on each release
+const APP_VER='1.7.6';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -977,7 +977,7 @@ function rfiPickSheet(team,hex,C){ const ans=rfiAns(team,hex), info=rfiInfo(team
   if(!rfiChosen(team,hex)) return `<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · choose this airfield as a spoke first, then ask its RFIs.</div>`;
   let h=`<div class="hint" style="margin:6px 0 4px"><b style="color:var(--ink)">RFIs</b> · ${info.left>0?`${info.label}${L?' · <b style="color:#E3B25C">same 5 questions as your first spoke (locked; the instructor can unlock)</b>':''} · choose your questions, then roll · <b style="color:var(--ink)">${pk.length} of ${info.left}</b> chosen`:'rolled · move the spoke to roll 3 more'}</div>`;
   h+=RFIQ.map(([q,a],i)=>{ const v=ans[i]; if(v) return `<div class="rfirow"><span class="rfiq">${q}</span><span style="background:${RFIC[v-1]};color:#111;font-weight:700;padding:0 7px;border-radius:2px">${v}</span><span style="color:#D5DADF">${a[v-1]}</span></div>`;
-    const on=pk.includes(i), dis=(!on&&(full||info.left<=0))||(L&&!L.includes(i));
+    const on=pk.includes(i), dis=(!on&&(full||info.left<=0))||!!L;
     return `<label class="rfirow pick ${on?'on':''} ${dis?'dis':''}"><input type="checkbox" ${on?'checked':''} ${dis?'disabled':''} onchange="${C}rfiToggle('${team}','${hex}',${i})"><span class="rfiq">${q}</span></label>`; }).join('');
   h+=`<div class="row" style="margin-top:8px"><button class="btn p" ${pk.length?'':'disabled'} onclick="${C}rfiRollPicked('${team}','${hex}')">Roll ${pk.length||''} selected RFI${pk.length===1?'':'s'} (D4 each)</button></div>`;
   return h; }
@@ -1166,7 +1166,7 @@ function morphEl(a,b){ for(const at of [...a.attributes]) if(!b.hasAttribute(at.
   const tag=a.tagName, focused=a===a.ownerDocument.activeElement;
   if(tag==='TEXTAREA'){ if(!focused&&a.value!==b.value) a.value=b.value; return; }
   morphKids(a,b);
-  if(tag==='INPUT'&&!focused){ if(a.type==='checkbox'||a.type==='radio'){ if(a.checked!==b.checked) a.checked=b.checked; } else if(a.value!==b.value) a.value=b.value; }
+  if(tag==='INPUT'){ if(a.type==='checkbox'||a.type==='radio'){ if(a.checked!==b.checked) a.checked=b.checked; } else if(!focused&&a.value!==b.value) a.value=b.value; }
   if(tag==='SELECT'&&!focused&&a.value!==b.value) a.value=b.value; }
 function mKey(n){ if(n.nodeType!==1) return n.nodeName; const id=n.getAttribute('id'); if(id) return n.nodeName+'#'+id; const d=n.getAttribute('data-id'); if(d) return n.nodeName+'@'+d; const c=n.getAttribute('class'); return n.nodeName+'.'+(c||''); }
 function morphKids(a,b){ const nb=[...b.childNodes]; let i=0;
@@ -1441,8 +1441,8 @@ function taskList(team,hex){ const st=baseStage(team,hex), byR=rfiDoneTasks(team
     let cls, txt, btn='';
     if(rfi){ cls='ok'; txt='Host nation'; }
     else if(done&&T.once&&!run){ cls='ok'; txt='Complete'; }
-    else if(run){ cls='run'; txt=T.once?`In progress · ${s.p||0} of ${s.need} turns`:'Running'; btn=`<button class="btn sm ghost" onclick="event.stopPropagation();cmd.unstaffTask('${team}','${hex}',${T.id})">Pull chips</button>`; }
-    else if(c.ok){ cls='ready'; txt='Ready'; btn=`<button class="btn sm p" onclick="event.stopPropagation();cmd.staffTask('${team}','${hex}',${T.id})">Staff</button>`; }
+    else if(run){ cls='run'; txt=T.once?`In progress · ${s.p||0} of ${s.need} turns`:'Running'; btn=`<button class="btn sm ghost" onclick="event.stopPropagation();cmd.unstaffTask('${team}','${hex}',${T.id})">Remove people</button>`; }
+    else if(c.ok){ cls='ready'; txt='Ready'; btn=`<button class="btn sm p" onclick="event.stopPropagation();cmd.staffTask('${team}','${hex}',${T.id})">Assign people</button>`; }
     else if(c.pre){ cls='wait'; txt=`After task ${c.pre}`; }
     else { cls='miss'; txt=c.miss==='people'?'Needs people on site':'Missing '+(CHIT[c.miss]?CHIT[c.miss].name:c.miss); }
     const iv=invAt(team,hex), hnv=((S.hnInv||{})[team]||{})[hex]||{}, asg=s.a||{};
@@ -1990,10 +1990,10 @@ setInterval(()=>{ if(MODE!=='instructor'||!S.running) return; if(!S.endsAt) S.en
 function timeUp(){ S.running=false; S.endsAt=null; log(S.opening?'Planning timer expired':'Shift timer expired');
   if(S.opening){ nextTurn(); return; }                       // planning over: turn 1 begins
   if(!S.movesOpen) nextTurn();                               // end of turn: flights move, tasks progress, move window opens
+  // owner 11-10: at 0:00 the next turn always starts by itself; waiting requests stay in the queue for the next move window
   const left=S.requests.filter(q=>q.st==='pending').length+(S.resReq||[]).filter(r=>r.st==='pending').length;
-  if(left){ banner(`TIME · ${left} request${left>1?'s':''} waiting · approve or deny, then start the next turn`,true); render(); return; }
-  if(S.turn>=S.turns){ nextTurn(); return; }                 // last turn: debrief
-  nextTurn(); }
+  window.__yesNow=true; try{ nextTurn(); }finally{ window.__yesNow=false; }
+  if(left) banner(`TURN ${S.turn} · ${left} request${left>1?'s':''} still waiting · decide them in the next move window`,false); }
 function clockAdd(n){ S.clock=Math.max(0,S.clock+n); if(S.running) S.endsAt=Date.now()+S.clock*1000; log(`Timer ${n>0?'+':''}${n/60} min`); if(S.clock===0&&S.running){ timeUp(); return; } render(); }
 function clockHide(){ S.hidden=!S.hidden; log(S.hidden?'Timer hidden from class':'Timer shown'); render(); }
 function clockReset(){ S.clock=(S.opening?(S.planMin||PLAN_MIN):CLOCK_MIN(S.turn))*60; S.running=false; render(); }
