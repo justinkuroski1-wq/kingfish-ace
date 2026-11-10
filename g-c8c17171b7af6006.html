@@ -582,6 +582,12 @@ body{font-size:15.5px}
 .tgt{fill:rgba(242,193,78,.18)!important;stroke:#F2C14E!important;stroke-width:7!important;stroke-dasharray:none!important}.hl{fill:rgba(255,255,255,.18)!important;stroke:#FFFFFF!important;stroke-width:6!important}
 .lgd{display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0}.lgd i{width:16px;height:12px;display:inline-block;flex-shrink:0;border-radius:2px}
 .flg{transition:none!important}
+#kfa-send{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1A2633;border:1px solid #3A5A7C;color:#DCE6EF;font-size:13px;padding:7px 14px;border-radius:16px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9500}#kfa-send.on{opacity:1}
+.wnext{font-size:13.5px;line-height:1.4;color:#DCE6EF;background:#16222E;border-left:3px solid #5B8DB8;padding:8px 12px;margin:0 0 8px}
+.pcc{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid #222a31;font-size:14px}.pcc b{width:18px;flex-shrink:0}.pcc.ok b{color:#6FCF97}.pcc.bad b{color:#F08A7E}
+#kfa-tcard{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:9400;background:rgba(12,16,20,.94);border:1px solid #2E3843;border-top:4px solid #F2C14E;padding:22px 44px;text-align:center;pointer-events:none;opacity:0}
+#kfa-tcard.on{animation:tcard 2.6s ease forwards}@keyframes tcard{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+#kfa-tcard small{display:block;font-size:13px;letter-spacing:3px;color:#9AA5AF}#kfa-tcard b{display:block;font-size:40px;letter-spacing:4px;margin:6px 0}#kfa-tcard span{font-size:15px;letter-spacing:4px;font-weight:700}#kfa-tcard span.conflict{color:#F08A7E}#kfa-tcard span.crisis{color:#F2C14E}
 </style>
 </head>
 <body>
@@ -618,6 +624,8 @@ body{font-size:15.5px}
       <button class="btn sm p" onclick="openProjector()" title="Opens the board in a second window. Drag it onto the projector and press F11.">Projector</button>
       <span style="position:relative"><button class="btn sm" id="gm-btn" onclick="gameMenu(event)">Game ▾</button><div id="gm" class="gm" style="display:none">
         <button onclick="gmDo('pause')"><b id="gm-pause">Pause timer</b><span>Stops the shift timer on every screen</span></button>
+        <button onclick="gmDo('undo')"><b>Undo last game-master action</b><span>Backs out the last move, base change, inject or Red edit</span></button>
+        <button onclick="gmDo('check')"><b>Pre-class check</b><span>Confirms network, join code, saving and windows before students arrive</span></button>
         <button onclick="gmDo('save')"><b>Save to file</b><span>Downloads a backup of this game now</span></button>
         <button onclick="gmDo('exit')"><b>Pause and exit</b><span>Stops the timer and signs out. The game stays saved on this laptop; sign back in to continue.</span></button>
         <button onclick="gmDo('restart')"><b>Restart game</b><span>Starts a new game. This one is kept on the laptop as a backup.</span></button>
@@ -764,7 +772,7 @@ body{font-size:15.5px}
       <h3>TODAY'S ORDERS <span class="r">edit, then press Post</span></h3>
       <div class="dice" style="grid-template-columns:110px 1fr">
         <span>Intent</span><input class="field" id="o-intent">
-        <span>Target hexes</span><input class="field" id="o-targets">
+        <span>Mission hexes</span><input class="field" id="o-targets">
         <span>Aircraft</span><input class="field" id="o-acft">
         <span>Access</span><input class="field" id="o-access">
       </div>
@@ -909,7 +917,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.8.3';   // shown on every screen; bump on each release
+const APP_VER='1.8.5';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1023,7 +1031,7 @@ function lockedSet(team,hex){ const s=(S.rfiSet||{})[team]; if(!s||!s.length) re
 function rfiChosen(team,hex){ return S.bases[team].some(b=>b.hex===hex&&b.role!=='mob'&&b.role!=='hub'); }
 function noteRfiSet(team,hex){ if(rfiInfo(team,hex).cap!==5) return; S.rfiSet=S.rfiSet||{}; S.rfiSetHex=S.rfiSetHex||{}; const asked=Object.keys(rfiAns(team,hex)).map(Number);
   if(!S.rfiSet[team]){ S.rfiSet[team]=asked.slice(0,5); S.rfiSetHex[team]=hex; } else if(S.rfiSetHex[team]===hex){ for(const i of asked) if(!S.rfiSet[team].includes(i)&&S.rfiSet[team].length<5) S.rfiSet[team].push(i); } }
-function unlockRfi(){ const o=ownerOf(S.sel); if(!o||o.b.role==='mob') return; const add=(o.b.rfiMax||5)>=5?5:3; o.b.rfiMax=Math.min(10,(o.b.rfiMax||5)+add); if(S.rfiSet) delete S.rfiSet[o.team];
+function unlockRfi(){ gmSnap('unlock RFIs'); const o=ownerOf(S.sel); if(!o||o.b.role==='mob') return; const add=(o.b.rfiMax||5)>=5?5:3; o.b.rfiMax=Math.min(10,(o.b.rfiMax||5)+add); if(S.rfiSet) delete S.rfiSet[o.team];
   log(`${TM[o.team].n} ${S.sel}: instructor unlocked ${add} new RFIs`); banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} · ${add} NEW RFIs UNLOCKED BY THE INSTRUCTOR`,false); render(); }
 function rfiKey(){ return S.opening?0:S.turn; }
 function rfiAns(team,hex){ return ((S.rfi||{})[team]||{})[hex]||{}; }
@@ -1084,7 +1092,7 @@ function iocPanel(team,hex){ const rows=iocSources(team,hex), ok=rows.filter(r=>
 function rfiPicks(team,hex){ return (((S.rfiPick=S.rfiPick||{})[team]=S.rfiPick[team]||{})[hex])=S.rfiPick[team][hex]||[]; }
 function rfiToggle(team,hex,i){ const pk=rfiPicks(team,hex), info=rfiInfo(team,hex); const k=pk.indexOf(i); { const L=lockedSet(team,hex); if(L&&!L.includes(i)) return; }
   if(k>=0) pk.splice(k,1); else if(pk.length<info.left&&!rfiAns(team,hex)[i]) pk.push(i); render(); }
-function rfiRollPicked(team,hex){ if(!rfiChosen(team,hex)) return alert('RFIs open once the instructor approves this spoke.'); const pk=rfiPicks(team,hex).slice(); if(!pk.length) return; const res=[]; window.__batchRfi=true;
+function rfiRollPicked(team,hex){ if(!rfiChosen(team,hex)) return alert('RFIs open once the instructor approves this spoke.'); let pk=rfiPicks(team,hex).slice(); { const L=lockedSet(team,hex); if(L){ const ans=rfiAns(team,hex), info=rfiInfo(team,hex); pk=L.filter(i=>!ans[i]).slice(0,info.left); } } if(!pk.length) return; const res=[]; window.__batchRfi=true;
   for(const i of pk){ rollRfiFor(team,hex,i); const v=rfiAns(team,hex)[i]; if(v) res.push(`${RFIQ[i][0]} ${v}`); }
   window.__batchRfi=false; noteRfiSet(team,hex); S.rfiPick[team][hex]=[]; pushRoll({team,title:`${TM[team].n} · RFIs at hex ${hex}`,dice:pk.map(i=>({s:4,v:rfiAns(team,hex)[i]||1,l:RFIQ[i][0],sub:(RFIQ[i][1]||[])[(rfiAns(team,hex)[i]||1)-1]}))});
   banner(`${TM[team].n.toUpperCase()} · RFIs at hex ${hex}: ${res.join(' · ')}`,res.some(r=>r.endsWith(' 1'))); render(); }
@@ -1142,7 +1150,8 @@ try{ if(MODE==='instructor'){ ROOM=localStorage.getItem('kfa-room'); if(!/^[A-Z0
 function fbUrl(path){ return FB_ROOT+ROOM+'/'+path+'.json'; }
 async function fbGet(path){ try{ const r=await fetch(fbUrl(path)+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return undefined; return await r.json(); }catch(e){ return undefined; } }
 async function fbSend(path,method,val){ try{ const r=await fetch(fbUrl(path),{method,body:JSON.stringify(val)}); return r.ok; }catch(e){ return false; } }
-function sendWing(m){ if(REMOTE){ fbSend('cmds','POST',JSON.stringify(m)); } else if(BC) BC.postMessage(m); }
+function sendWing(m){ if(REMOTE){ showSending(true); fbSend('cmds','POST',JSON.stringify(m)); } else if(BC) BC.postMessage(m); }
+function showSending(on){ let el=document.getElementById('kfa-send'); if(!el){ el=document.createElement('div'); el.id='kfa-send'; el.textContent='Sending to the instructor…'; document.body.appendChild(el); } el.classList.toggle('on',!!on); clearTimeout(window.__sendT); if(on) window.__sendT=setTimeout(()=>el.classList.remove('on'),6000); }
 const INSTR_PW='Admin1';   // classroom lock only: anyone can read this file's code
 function confirmThen(msg,fn,yesLabel){ if(window.__yesNow) return true;
   if(!/\[native code\]/.test(Function.prototype.toString.call(window.confirm))) return window.confirm(msg);
@@ -1204,10 +1213,11 @@ setTimeout(()=>{
     let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
     window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; fbSend('live','PUT',{rev:__rev,t:Date.now(),clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
       if(now===true){ clearTimeout(liveT); liveT=null; send(); return; } if(liveT) return; liveT=setTimeout(()=>{ liveT=null; send(); },900); };
-    window.cloudSave=()=>{ clearTimeout(gameT); gameT=setTimeout(async()=>{ if(window.__standby) return; let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g||g===lastGame) return; if(await fbSend('game','PUT',g)){ lastGame=g; __rev++; cloudLive(true); } },400); };
+    window.cloudSave=(now)=>{ clearTimeout(gameT); gameT=setTimeout(async()=>{ if(window.__standby) return; let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g||g===lastGame) return; if(await fbSend('game','PUT',g)){ lastGame=g; __rev++; cloudLive(true); } },now?0:150); };
     window.cloudAlert=(team,text)=>{ alerts[team]={text,t:Date.now()}; cloudLive(true); };
     setInterval(()=>cloudLive(true),3000);
-    setInterval(async()=>{ if(busy||window.__standby) return; busy=true; try{ const c=await fbGet('cmds'); if(c&&typeof c==='object'){ const del={}; for(const k of Object.keys(c).sort()){ del[k]=null; let m=c[k]; try{ if(typeof m==='string') m=JSON.parse(m); onWingMsg({data:m}); }catch(e){ console.error(e); } } await fbSend('cmds','PATCH',del); } }finally{ busy=false; } },1000);
+    const pullCmds=async()=>{ if(busy||window.__standby) return; busy=true; try{ const c=await fbGet('cmds'); if(c&&typeof c==='object'){ const del={}; for(const k of Object.keys(c).sort()){ del[k]=null; let m=c[k]; try{ if(typeof m==='string') m=JSON.parse(m); onWingMsg({data:m}); }catch(e){ console.error(e); } } await fbSend('cmds','PATCH',del); } }finally{ busy=false; } };
+    setInterval(pullCmds,1000); try{ const es=new EventSource(fbUrl('cmds')); es.addEventListener('put',e=>{ try{ const d=JSON.parse(e.data); if(d&&d.data!==null) pullCmds(); }catch(x){} }); es.addEventListener('patch',()=>pullCmds()); }catch(e){}
     cloudSave(); cloudLive(true);
   }
   if(REMOTE){
@@ -1215,9 +1225,9 @@ setTimeout(()=>{
     const apply=g=>{ try{ const k=gameKey(g); if(k&&k===window.__gk) return; window.__gk=k; const n=JSON.parse(g); if(!validSave(n)) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); S=n; Object.assign(S,keep); restoreUi(ui); try{ localStorage.setItem('kfa-game',g); }catch(e){} render(); }catch(e){} };
     const tick=async()=>{ if(busy) return; busy=true; try{ const L=await fbGet('live'); if(L&&L.t){ if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
         const a=L.alerts&&L.alerts[WING_ID]; if(a&&a.t!==window.__lastAlert){ if(window.__lastAlert!==undefined) alert(a.text); window.__lastAlert=a.t; }
-        if(L.rev!==rev){ const g=await fbGet('game'); if(typeof g==='string'){ rev=L.rev; apply(g); } }
+        if(L.rev!==rev){ const g=await fbGet('game'); if(typeof g==='string'){ rev=L.rev; apply(g); showSending(false); } }
         S.clock=L.clock; S.hidden=L.hidden; S.running=L.running; S.endsAt=L.endsAt; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } }finally{ busy=false; } };
-    tick(); setInterval(tick,1000);
+    tick(); setInterval(tick,1000); try{ const es=new EventSource(fbUrl('live')); const go=()=>{ tick(); }; es.addEventListener('put',go); es.addEventListener('patch',go); window.__es=es; }catch(e){}
   }
 },0);
 if(BC&&MODE==='instructor'){ BC.postMessage({insHello:INS_ID}); setInterval(()=>{ if(!window.__standby) BC.postMessage({hb:1}); },800); }
@@ -1621,7 +1631,11 @@ function sideTabs(team,parts){ const pend=(S.resReq||[]).filter(r=>r.team===team
   const nf=Object.values((S.fighters||{})[team]||{}).reduce((a,b)=>a+b,0);
   const tabs=[['plan',S.opening?'Plan':'Bases'],['air','Airlift'],['fx','Fighters',nf],['rq','Supplies',pend||'']];
   if(!WSTAB||!tabs.some(x=>x[0]===WSTAB)) WSTAB=S.opening?'plan':'air';
-  return `<div class="stabs">${tabs.map(([k,n,c])=>`<button class="${WSTAB===k?'on':''}" onclick="WSTAB='${k}';render()">${n}${c!==''&&c!==undefined?`<em>${c}</em>`:''}</button>`).join('')}</div>${parts[WSTAB]||''}`; }
+  const nx=(()=>{ const sp=S.bases[team].filter(b=>b.role==='spoke').length, pend=S.requests.filter(q=>q.team===team&&q.st==='pending').length;
+    if(S.opening){ if(sp+pend<3) return `Next: choose your spokes (${sp+pend} of 3). Click an airfield on the map, then "Choose as spoke".`; if(pend) return `Next: wait for the instructor to approve your ${pend} spoke request${pend>1?'s':''}, then roll aircraft and ask RFIs.`; return 'Next: roll aircraft, ask RFIs at your spokes, load chalks and plot routes.'; }
+    if(S.movesOpen) return 'Move window: request any spoke moves now. The instructor starts the next turn.';
+    return S.orders.sit==='conflict'?'Conflict: protect your bases, fly sorties at Mission hexes, keep supplies moving.':'Crisis: open your spokes, staff tasks toward IOC, keep food, water and fuel moving.'; })();
+  return `<div class="wnext">${nx}</div><div class="stabs">${tabs.map(([k,n,c])=>`<button class="${WSTAB===k?'on':''}" onclick="WSTAB='${k}';render()">${n}${c!==''&&c!==undefined?`<em>${c}</em>`:''}</button>`).join('')}</div>${parts[WSTAB]||''}`; }
 const SCROLLERS=['.wside','.ldbox','.rmain','.rside','.fold>div','#panel','.pbody'];
 let DIRTY={};
 addEventListener('input',e=>{ const x=e.target; if(x&&x.id&&x.type!=='file') DIRTY[x.id]=x.value; },true);
@@ -1695,7 +1709,7 @@ function wingHtml(team,call,view){ const C=call||'opener.'; const T=TM[team], [s
        <div class="row">${step('r',U.r)}<select class="field" style="width:auto" onchange="fUi('${team}','${hx}').d=this.value">${dests.map(x=>`<option value="${x.hex}" ${U.d===x.hex?'selected':''}>${longId(team,x)}</option>`).join('')||'<option value="">no base in range</option>'}</select></div>
        <div class="row"><button class="btn sm" ${dests.length?'':'disabled'} onclick="${C}wingFighterMove('${team}','${hx}',fUi('${team}','${hx}').d||'${(dests[0]||{}).hex||''}',${U.r})">Move ${U.r} to ${(()=>{ const d=dests.find(x=>x.hex===U.d)||dests[0]; return d?longId(team,d).replace(/^Wing \d • /,''):'—'; })()}</button></div></div></div>`; }).join(''):'<div class="hint">No fighters left.</div>';
   const fm=S.fmoves.filter(m=>m.team===team); if(fm.length) fx+=`<div class="hint" style="margin-top:6px">Repositioning: ${fm.map(m=>m.n+' '+m.from+' → '+m.to).join(' · ')}</div>`;
-  fx+=`<div class="hint" style="margin-top:6px">5 MP per fighter launched from a spoke into a mission-intent hex. Crisis: bombs and missiles reused. Conflict: each fighter expends 1 bomb + 1 air-to-air missile.</div></div>`;
+  fx+=`<div class="hint" style="margin-top:6px">5 MP per fighter launched from a spoke into a Mission hex. Crisis: bombs and missiles reused. Conflict: each fighter expends 1 bomb + 1 air-to-air missile.</div></div>`;
   // resource requests
   const mobs=S.bases[team].filter(b=>b.role==='mob');
   const rr=(S.resReq||[]).filter(x=>x.team===team).slice(-4).reverse();
@@ -1758,10 +1772,10 @@ function renderPanel(){
   const box=document.getElementById('i-hex'), act=document.getElementById('i-hexactions');
   if(!S.sel){ box.textContent='No hex selected. Click any hex on the board.'; act.style.display='none'; }
   else{ const chips=MD.chips.filter(c=>c.hex===S.sel); const owner=ownerOf(S.sel);
-    box.innerHTML=`<b>Hex ${S.sel}</b> · ${chips.length?chips.length+' airfield'+(chips.length>1?'s':'')+': '+chips.map(c=>`<span style="color:${CHIPC[c.c]}">●</span> ${({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]}`).join(', '):'no airfield chip'}${(()=>{ const os=ownersOf(S.sel); if(os.length>1) return `<br>Shared hex · acting on: `+os.map(x=>`<button class="btn sm${x.team===owner.team?' p':''}" style="margin:4px 4px 0 0" onclick="S.selTeam='${x.team}';render()">${TM[x.team].n}</button>`).join('')+`<span class="hint"> (${owner.b.st})</span>`; return owner?`<br>Held by <b style="font-size:15px;color:${TM[owner.team].c}">${TM[owner.team].n}</b> (${owner.b.st})`:''; })()}${S.targets.includes(S.sel)?'<br>Marked as a target hex':''}`;
+    box.innerHTML=`<b>Hex ${S.sel}</b> · ${chips.length?chips.length+' airfield'+(chips.length>1?'s':'')+': '+chips.map(c=>`<span style="color:${CHIPC[c.c]}">●</span> ${({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]}`).join(', '):'no airfield chip'}${(()=>{ const os=ownersOf(S.sel); if(os.length>1) return `<br>Shared hex · acting on: `+os.map(x=>`<button class="btn sm${x.team===owner.team?' p':''}" style="margin:4px 4px 0 0" onclick="S.selTeam='${x.team}';render()">${TM[x.team].n}</button>`).join('')+`<span class="hint"> (${owner.b.st})</span>`; return owner?`<br>Held by <b style="font-size:15px;color:${TM[owner.team].c}">${TM[owner.team].n}</b> (${owner.b.st})`:''; })()}${S.targets.includes(S.sel)?'<br>Mission hex':''}`;
     act.style.display='block';
     document.getElementById('b-hl').classList.toggle('on',S.highlights.includes(S.sel)); document.getElementById('b-hl').textContent=S.highlights.includes(S.sel)?'Remove highlight':'Highlight';
-    document.getElementById('b-tgt').textContent=S.targets.includes(S.sel)?'Unmark target':'Mark as target hex';
+    document.getElementById('b-tgt').textContent=S.targets.includes(S.sel)?'Unmark target':'Mission hex on/off';
     document.getElementById('i-assign').innerHTML=TEAMS.map(t=>`<button class="btn ${owner&&owner.team===t.id?'on':''}" style="border-left:6px solid ${t.c}" onclick="assign('${t.id}')">${t.n}</button>`).join('');
     document.getElementById('i-status').style.display=owner?'block':'none'; if(owner){ document.getElementById('i-owner').textContent=TM[owner.team].n;
       document.querySelectorAll('#i-role button').forEach((b,i)=>b.classList.toggle('on',['spoke','cl'][i]===owner.b.role));
@@ -1812,7 +1826,7 @@ function hexPtsK(h,k){ return [[h.x,h.y-R*k],[h.x+HW*k,h.y-R*k/2],[h.x+HW*k,h.y+
 
 // ================= ACTIONS =================
 function redTool(k){ window.__rt=window.__rt===k?null:k; ['mission','da','al','fi','sat','rm'].forEach(x=>{ const b=document.getElementById('rt-'+x); if(b) b.classList.toggle('p',window.__rt===x); }); }
-function applyTool(id){ const k=window.__rt; if(!k) return false;
+function applyTool(id){ const k=window.__rt; if(!k) return false; gmSnap(k==='mission'?'Mission hex edit':'Red edit');
   if(k==='mission'){ S.targets=S.targets||[]; const i=S.targets.indexOf(id); if(i>=0) S.targets.splice(i,1); else S.targets.push(id); S.orders.targets=S.targets.join(' '); render(); return true; }
   S.redz=S.redz||{}; S.redJam=S.redJam||{};
   if(k==='rm'){ delete S.redz[id]; delete S.redJam[id]; }
@@ -1950,8 +1964,8 @@ function randomTargets(){ const owned=new Set(); TEAMS.forEach(tm=>S.bases[tm.id
     if(sets.length===2){ S.targetSets=sets; return sets.flat(); } }
   S.targetSets=null; return []; }
 function targetText(){ return S.targetSets&&S.targetSets.length===2&&S.targetSets.flat().every(h=>S.targets.includes(h))?S.targetSets.map(s=>s.join(' ')).join(' · '):S.targets.join(' '); }
-function rerollTargets(){ S.targets=randomTargets(); S.orders.targets=targetText(); log('Operational hexes: '+S.orders.targets); banner('OPERATIONAL HEXES: '+S.orders.targets,false); render(); }
-function toggleTarget(){ if(!S.sel) return alert('Select a hex first.'); const i=S.targets.indexOf(S.sel); if(i>=0) S.targets.splice(i,1); else S.targets.push(S.sel); S.targetSets=null; S.orders.targets=targetText(); log(`Operational hex ${i>=0?'removed':'added'}: ${S.sel}`); render(); }
+function rerollTargets(){ S.targets=randomTargets(); S.orders.targets=targetText(); log('Mission hexes: '+S.orders.targets); banner('MISSION HEXES: '+S.orders.targets,false); render(); }
+function toggleTarget(){ if(!S.sel) return alert('Select a hex first.'); const i=S.targets.indexOf(S.sel); if(i>=0) S.targets.splice(i,1); else S.targets.push(S.sel); S.targetSets=null; S.orders.targets=targetText(); log(`Mission hex ${i>=0?'removed':'added'}: ${S.sel}`); render(); }
 function randomRed(){ const anchors=['406','506'], owned=new Set(); TEAMS.forEach(tm=>S.bases[tm.id].forEach(b=>owned.add(b.hex)));
   const ac=Math.min(...anchors.map(a=>HX[a].col));
   const dist=h=>Math.min(...anchors.map(a=>hexDist(a,h)));
@@ -2084,13 +2098,13 @@ function toggleHighlight(){ const i=S.highlights.indexOf(S.sel); if(i>=0) S.high
 function clearHighlights(){ S.highlights=[]; render(); }
 function clearTicker(){ S.ticker={text:'',alarm:false}; render(); }
 function banner(text,alarm){ S.ticker={text,alarm}; }
-function assign(team){ const ex=ownerOf(S.sel);
+function assign(team){ gmSnap('give base'); const ex=ownerOf(S.sel);
   if(S.bases[team].some(b=>b.hex===S.sel)) return;
   if(ex&&MD.chips.filter(c=>c.hex===S.sel).length<2) return alert(`${TM[ex.team].n} already holds the only airfield in hex ${S.sel}.`);
   { const nb={hex:S.sel,st:'selected',role:null,rfi:{},rfiMax:spokePicks(team)>=3?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[team]=spokePicks(team)+1; S.bases[team].push(nb); nb.role=spokeCount(team)>=MAX_SPOKES?'cl':'spoke'; nb.sid=nextSid(team,nb.role); } const chips=MD.chips.filter(c=>c.hex===S.sel);
   log(`${TM[team].n} selected hex ${S.sel}${chips.length?' ('+chips.map(c=>({g:'green',y:'yellow',r:'red',b:'main base'})[c.c]).join(', ')+')':''}`);
   banner(`${TM[team].n.toUpperCase()} selects hex ${S.sel}`,false); render(); }
-function setStatus(st){ const o=ownerOf(S.sel); if(!o) return; const b=o.b;
+function setStatus(st){ const o=ownerOf(S.sel); if(!o) return; gmSnap('base status'); const b=o.b;
   if(st==='struck'){ const isHub=b.role==='mob'||b.role==='hub'; if(isHub) return alert('Hubs are not struck in this game. Only spokes can be struck.');
     if(!isHub&&(b.strikes||0)>=2&&!confirmThen(`This is the third strike on hex ${S.sel}. The base and everything on it will be removed from the game. Continue?`,()=>setStatus(st),'Remove base')) return;
     const hex=S.sel, msg=strikeBase(o.team,b); S.flash={hex,t:Date.now()}; log(`${TM[o.team].n} ${hex} STRUCK by instructor: ${msg}`); banner(`AIRFIELD STRIKE · hex ${hex} (${TM[o.team].n}) · ${msg}`,true); render(); return;
@@ -2103,13 +2117,15 @@ function setStatus(st){ const o=ownerOf(S.sel); if(!o) return; const b=o.b;
   if(false){ }
   else banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} · ${({selected:'selected',moving:'forces moving in',ioc:'INITIAL OPERATING CAPABILITY',foc:'FULL OPERATING CAPABILITY'})[st]}`,false);
   render(); }
-function removeBase(){ const o=ownerOf(S.sel); if(!o) return; if(o.b.role==='mob') return alert('A home hub cannot be removed.'); S.bases[o.team]=S.bases[o.team].filter(b=>b.hex!==S.sel); for(const k of ['inv','fighters','tasks']) if(S[k]&&S[k][o.team]) delete S[k][o.team][S.sel]; log(`${TM[o.team].n} left hex ${S.sel}`); render(); }
-function inject(kind){ const o=ownerOf(S.sel); const who=o?` (${TM[o.team].n})`:'';
+function removeBase(){ const o=ownerOf(S.sel); if(!o) return; gmSnap('remove base'); if(o.b.role==='mob') return alert('A home hub cannot be removed.'); S.bases[o.team]=S.bases[o.team].filter(b=>b.hex!==S.sel); for(const k of ['inv','fighters','tasks']) if(S[k]&&S[k][o.team]) delete S[k][o.team][S.sel]; log(`${TM[o.team].n} left hex ${S.sel}`); render(); }
+function inject(kind){ gmSnap(kind); const o=ownerOf(S.sel); const who=o?` (${TM[o.team].n})`:'';
   log(`INJECT ${kind} → hex ${S.sel}${who}`); S.flash={hex:S.sel,t:Date.now()};
   if(kind==='Airfield strike'&&o){ setStatus('struck'); return; }
   if(o&&/Jamming|Cyber/.test(kind)){ (S.comms=S.comms||{})[o.team]=S.turn+1; log(`${TM[o.team].n} comms cut until turn ${S.turn+1} (${kind})`); }
   banner(`${kind.toUpperCase()} · hex ${S.sel}${who}`,/strike|cyber|jamming|comms/i.test(kind)); render(); }
-function gmMove(){ const team=document.getElementById('r-team').value, from=document.getElementById('r-from').value; if(!S.sel) return; if(!from) return alert('Pick which base the wing is moving.'); if(from===S.sel) return;
+function gmSnap(label){ const U=(window.__gmU=window.__gmU||[]); U.push({label,s:JSON.stringify({...S,undo:null})}); if(U.length>15) U.shift(); }
+function gmUndo(){ const U=window.__gmU||[]; const x=U.pop(); if(!x) return alert('Nothing to undo.'); const keep={running:S.running,endsAt:S.endsAt,clock:S.clock}; S=JSON.parse(x.s); Object.assign(S,keep); upgradeState(); log(`GAME MASTER undo: ${x.label}`); banner(`UNDONE · ${x.label}`,false); save(); render(); }
+function gmMove(){ gmSnap('move base'); const team=document.getElementById('r-team').value, from=document.getElementById('r-from').value; if(!S.sel) return; if(!from) return alert('Pick which base the wing is moving.'); if(from===S.sel) return;
   S.requests.push({id:S.reqSeq++,team,hex:S.sel,af:(MD.chips.find(c=>c.hex===S.sel)||{}).id||null,from,role:'spoke',turn:S.turn,st:'pending'}); const q=S.requests[S.requests.length-1], mo=S.movesOpen; S.movesOpen=true; window.__yesNow=true; try{ decide(q.id,true); }finally{ window.__yesNow=false; S.movesOpen=mo; }
   log(`GAME MASTER moved ${TM[team].n} base ${from} → ${S.sel}`); render(); }
 function addRequest(team,from){ team=team||document.getElementById('r-team').value; from=from!==undefined?from:document.getElementById('r-from').value;
@@ -2200,15 +2216,27 @@ function rollAny(){ const n=+document.getElementById('d-any').value; const {r,ty
 function download(name,text,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
 function stamp(d){ const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}${z(d.getMinutes())}`; }
 function saveFile(){ S.fileSavedAt=Date.now(); S.fileSavedTurn=S.turn; download(`Kingfish ACE - Day ${day()} Turn ${S.turn} - ${stamp(new Date())}.json`,JSON.stringify({...S,v:SAVE_V,running:false},null,1),'application/json'); log(`Saved to file (day ${day()}, turn ${S.turn})`); render(); }
+function turnCard(){ const k=S.opening?'plan':S.turn+':'+(S.movesOpen?1:0); if(window.__tk===undefined){ window.__tk=k; return; } if(window.__tk===k) return; window.__tk=k; if(S.movesOpen||S.opening) return;
+  const [sn,sh]=shift(); let el=document.getElementById('kfa-tcard'); if(!el){ el=document.createElement('div'); el.id='kfa-tcard'; document.body.appendChild(el); } el.innerHTML=`<small>DAY ${day()} &middot; ${sh}</small><b>TURN ${S.turn} &middot; ${sn.toUpperCase()}</b><span class="${S.orders.sit}">${S.orders.sit.toUpperCase()}</span>`; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
+if(MODE==='instructor'||MODE==='projector') setInterval(()=>{ try{ turnCard(); }catch(e){} },500);
 function renderToday(){ const el=document.getElementById('i-today'); if(!el) return; const nz=Object.keys(S.redz||{}).length, nj=Object.keys(S.redJam||{}).length; const v=S.orders.intent&&S.orders.intent!=='—'?`<b style="color:var(--ink)">${S.orders.intent}</b> · Mission hexes ${S.targets&&S.targets.length?S.targets.join(' '):'none'} · Red: ${nz} zone${nz===1?'':'s'}, ${nj} jammer${nj===1?'':'s'}`:'Roll the Situation (Dice tab) to start the day.'; if(el.innerHTML!==v) el.innerHTML=v; }
 if(MODE==='instructor') setInterval(renderToday,700);
 function fitPanelTabs(){ try{ const ph=document.querySelector('#panel .ph'), pt=document.getElementById('ptabs'); if(ph&&pt){ const h=ph.offsetHeight+'px'; if(pt.style.top!==h) pt.style.top=h; } }catch(e){} }
 if(MODE==='instructor'){ addEventListener('resize',fitPanelTabs); setInterval(fitPanelTabs,1000); setTimeout(fitPanelTabs,50); }
+async function preClassCheck(){ const R=[]; const ok=(b,y,n)=>R.push(`<div class="pcc ${b?'ok':'bad'}"><b>${b?'&#10003;':'&#10005;'}</b>${b?y:n}</div>`);
+  let ls=false; try{ localStorage.setItem('kfa-t','1'); ls=localStorage.getItem('kfa-t')==='1'; localStorage.removeItem('kfa-t'); }catch(e){} ok(ls,'This laptop saves the game (browser storage works).','This browser cannot save. Turn off private (InPrivate) mode.');
+  let net=false; try{ const r=await fetch(FB_ROOT+(ROOM||'X')+'/live.json?t='+Date.now(),{cache:'no-store'}); net=r.ok; }catch(e){} ok(net,`Join code server reachable. Wings on other laptops can join with code ${ROOM||'none'}.`,'The join-code server is blocked on this network. Run every screen on this laptop.');
+  let ver=null; try{ const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(r.ok) ver=(await r.json()).v; }catch(e){} ok(!ver||ver===APP_VER,`Latest version (${APP_VER}).`,`A newer version (${ver}) is online. Press Ctrl+F5.`);
+  const w=window.open('','kfa-popcheck','width=200,height=120'); const pop=!!w; if(w) w.close(); ok(pop,'Pop-up windows allowed: the Projector and Wing windows can open.','Pop-ups are blocked. Allow pop-ups for this site (icon at the right of the address bar).');
+  ok(innerWidth>=1280,`Screen width OK (${innerWidth}px).`,`Screen is narrow (${innerWidth}px). Maximize the window or zoom out (Ctrl and minus).`);
+  const ov=document.createElement('div'); ov.className='cfx'; ov.innerHTML=`<div class="cfb" style="max-width:560px"><h3 style="margin:0 0 10px">Pre-class check</h3>${R.join('')}<div class="cfr" style="margin-top:12px"><button class="btn p" onclick="this.closest('.cfx').remove()">Close</button></div></div>`; document.body.appendChild(ov); }
 function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm'); const on=m.style.display==='none'; if(on&&m.parentNode!==document.body) document.body.appendChild(m); const r=document.getElementById('gm-btn').getBoundingClientRect(); m.style.position='fixed'; m.style.top=Math.round(r.bottom+6)+'px'; m.style.right=Math.max(8,Math.round(innerWidth-r.right))+'px'; m.style.left='auto'; m.style.zIndex='9000'; m.style.display=on?'block':'none'; const p=document.getElementById('gm-pause'); if(p) p.textContent=S.running?'Pause timer':'Start timer'; if(on) setTimeout(()=>document.addEventListener('click',()=>{ m.style.display='none'; },{once:true}),0); }
 function gmDo(k){ document.getElementById('gm').style.display='none';
   if(k==='pause'){ clockStartPause(); render(); }
   else if(k==='save'){ saveFile(); banner('GAME SAVED TO FILE',false); render(); }
   else if(k==='exit'){ if(S.running) clockStartPause(); save(); go(''); }
+  else if(k==='undo') gmUndo();
+  else if(k==='check') preClassCheck();
   else if(k==='restart') newGame();
   else if(k==='prev'){ let g=null; try{ g=JSON.parse(localStorage.getItem('kfa-game-prev')); }catch(e){} if(!g||!validSave(g)) return alert('No earlier game is stored on this laptop.'); if(!confirmThen('Bring back the last game? The current game is swapped out and kept as the backup.',()=>gmDo('prev'),'Restore')) return; try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} S=g; upgradeState(); save(); render(); } }
 function pauseAndSave(){ if(S.running) clockStartPause(); saveFile(); banner('GAME PAUSED AND SAVED',false); }
