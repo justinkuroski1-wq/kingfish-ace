@@ -949,8 +949,13 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
          The board says in plain words what crisis or conflict means for play.
    R8.2  Conflict phase per spoke: intel warning D10 (targeted above 7/5/3 by days operating); information attack
          (jamming within 2 hexes of a Red jammer, or cyber) cuts comms a turn; missile attack inside the DF-26 ring:
-         D20 vs D10 (+2 missile defense, +1 hardening). Hit = closed 3 turns then reopens; 2nd hit restarts;
-         3rd hit destroys everything on the spoke. Hubs are never attacked (owner 11-10).
+         D20 vs D10 (+2 missile defense, +1 hardening). 2nd hit restarts recovery; 3rd hit destroys everything
+         on the spoke. Hubs are never attacked (owner 11-10).
+   R8.2b Owner 11-10 (rulebook p.13-14): a struck SPOKE stays closed until the wing staffs Base recovery (task 15:
+         engineering + ADR kit, 3 turns = UXO sweep 1 + repair 2). It does not reopen on its own. Struck hubs reopen
+         by themselves after 3 turns. For a struck spoke, task 15 needs no other task first.
+   R8.2c Owner 11-10: a struck base launches nothing: no fighter sorties or repositioning out of it, no fighters
+         repositioned into it, and aircraft parked there are held.
    R8.3  Struck bases show a steady red outline (owner 11-10). A brief red pulse right after an inject is allowed.
 
    R9  CARDS
@@ -975,7 +980,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.10.1';   // shown on every screen; bump on each release
+const APP_VER='1.10.2';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1915,7 +1920,7 @@ function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o
   const z=(S.redz||{})[hex]; if(z){ const Z=REDZ[z]; L.unshift(`Red ${Z.die===20?'strong':Z.die===12?'medium':'light'} defense · each fighter rolls D${FDIE} vs D${Z.die}, one at a time; tie goes to Red; a loss shoots the fighter down; the first win clears it`); }
   if((S.redJam||{})[hex]) L.unshift('Red jammer · Red +2 in fighter combat nearby · may cut base comms within 2 hexes');
   return L.length?`<title>Hex ${hex}&#10;${L.join('&#10;')}</title>`:`<title>Hex ${hex}</title>`; }
-function baseLine(team,b){ if(b.role==='mob'||b.role==='hub') return 'Home base · full capacity'; if(b.st==='struck') return 'Struck · closed'+(b.recUntil?` until turn ${b.recUntil}`:'');
+function baseLine(team,b){ if(b.role==='mob'||b.role==='hub') return 'Home base · full capacity'; if(b.st==='struck') return 'Struck · closed'+(b.recUntil?` until turn ${b.recUntil}`:' · staff Base recovery (task 15) to reopen');
   const done=IOC_TASKS.filter(id=>taskDone(team,b.hex,id)).length; if(b.st==='ioc'||b.st==='foc') return b.st.toUpperCase()+' reached';
   const short=[]; for(const id of IOC_TASKS){ const T=TASK[id]; if(taskDone(team,b.hex,id)||taskRunning(team,b.hex,id)) continue; for(const g of taskGap(team,b.hex,T)) if(short.length<2) short.push(g.replace(/ \(have.*$/,'')); }
   return `${done} of ${IOC_TASKS.length} IOC tasks${short.length?' · short '+short.join(', '):''}`; }
@@ -1968,13 +1973,13 @@ function taskGap(team,hex,T){ const av=availAt(team,hex), need=taskNeed(team,hex
   for(const c in need){ const have=av[c]||0; if(have<need[c]) L.push(`${need[c]-have} × ${CHIT[c]?CHIT[c].name:c} (have ${have} of ${need[c]})`); }
   if(T.or&&!T.or.some(o=>Object.keys(o).every(c=>(av[c]||0)>=o[c]))) L.push('One of: '+T.or.map(o=>Object.entries(o).map(([c,n])=>n+' × '+(CHIT[c]?CHIT[c].name:c)).join(' + ')).join(' OR '));
   if(T.turns==='people'&&peopleAt(team,hex)<5) L.push(`${5-peopleAt(team,hex)} more people on site (any team)`);
-  for(const pid of T.pre) if(!taskDone(team,hex,pid)&&!(TASK[pid].each&&taskRunning(team,hex,pid))) L.push(`Finish task ${pid} (${TASK[pid].n}) first`);
+  for(const pid of (T.id===15&&baseStruck(team,hex)?[]:T.pre)) if(!taskDone(team,hex,pid)&&!(TASK[pid].each&&taskRunning(team,hex,pid))) L.push(`Finish task ${pid} (${TASK[pid].n}) first`);
   return L; }
 function canStaff(team,hex,T){ const av=availAt(team,hex), need=taskNeed(team,hex,T);
   for(const c in need) if((av[c]||0)<need[c]) return {ok:false,miss:c};
   if(T.or){ if(!T.or.some(o=>Object.keys(o).every(c=>(av[c]||0)>=o[c]))) return {ok:false,miss:Object.keys(T.or[0])[0]}; }
   if(T.turns==='people'&&peopleAt(team,hex)<5) return {ok:false,miss:'people'};
-  for(const pid of T.pre) if(!taskDone(team,hex,pid)&&!(TASK[pid].each&&taskRunning(team,hex,pid))) return {ok:false,pre:pid};
+  for(const pid of (T.id===15&&baseStruck(team,hex)?[]:T.pre)) if(!taskDone(team,hex,pid)&&!(TASK[pid].each&&taskRunning(team,hex,pid))) return {ok:false,pre:pid};
   return {ok:true}; }
 function taskRunning(team,hex,id){ const st=taskState(team,hex)[id]; return !!(st&&st.a&&(Object.keys(st.a).length||st.on)); }
 function staffTask(team,hex,id){ const T=TASK[id], c=canStaff(team,hex,T); if(!c.ok) return;
@@ -2096,7 +2101,7 @@ function sortiePreview(team,from,target,n){ const dist=hexDist(from,target); if(
   return L.join(' · '); }
 function fUi(team,hx){ const W=(window.__fui=window.__fui||{}), k=team+':'+hx, have=fightersAt(team,hx)||1; const u=W[k]=W[k]||{s:Math.min(4,have),r:Math.min(4,have),d:''}; u.s=Math.max(1,Math.min(u.s,have)); u.r=Math.max(1,Math.min(u.r,have)); return u; }
 function fSet(team,hx,k,dv){ const u=fUi(team,hx); u[k]+=dv; fUi(team,hx); render(); }
-function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return;
+function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return; if(baseStruck(team,from)) return alert(`Hex ${from} is struck and closed. Fighters cannot leave until Base recovery is done.`); if(baseStruck(team,to)) return alert(`Hex ${to} is struck and closed. Fighters cannot move there until Base recovery is done.`);   // R8.2c
   if(hexDist(from,to)>FRANGE) return alert(`Fighters move ${FRANGE} hexes at most.`);
   { const e=afEff(team,to); if(e&&e.c==='r') return alert(`Hex ${to} is a red airfield: C-17 and C-130 only. Fly in a Mobile Arresting System (4 PP) first, then fighters can use it.`); }
   const inbound=S.fmoves.filter(m=>m.team===team&&m.to===to).reduce((s,m)=>s+m.n,0);
@@ -2104,7 +2109,7 @@ function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base
   S.fighters[team][from]-=n; if(!S.fighters[team][from]) delete S.fighters[team][from]; S.fmoves.push({team,from,to,n});
   log(`${TM[team].n}: ${n} ${FTYPE[team]} repositioning ${from} → ${to} (arrive end of turn)`); render(); }
 function moveFighters(){ for(const m of S.fmoves){ S.fighters[m.team][m.to]=(S.fighters[m.team][m.to]||0)+m.n; log(`${TM[m.team].n}: ${m.n} ${FTYPE[m.team]} arrived at ${m.to}`); } S.fmoves=[]; }
-function sortieReady(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(!b) return 'not your base';
+function sortieReady(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(!b) return 'not your base'; if(b.st==='struck') return 'the airfield is struck and closed until Base recovery is done';   // R8.2c
   if(b.st==='struck') return 'airfield is struck';
   if(b.role!=='mob'&&!(taskDone(team,hex,11)||taskRunning(team,hex,11))) return 'needs Integrated combat turn staffed';
   if(b.role!=='mob'&&!(taskDone(team,hex,12)||taskRunning(team,hex,12))) return 'needs Specialized refueling staffed';
@@ -2170,8 +2175,9 @@ function strikeBase(team,b){ if(b.st!=='struck') b.prevSt=b.st; b.strikes=(b.str
   if(isHub){ b.st='struck'; b.recUntil=S.turn+3; return b.strikes>=2?'hit again: closed 3 more turns (hubs are never destroyed)':'hit: closed 3 turns'; }
   if(b.strikes>=3){ (S.flights||[]).forEach(f=>{ if(f.team===team&&f.st!=='arrived'&&f.st!=='denied'&&f.path[f.path.length-1]===b.hex&&S.bases[team].some(x=>x.hex===f.path[0]&&x!==b)){ f.path=[f.path[0]]; f.dist=0; f.moved=0; f.st='arrived'; f.arrTurn=S.turn; if(f.cargo) addInv(team,f.path[0],f.cargo,1); log(`${TM[team].n}: flight to ${b.hex} turned back to ${f.path[0]} (base destroyed); load returned`); } });
     S.bases[team]=S.bases[team].filter(x=>x!==b); if(S.inv[team]) delete S.inv[team][b.hex]; if(S.fighters[team]) delete S.fighters[team][b.hex]; if(S.tasks[team]) delete S.tasks[team][b.hex]; return 'THIRD STRIKE: all assets destroyed'; }
-  b.st='struck'; b.recUntil=S.turn+3; if(b.role!=='mob'&&S.tasks[team]&&S.tasks[team][b.hex]&&S.tasks[team][b.hex][15]) S.tasks[team][b.hex][15]={p:0};
-  return b.strikes===2?'SECOND STRIKE: recovery restarts':(b.role==='mob'?'hit: closed 3 turns':'hit: closed 3 turns, then recovers'); }
+  b.st='struck'; b.recUntil=null; if(S.tasks[team]&&S.tasks[team][b.hex]&&S.tasks[team][b.hex][15]) S.tasks[team][b.hex][15]={p:0};   // R8.2b
+  return b.strikes===2?'SECOND STRIKE: closed; Base recovery starts over':'hit: closed until Base recovery (task 15) is done'; }
+function baseStruck(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); return !!(b&&b.st==='struck'); }
 function daysOperating(team,b){ return b.role==='mob'?99:Math.floor((S.turn-(b.since||S.turn))/3)+1; }
 function runConflict(){
   if(S.orders.sit!=='conflict') return alert('The situation is a crisis. The conflict phase only runs in conflict.');
