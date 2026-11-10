@@ -563,6 +563,7 @@ body{font-size:15.5px}
 @media (prefers-reduced-motion:reduce){.flg{transition:none}.flping,.flroute,.arrc{animation:none}}
 @media (max-height:800px){#app.projmode .clock{padding:10px 0 8px}#app.projmode .clock .big{font-size:66px}#app.projmode .side .sbox{padding:6px 16px}#app.projmode .score{font-size:15px;padding:2px 0}#app.projmode .side .sbox h4{margin-bottom:4px}#app.projmode .side .sbox>div[style*="font-size:12px"]{font-size:12.5px!important}}
 .wing:has(>.commsbar){grid-template-rows:auto auto minmax(0,1fr)!important}
+.lg-right{position:relative}.lg-home{position:absolute;top:22px;left:28px;color:#9AA5AF;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.3px;padding:6px 10px;border-radius:3px}.lg-home:hover{color:#EDF0F2;background:rgba(255,255,255,.06)}
 </style>
 </head>
 <body>
@@ -577,6 +578,7 @@ body{font-size:15.5px}
     </div>
   </div>
   <div class="lg-right">
+    <a id="lg-home" class="lg-home" href="../">&larr; Home</a>
     <div class="lg-inner">
       <div class="lg-h1">Sign in</div>
       <label class="lg-lbl" for="lg-role">Role</label>
@@ -774,7 +776,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.6.10';   // shown on every screen; bump on each release
+const APP_VER='1.6.11';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1983,6 +1985,7 @@ else { S.running=false; S.endsAt=null; }
 function lgInstructor(){ document.getElementById('lg-pwi').focus(); }
 function lgRole(){ const r=document.getElementById('lg-role').value; document.getElementById('lg-pwbox').style.display=r==='instructor'?'block':'none'; document.getElementById('lg-err').textContent=''; if(r==='instructor') document.getElementById('lg-pwi').focus(); }
 function lgGo(){ const r=document.getElementById('lg-role').value; if(r==='instructor') lgCheck(); else go(r); }
+(function(){ const h=()=>{ const el=document.getElementById('lg-home'); if(!el) return; if(location.protocol==='file:'){ el.style.display='none'; return; } el.href=/(\/|\/index\.html)$/.test(location.pathname)?'../':'./'; }; if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',h); else h(); })();
 function lgCheck(){ if(document.getElementById('lg-pwi').value===INSTR_PW){ try{ sessionStorage.setItem('kfa-ins','1'); sessionStorage.removeItem('kfa-asked'); }catch(e){} go('instructor'); } else { document.getElementById('lg-err').textContent='Incorrect password.'; document.getElementById('lg-pwi').select(); } }
 const FIGHTERS={alpha:'16 × F-15',bravo:'16 × F-22',charlie:'16 × F-22',delta:'16 × F-16 at Misawa'};
 if(MODE==='instructor'){ let ok=false; try{ ok=sessionStorage.getItem('kfa-ins')==='1'; }catch(e){} if(!ok){ location.hash=''; location.reload(); } }
