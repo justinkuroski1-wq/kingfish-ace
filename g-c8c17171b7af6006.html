@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.1';   // shown on every screen; bump on each release
+const APP_VER='1.17.2';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2755,7 +2755,11 @@ function rollAllAccess(quiet){ const dice=[], parts=[]; S.access={};
   for(const c in ACCESS){ const [acc,ovf]=ACCESS[c], r=d(10), st=r>=acc?'granted':r>ovf?'overflight':'denied'; S.access[c]=st;
     dice.push({s:10,v:r,l:c,sub:st==='granted'?'ACCESS':st==='overflight'?'OVERFLIGHT ONLY':'DENIED'}); parts.push(`${c} ${st==='granted'?'granted':st==='overflight'?'overflight only':'denied'}`); }
   S.orders.access=accessText(); S.accessDay=day();
-  { const hit=[]; for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.role==='hub') continue; const co=airfieldCountry(b.hex,b.af); if(accessOf(co)!=='granted') hit.push(`${TM[tm.id].n} ${b.hex} (${co})`); } if(hit.length) setTimeout(()=>banner(`ACCESS REVOKED at ${hit.join(', ')} · game master decides how long operations there are restricted`,true),1600); }
+  { const hit=[], lifted=[]; for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.role==='hub') continue; const co=airfieldCountry(b.hex,b.af);
+      if(accessOf(co)!=='granted'){ if(!b.vacateBy||b.vacateBy>S.turn){ b.vacateBy=S.turn; b.vacateWhy='access'; } hit.push(`${TM[tm.id].n} ${b.hex} (${co})`); log(`${TM[tm.id].n} ${b.hex}: ${co} withdrew base access · vacate order: move this spoke by the end of turn ${S.turn}, or it closes and its assets return to the hub`); }
+      else if(b.vacateWhy==='access'&&b.vacateBy>=S.turn){ delete b.vacateBy; delete b.vacateWhy; lifted.push(`${TM[tm.id].n} ${b.hex}`); log(`${TM[tm.id].n} ${b.hex}: base access restored · vacate order lifted`); } }
+    if(hit.length) setTimeout(()=>banner(`VACATE ORDER · access withdrawn at ${hit.join(', ')} · move by the end of this turn or the spoke closes and its assets return to the hub`,true),1600);
+    if(lifted.length) setTimeout(()=>banner(`ACCESS RESTORED · vacate order lifted at ${lifted.join(', ')}`,false),1700); }
   log('BASE ACCESS · '+parts.join(' · ')); if(!quiet) pushRoll({team:null,title:`Day ${day()} base access and overflight`,note:'D10 per country. Access: use bases there. Overflight only: fly over, no bases. Denied: stay out.',dice});
   banner(`BASE ACCESS · DENIED: ${Object.keys(S.access).filter(c=>S.access[c]==='denied').join(', ')||'none'} · OVERFLIGHT ONLY: ${Object.keys(S.access).filter(c=>S.access[c]==='overflight').join(', ')||'none'}`,false); render(); }
 function rollAccess(){ const c=document.getElementById('d-country').value; const [acc,ovf]=ACCESS[c]; const {r,typed}=val('d-acc',10); if(!typed) pushRoll({team:null,title:`${c} · base access`,note:`Access needs ${acc} or more · overflight needs more than ${ovf}`,dice:[{s:10,v:r,l:c,sub:r>=acc?'ACCESS GRANTED':r>ovf?'OVERFLIGHT ONLY':'DENIED'}]});
