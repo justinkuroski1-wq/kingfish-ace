@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.15.4';   // shown on every screen; bump on each release
+const APP_VER='1.16.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1280,6 +1280,12 @@ try{ if(MODE==='instructor'){ ROOM=localStorage.getItem('kfa-room'); if(!/^[A-Z0
   else if(MODE==='wing'){ const j=sessionStorage.getItem('kfa-join'); if(/^[A-Z0-9]{6}$/.test(j||'')){ ROOM=j; REMOTE=true; } } }catch(e){}
 function fbUrl(path){ return FB_ROOT+ROOM+'/'+path+'.json'; }
 async function fbGet(path){ try{ const r=await fetch(fbUrl(path)+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return undefined; return await r.json(); }catch(e){ return undefined; } }
+let __zw=null, __zwN=0, __zwP={}; function zWorker(){ if(__zw!==null) return __zw; try{ const src="onmessage=async e=>{ const [id,str]=e.data; try{ const cs=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip')); const b=new Uint8Array(await new Response(cs).arrayBuffer()); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); postMessage([id,'z1:'+btoa(s)]); }catch(x){ postMessage([id,null]); } };"; __zw=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'}))); __zw.onmessage=e=>{ const [id,r]=e.data; const f=__zwP[id]; delete __zwP[id]; if(f) f(r); }; __zw.onerror=()=>{ __zw=false; }; }catch(e){ __zw=false; } return __zw; }
+async function zPack(str){ const w=typeof CompressionStream!=='undefined'&&zWorker(); if(w){ const r=await new Promise(res=>{ const id=++__zwN; __zwP[id]=res; try{ w.postMessage([id,str]); }catch(e){ delete __zwP[id]; res(null); } setTimeout(()=>{ if(__zwP[id]){ delete __zwP[id]; res(null); } },3000); }); if(r) return r; } return zPackMain(str); }
+async function zPackMain(str){ try{ if(typeof CompressionStream==='undefined') return str; const cs=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip')); const b=new Uint8Array(await new Response(cs).arrayBuffer()); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return 'z1:'+btoa(s); }catch(e){ return str; } }
+async function zUnpack(g){ if(typeof g!=='string'||g.slice(0,3)!=='z1:') return g; const bin=atob(g.slice(3)), b=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i); const ds=new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')); return await new Response(ds).text(); }
+function cloudCopy(g,rev){ try{ const o=JSON.parse(g); delete o.undo; if(rev!=null) o.__rev=rev; return JSON.stringify(o); }catch(e){ return g; } }
+function fbDelRoom(code){ try{ if(/^[A-Z0-9]{6}$/.test(code||'')) fetch(FB_ROOT+code+'.json',{method:'DELETE',keepalive:true}); }catch(e){} }
 async function fbSend(path,method,val){ try{ const r=await fetch(fbUrl(path),{method,body:JSON.stringify(val)}); return r.ok; }catch(e){ return false; } }
 function sendWing(m){ if(REMOTE){ showSending(true); fbSend('cmds','POST',JSON.stringify(m)); } else if(BC) BC.postMessage(m); }
 function showSending(on){ let el=document.getElementById('kfa-send'); if(!el){ el=document.createElement('div'); el.id='kfa-send'; el.textContent='Sending to the instructor…'; document.body.appendChild(el); } el.classList.toggle('on',!!on); clearTimeout(window.__sendT); if(on) window.__sendT=setTimeout(()=>el.classList.remove('on'),6000); }
@@ -1311,9 +1317,10 @@ function instructorAlive(){ return REMOTE?Date.now()-__remoteSeen<9000:(BC&&Date
 const cmd=new Proxy({},{get:(_,fn)=>(...args)=>{ if(!CMD_OK.includes(fn)) return;
   if(MODE==='wing'&&UI_ONLY.has(fn)){ window[fn](...args); return; }          // stays on this screen
   if(MODE==='wing'&&instructorAlive()) window.__waitN=0;
-  if(MODE==='wing'&&(REMOTE||BC)&&!instructorAlive()&&(REMOTE||performance.now()<4000||lastHb>0)&&(window.__waitN=(window.__waitN||0)+1)<40){ if(BC&&!REMOTE) BC.postMessage({ping:1}); if(window.__waitN===2) notice('Waiting for the instructor screen. Your action goes through when it answers.'); setTimeout(()=>cmd[fn](...args),250); return; }
+  if(MODE==='wing'&&REMOTE&&!instructorAlive()&&!window.__slowSaid){ window.__slowSaid=1; notice('The instructor screen is slow to answer. Your clicks are queued and go through in order.'); setTimeout(()=>{ window.__slowSaid=0; },15000); }
+  if(MODE==='wing'&&BC&&!REMOTE&&!instructorAlive()&&(performance.now()<4000||lastHb>0)&&(window.__waitN=(window.__waitN||0)+1)<40){ if(BC&&!REMOTE) BC.postMessage({ping:1}); if(window.__waitN===2) notice('Waiting for the instructor screen. Your action goes through when it answers.'); setTimeout(()=>cmd[fn](...args),250); return; }
   if(MODE==='wing') window.__waitN=0;   // wait for the instructor window; never write alongside it   // just opened: wait to hear from the instructor window
-  if(MODE==='wing'&&instructorAlive()){ const team=args[0];
+  if(MODE==='wing'&&(REMOTE||instructorAlive())){ const team=args[0];
     if(fn==='wingSubmit'){ const c=checkPlan(planOf(team),S.plot?S.plot.path:[]); if(c.block) return; }
     sendWing({cmd:fn,args,team,ui:{plot:S.plot,wsel:(S.wsel||{})[team],wselAf:((S.wselAf||{})[team]),wform:(S.wform||{})[team],rfiPick:((S.rfiPick||{})[team])}});
     if(fn==='wingSubmit'){ const f=wingForm(team); f.cargo={}; f.tail=null; S.plot=null; }
@@ -1340,30 +1347,50 @@ function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
 if(BC) BC.onmessage=onWingMsg;
 if(MODE==='instructor') setTimeout(()=>{ document.querySelectorAll('#panel [id], #save-status').forEach(el=>{ if(!/^(lg-|set-)/.test(el.id)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) if(window.morphable) window.morphable(el); }); },0);
 setTimeout(()=>{
-  if(MODE==='instructor'&&ROOM){
+  if(MODE==='instructor'&&ROOM&&!window.__noCloud){   /* test builds stay off the server unless a test asks (owner 11-10: no clutter) */
     let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
-    window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; return fbSend('live','PUT',{rev:__rev,t:Date.now(),clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
+    window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; return fbSend('sync/live','PUT',{rev:__rev,t:Date.now(),clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
       if(now===true){ clearTimeout(liveT); liveT=null; return send(); } if(liveT) return; liveT=setTimeout(()=>{ liveT=null; send(); },900); };
-    let upBusy=false, upAgain=false;   /* R10.27 one upload at a time; the newest game always lands last (separate-browser test 11-10) */
-    window.cloudSave=(now)=>{ clearTimeout(gameT); const run=async()=>{ if(window.__standby) return; if(upBusy){ upAgain=true; return; } upBusy=true; try{ do{ upAgain=false; let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g||g===lastGame) continue; if(await fbSend('game','PUT',g)){ lastGame=g; __rev++; window.__cloudAt=Date.now(); await cloudLive(true); } else { window.__cloudBad=Date.now(); break; } } while(upAgain); } finally{ upBusy=false; } }; if(now||document.hidden) run(); else gameT=setTimeout(run,30); };
+    let upBusy=false, upAgain=false, forceQ=false, prevK=null, prevLen={}, lastFullAt=0, fullT=null, needFull=true;   /* R10.27 one upload at a time; R10.45 changes only */
+    const scheduleFull=()=>{ if(fullT) return; fullT=setTimeout(()=>{ fullT=null; window.cloudSave('full'); },Math.max(50,2000-(Date.now()-lastFullAt))); };
+    window.cloudSave=(now)=>{ clearTimeout(gameT); if(now==='full'||now===true) forceQ=true; const run=async()=>{ if(window.__standby) return; if(upBusy){ upAgain=true; return; } upBusy=true; try{ do{ upAgain=false; const fz=forceQ; forceQ=false;
+        let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g) continue; const same=g===lastGame; if(same&&!fz) continue;
+        let cur; try{ cur=JSON.parse(g); }catch(e){ continue; } delete cur.undo; const ks={}; for(const k in cur) ks[k]=JSON.stringify(cur[k]);
+        let delta=null; if(!same&&prevK&&!needFull&&!fz){ const set={}, app={}, del=[]; let n=0;
+          for(const k in ks){ if(ks[k]===prevK[k]) continue; const v=cur[k]; if(Array.isArray(v)&&prevLen[k]!=null&&prevLen[k]>0&&v.length>=prevLen[k]&&JSON.stringify(v.slice(0,prevLen[k]))===prevK[k]){ app[k]=v.slice(prevLen[k]); n+=JSON.stringify(app[k]).length; } else { set[k]=v; n+=ks[k].length; } }
+          for(const k in prevK) if(!(k in ks)) del.push(k); if(n<40000) delta={set,app,del}; }
+        const nr=same?__rev:__rev+1; let ok=false;
+        if(window.__standby) break; if(delta){ ok=await fbSend('sync/delta','PUT',JSON.stringify({rev:nr,base:__rev,...delta})); window.__upKB=Math.round(JSON.stringify(delta).length/1024*10)/10; if(ok) scheduleFull(); }
+        else { cur.__rev=nr; const up=await zPack(JSON.stringify(cur)); window.__fullKB=Math.round(up.length/1024); if(window.__standby) break; ok=await fbSend('game','PUT',up); if(ok){ lastFullAt=Date.now(); needFull=false; if(!same&&!window.__standby) await fbSend('sync/delta','PUT',JSON.stringify({rev:nr,base:__rev,full:1})); } }
+        if(ok){ lastGame=g; __rev=nr; prevK=ks; prevLen={}; for(const k in cur) if(Array.isArray(cur[k])) prevLen[k]=cur[k].length; window.__cloudAt=Date.now(); await cloudLive(true); } else { window.__cloudBad=Date.now(); needFull=true; break; } } while(upAgain||forceQ); } finally{ upBusy=false; } };
+      if(now||document.hidden) run(); else gameT=setTimeout(run,0); };
     window.cloudAlert=(team,text)=>{ alerts[team]={text,t:Date.now()}; cloudLive(true); };
     setInterval(()=>cloudLive(true),3000);
-    const pullCmds=async()=>{ if(busy||window.__standby) return; busy=true; try{ const c=await fbGet('cmds'); if(c&&typeof c==='object'){ const del={}; for(const k of Object.keys(c).sort()){ del[k]=null; let m=c[k]; try{ if(typeof m==='string') m=JSON.parse(m); onWingMsg({data:m}); }catch(e){ console.error(e); } } await fbSend('cmds','PATCH',del); } }finally{ busy=false; } };
-    setInterval(pullCmds,300); try{ const es=new EventSource(fbUrl('cmds')); es.addEventListener('put',e=>{ try{ const d=JSON.parse(e.data); if(d&&d.data!==null) pullCmds(); }catch(x){} }); es.addEventListener('patch',()=>pullCmds()); }catch(e){}
-    cloudSave(); cloudLive(true);
+    let seen=new Set(), delQ={}, delT=null; const flushDel=()=>{ delT=null; const d=delQ; delQ={}; if(Object.keys(d).length) fbSend('cmds','PATCH',d); };
+    let rT=null; const runCmd=(k,m)=>{ if(seen.has(k)) return; seen.add(k); if(seen.size>4000) seen=new Set([...seen].slice(-2000)); delQ[k]=null; if(!delT) delT=setTimeout(flushDel,250); window.__deferR=true; try{ if(typeof m==='string') m=JSON.parse(m); if(m) onWingMsg({data:m}); }catch(e){ console.error(e); } finally{ window.__deferR=false; } if(window.__needR&&!rT) rT=setTimeout(()=>{ rT=null; if(window.__needR){ window.__needR=false; render(); } },16); };
+    let sseAt=0; const pullCmds=async(force)=>{ if(busy||window.__standby) return; if(!force&&window.__esC&&window.__esC.readyState===1&&Date.now()-sseAt<1500) return; busy=true; try{ const c=await fbGet('cmds'); if(c&&typeof c==='object'){ for(const k of Object.keys(c).sort()) runCmd(k,c[k]); } }finally{ busy=false; } };
+    setInterval(pullCmds,300); try{ const es=new EventSource(fbUrl('cmds')); window.__esC=es; es.addEventListener('open',()=>{ sseAt=Date.now(); pullCmds(true); }); es.addEventListener('keep-alive',()=>{ sseAt=Date.now(); }); es.addEventListener('put',e=>{ sseAt=Date.now(); if(window.__standby) return; try{ const d=JSON.parse(e.data); if(!d||d.data===null) return; if(d.path==='/'){ if(typeof d.data==='object') for(const k of Object.keys(d.data).sort()) runCmd(k,d.data[k]); } else runCmd(d.path.replace(/^\//,''),d.data); }catch(x){ pullCmds(true); } }); es.addEventListener('patch',()=>{ sseAt=Date.now(); }); }catch(e){}
+    cloudSave(); cloudLive(true); setTimeout(()=>{ lastGame=''; cloudSave(true); cloudLive(true); },2500);
+    try{ const old=localStorage.getItem('kfa-room-old'); if(old&&old!==ROOM){ setTimeout(()=>fbDelRoom(old),1500); setTimeout(()=>{ fbDelRoom(old); try{ localStorage.removeItem('kfa-room-old'); }catch(e){} },6000); } }catch(e){}   /* an upload in flight at New game can land after the first removal */
   }
   if(REMOTE){
     let rev=-1, busy=false;
-    const apply=g=>{ try{ const k=gameKey(g); if(k&&k===window.__gk) return; window.__gk=k; const n=JSON.parse(g); if(!validSave(n)) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); S=n; Object.assign(S,keep); restoreUi(ui); try{ localStorage.setItem('kfa-game',g); }catch(e){} render(); }catch(e){} };
-    const tick=async(pre)=>{ if(busy) return; busy=true; try{ const L=pre||await fbGet('live'); if(L&&L.t){ if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
+    let gotRev=-1, lagAt=0, fetching=false;
+    const apply=g=>{ try{ const n=JSON.parse(g); if(n&&n.__rev!=null){ if(n.__rev<gotRev) return; gotRev=n.__rev; delete n.__rev; } const k=gameKey(g); if(k&&k===window.__gk) return; window.__gk=k; if(!validSave(n)) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); S=n; Object.assign(S,keep); restoreUi(ui); try{ localStorage.setItem('kfa-game',JSON.stringify(S)); }catch(e){} render(); }catch(e){} };
+    const pullFull=async()=>{ if(fetching) return; fetching=true; try{ let g=await fbGet('game'); if(typeof g==='string'){ g=await zUnpack(g); if(typeof g==='string'){ apply(g); showSending(false); } } }catch(e){} finally{ fetching=false; } };
+    const applyDelta=d=>{ if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return; } } if(!d||d.rev==null||d.rev<=gotRev) return; if(d.full||d.base!==gotRev){ pullFull(); return; }
+      try{ const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); for(const k in (d.set||{})) S[k]=d.set[k]; for(const k in (d.app||{})) S[k]=(Array.isArray(S[k])?S[k]:[]).concat(d.app[k]); for(const k of (d.del||[])) delete S[k];
+        Object.assign(S,keep); restoreUi(ui); gotRev=d.rev; window.__gk=null; lagAt=0; try{ localStorage.setItem('kfa-game',JSON.stringify(S)); }catch(e){} render(); showSending(false); }catch(e){ pullFull(); } };
+    const tick=async(pre)=>{ if(busy) return; busy=true; try{ const L=pre||await fbGet('sync/live'); if(L===null&&window.__lastLiveT&&!window.__goneSaid){ window.__goneSaid=1; notice('The instructor closed this game. Ask the instructor for the game code to rejoin.'); } if(L&&L.t){ window.__goneSaid=0; if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
         const a=L.alerts&&L.alerts[WING_ID]; if(a&&a.t!==window.__lastAlert){ if(window.__lastAlert!==undefined) alert(a.text); window.__lastAlert=a.t; }
-        if(L.rev!==rev){ const g=await fbGet('game'); if(typeof g==='string'){ rev=L.rev; apply(g); showSending(false); } }
+        if(gotRev>=L.rev){ rev=L.rev; lagAt=0; } else { if(!lagAt) lagAt=Date.now(); else if(Date.now()-lagAt>1200){ lagAt=Date.now(); pullFull(); } }
         S.clock=L.clock; S.hidden=L.hidden; S.running=L.running; S.endsAt=L.endsAt; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } }finally{ busy=false; } };
-    tick(); setInterval(()=>tick(),300); try{ const es=new EventSource(fbUrl('live')); const go=e=>{ let pre=null; try{ const d=JSON.parse(e.data); if(d&&d.path==='/'&&d.data&&d.data.t) pre=d.data; }catch(x){} tick(pre); }; es.addEventListener('put',go); es.addEventListener('patch',()=>tick()); window.__es=es; }catch(e){}
+    tick(); setInterval(()=>tick(),300); try{ const es=new EventSource(fbUrl('sync')); es.addEventListener('put',e=>{ try{ const d=JSON.parse(e.data); if(!d) return; if(d.path==='/'){ const v=d.data||{}; if(v.delta) applyDelta(v.delta); tick(v.live&&v.live.t?v.live:null); } else if(d.path==='/live'){ tick(d.data&&d.data.t?d.data:null); } else if(d.path==='/delta'){ if(d.data) applyDelta(d.data); } }catch(x){ tick(); } }); es.addEventListener('patch',()=>tick()); window.__es=es; }catch(e){}
+    pullFull();
   }
 },0);
 if(BC&&MODE==='instructor'){ BC.postMessage({insHello:INS_ID}); setInterval(()=>{ if(!window.__standby) BC.postMessage({hb:1}); },800); }
-if(MODE==='instructor'){ addEventListener('pagehide',()=>saveNow());
+if(MODE==='instructor'){ addEventListener('pagehide',()=>{ saveNow(); if(!window.__keepRoom&&!window.__standby&&!window.__noCloud&&ROOM) fbDelRoom(ROOM); });
   let asked=false; try{ asked=sessionStorage.getItem('kfa-asked')==='1'; }catch(e){}
   const started=S.savedAt&&((S.log||[]).length>2||S.turn>1||!S.opening);
   if(!asked&&started) setTimeout(resumeChoice,300); else { try{ sessionStorage.setItem('kfa-asked','1'); }catch(e){} } }
@@ -1673,7 +1700,7 @@ function fitVb(){ if(MODE!=='instructor') return; const box=document.querySelect
 addEventListener('resize',()=>{ clearTimeout(window.__fvt); window.__fvt=setTimeout(()=>{ try{ fitVb(); }catch(e){} },150); });
 setTimeout(()=>{ try{ fitVb(); }catch(e){} },400);
 function renderNoSave(){ const sv=save; save=function(){}; try{ render(); } finally { save=sv; } }
-function render(){
+function render(){ if(window.__deferR){ window.__needR=true; return; }
   const host=document.getElementById('boardHost'); ensureStatic(document); const bh=boardHtml(true); setHTML(host,bh);
   host.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>selectHex(p.dataset.id)));
   for(const id in WINS) if(WINS[id]&&!WINS[id].closed) wingRender(id);
@@ -2778,7 +2805,7 @@ function fitPanelTabs(){ try{ const ph=document.querySelector('#panel .ph'), pt=
 if(MODE==='instructor'){ addEventListener('resize',fitPanelTabs); setInterval(fitPanelTabs,1000); setTimeout(fitPanelTabs,50); }
 async function preClassCheck(){ const R=[]; const ok=(b,y,n)=>R.push(`<div class="pcc ${b?'ok':'bad'}"><b>${b?'&#10003;':'&#10005;'}</b>${b?y:n}</div>`);
   let ls=false; try{ localStorage.setItem('kfa-t','1'); ls=localStorage.getItem('kfa-t')==='1'; localStorage.removeItem('kfa-t'); }catch(e){} ok(ls,'This laptop saves the game (browser storage works).','This browser cannot save. Turn off private (InPrivate) mode.');
-  let net=false; try{ const r=await fetch(FB_ROOT+(ROOM||'X')+'/live.json?t='+Date.now(),{cache:'no-store'}); net=r.ok; }catch(e){} ok(net,`Join code server reachable. Wings on other laptops can join with code ${ROOM||'none'}.`,'The join-code server is blocked on this network. Run every screen on this laptop.');
+  let net=false; try{ const r=await fetch(FB_ROOT+(ROOM||'X')+'/sync/live.json?t='+Date.now(),{cache:'no-store'}); net=r.ok; }catch(e){} ok(net,`Join code server reachable. Wings on other laptops can join with code ${ROOM||'none'}.`,'The join-code server is blocked on this network. Run every screen on this laptop.');
   let ver=null; try{ const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(r.ok) ver=(await r.json()).v; }catch(e){} ok(!ver||ver===APP_VER,`Latest version (${APP_VER}).`,`A newer version (${ver}) is online. Press Ctrl+F5.`);
   const w=window.open('','kfa-popcheck','width=200,height=120'); const pop=!!w; if(w) w.close(); ok(pop,'Pop-up windows allowed: the Projector and Wing windows can open.','Pop-ups are blocked. Allow pop-ups for this site (icon at the right of the address bar).');
   { const t0=performance.now(); for(let k=0;k<5;k++) render(); const rms=(performance.now()-t0)/5; const t1=performance.now(); for(let k=0;k<5;k++) save(); const sms=(performance.now()-t1)/5; const tot=Math.round(rms+sms);
@@ -2800,7 +2827,7 @@ function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm')
 function gmDo(k){ document.getElementById('gm').style.display='none';
   if(k==='pause'){ clockStartPause(); render(); }
   else if(k==='save'){ saveFile(); banner('GAME SAVED TO FILE',false); render(); }
-  else if(k==='exit'){ if(S.running) clockStartPause(); save(); go(''); }
+  else if(k==='exit'){ if(S.running) clockStartPause(); window.__keepRoom=true; saveNow(); if(window.cloudSave) cloudSave(true); setTimeout(()=>go(''),400); }
   else if(k==='undo') gmUndo();
   else if(k==='check') preClassCheck();
   else if(k==='restart') newGame();
@@ -2830,7 +2857,8 @@ function applySetup(){ const g=id=>+document.getElementById(id).value; const w=g
   log(`Game setup: ${w} points to win · ${dd} days (${dd*3} turns) · ${tm}-minute turns · ${pm}-minute planning`); document.getElementById('set-msg').textContent='Saved.'; SETEDIT=false; render(); }
 function keepSetup(fn){ const k={winPts:S.winPts,turns:S.turns,timerMin:S.timerMin,planMin:S.planMin,sitStart:S.sitStart,conflictFrom:S.conflictFrom}; fn(); for(const x in k) if(k[x]!=null) S[x]=k[x]; S.clock=(S.planMin||PLAN_MIN)*60; }
 function newGid(){ S.gid=Date.now()+'-'+Math.random().toString(36).slice(2,6); }
-function newGame(){ if(!confirmThen('Start a new game? The current game is kept as a backup on this laptop (Save game tab: Restore last game).',()=>newGame(),'Start new game')) return; if(S.log&&S.log.length>2){ try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} } keepSetup(()=>{ S=blank(); upgradeState(); }); newGid(); log(`New game · 4 teams · ${S.turns} turns`); render(); }
+function newGame(){ if(!confirmThen('Start a new game? The current game is kept as a backup on this laptop (Save game tab: Restore last game).',()=>newGame(),'Start new game')) return; if(S.log&&S.log.length>2){ try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} } keepSetup(()=>{ S=blank(); upgradeState(); }); newGid(); log(`New game · 4 teams · ${S.turns} turns`); render();
+  if(MODE==='instructor'&&ROOM&&!window.__noCloud){ const old=ROOM, A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let nc=old; while(nc===old) nc=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join(''); window.__keepRoom=true; window.__standby=true; saveNow(); try{ localStorage.setItem('kfa-room',nc); localStorage.setItem('kfa-room-old',old); sessionStorage.setItem('kfa-asked','1'); }catch(e){} fbDelRoom(old); setTimeout(()=>location.reload(),300); } }
 const PTABS=[['turn','Turn'],['map','Map'],['air','Airlift'],['wings','Wings'],['dice','Dice'],['save','Save game']];
 const SEC_TAB={'TODAY:':'turn','RESOURCE REQUESTS':'turn','TURN':'turn','TEAM BASE REQUESTS':'turn','SELECTED HEX':'map','AIRLIFT PLANS':'air','WINGS':'wings','DICE':'dice',"TODAY'S ORDERS":'dice','SAVE':'save'};
 function setupTabs(){ const panel=document.getElementById('panel'); panel.querySelectorAll('.sec').forEach(s=>{ const h=s.querySelector('h3'); const txt=h?h.childNodes[0].textContent.trim().toUpperCase():''; const key=Object.keys(SEC_TAB).find(k=>txt.startsWith(k)); s.dataset.tab=key?SEC_TAB[key]:'save'; });
@@ -2858,14 +2886,14 @@ async function lgGo(){ const r=document.getElementById('lg-role').value; if(r===
     if(!code){ try{ sessionStorage.removeItem('kfa-join'); }catch(e){} return go(r); }
     if(code.length!==6){ err.textContent='The join code has 6 letters and numbers.'; return; }
     err.textContent='Checking the code…';
-    let live=null; try{ const x=await fetch(FB_ROOT+code+'/live.json?t='+Date.now(),{cache:'no-store'}); live=x.ok?await x.json():null; }catch(e){ err.textContent='Cannot reach the game server from this network.'; return; }
+    let live=null; try{ const x=await fetch(FB_ROOT+code+'/sync/live.json?t='+Date.now(),{cache:'no-store'}); live=x.ok?await x.json():null; }catch(e){ err.textContent='Cannot reach the game server from this network.'; return; }
     if(!live||!live.t){ err.textContent='No game found with that code. Check the code on the projector.'; return; }
     try{ sessionStorage.setItem('kfa-join',code); }catch(e){}
     return go(r); }
   go(r); }
 (function(){ const h=()=>{ const el=document.getElementById('lg-home'); if(!el) return; if(location.protocol==='file:'){ el.style.display='none'; return; } el.href=/(\/|\/index\.html)$/.test(location.pathname)?'../':'./'; }; if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',h); else h(); })();
 async function resumeCode(code,fromLogin){ code=String(code||'').trim().toUpperCase(); if(!/^[A-Z0-9]{6}$/.test(code)) return 'Enter the 6-character game code.';
-  let g; try{ const r=await fetch(FB_ROOT+code+'/game.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return 'Cannot reach the game server from this network.'; g=await r.json(); }catch(e){ return 'Cannot reach the game server from this network.'; }
+  let g; try{ const r=await fetch(FB_ROOT+code+'/game.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return 'Cannot reach the game server from this network.'; g=await r.json(); if(typeof g==='string') g=await zUnpack(g); }catch(e){ return 'Cannot reach the game server from this network.'; }
   let n=null; try{ n=typeof g==='string'?JSON.parse(g):g; }catch(e){} if(!n||!validSave(n)) return `No saved game was found for code ${code}.`;
   try{ save=function(){}; window.__noSave=true; if(!fromLogin&&S&&S.log&&S.log.length>2) localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null}));
     localStorage.setItem('kfa-game',JSON.stringify({...n,running:false,endsAt:null})); localStorage.setItem('kfa-room',code); sessionStorage.setItem('kfa-ins','1'); sessionStorage.setItem('kfa-asked','1'); }catch(e){ return 'This browser blocked saving. Allow site data for this page and try again.'; }
