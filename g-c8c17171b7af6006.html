@@ -566,9 +566,9 @@ body{font-size:15px}
 .lg-right{position:relative}.lg-home{position:absolute;top:22px;left:28px;color:#9AA5AF;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.3px;padding:6px 10px;border-radius:3px}.lg-home:hover{color:#EDF0F2;background:rgba(255,255,255,.06)}
 .room{font-family:Consolas,monospace;font-size:13px;letter-spacing:2px;color:var(--mute);padding:0 16px;border-left:1px solid var(--line);white-space:nowrap}.room b{color:#F2C14E;font-size:20px;letter-spacing:4px;margin-left:6px}#app.projmode .room b{font-size:24px}
 /* owner 11-10: projector map larger, side data smaller */
-#app.projmode .boardbody{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,460px)!important}#app.projmode .mapbox,#app:not(.projmode) .mapbox{aspect-ratio:1960/1350!important;max-width:100%!important;width:100%;height:100%}#app.projmode .side{zoom:.82}
+#app.projmode .boardbody{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,460px)!important}#app.projmode .mapbox,#app:not(.projmode) .mapbox{aspect-ratio:1960/1350!important;max-width:100%!important;width:100%;height:100%}
 /* owner 11-10: Resources tables never cut off (fall to one column when narrow); no pulsing ring on moving aircraft */
-.rst2{grid-template-columns:repeat(auto-fit,minmax(440px,1fr))!important}.rst2 .rst .st{width:auto!important;white-space:nowrap;padding-right:10px}.rst2 .rst .q{width:56px!important}.rst .st{white-space:nowrap}
+.rst2{grid-template-columns:repeat(auto-fit,minmax(396px,1fr))!important}@media (max-width:1400px){.rst2 .rst .q{width:44px!important}.rst2 .rst th{font-size:10px!important;letter-spacing:.5px}.rst2 .rst td{padding-left:4px;padding-right:4px}}.rst2 .rst .st{width:auto!important;white-space:nowrap;padding-right:10px}.rst2 .rst .q{width:56px!important}.rst .st{white-space:nowrap}
 .flping{display:none!important}
 /* owner 11-10: strikes and jamming never flash or pulse; a struck base is a steady red outline */
 .struck{animation:none!important;opacity:1!important}.flash{animation:none!important;stroke-width:10;stroke-opacity:.9}
@@ -648,6 +648,13 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 [onclick]:not(button):not(.btn):not(.rl).kp{filter:brightness(1.4);transform:translateY(1px)}
 #i-movehint,#i-today{display:none!important}
 .side .sbox.legend{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start}.side .sbox.legend>h4,.side .sbox.legend>.lgd,.side .sbox.legend>div:nth-child(6){grid-column:1/-1}.side .sbox.legend>div{min-width:0}
+/* R10.22 GO review */
+.topbar>span{white-space:nowrap}.topbar .hrs{min-width:0;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}@media (max-width:1500px){.topbar>span{padding:0 12px}.topbar .t{letter-spacing:3px;font-size:15px}}
+#kfa-ver{display:none!important}.gmv{padding:8px 14px 4px;font-size:11px;color:var(--dim);letter-spacing:.5px;border-top:1px solid var(--line);margin-top:4px}
+.ktag{color:#fff!important;padding:1px 7px;border-radius:2px;font-weight:600}.kcard.free{background:#1B2128!important;border-color:#3A4652!important}.kcard.free p{color:#C9D1D8}
+.side .sbox.legend>div{font-size:13px!important}#app.projmode .side .sbox.legend>div{font-size:16px!important}
+.rlr.bad{color:#F08A7E!important}.rlr.warn{color:#E3B25C!important}
+.score b,.score b>span,.pth b span{font-family:"Segoe UI",Arial,sans-serif!important;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -669,7 +676,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
       <label class="lg-lbl" for="lg-role">Role</label>
       <select id="lg-role" class="lg-in" onchange="lgRole()"></select>
       <div id="lg-pwbox"><label class="lg-lbl" for="lg-pwi">Password</label><input id="lg-pwi" type="password" class="lg-in" autocomplete="off" onkeydown="if(event.key==='Enter')lgGo()"><label class="lg-lbl" for="lg-resume">Resume a game <span style="opacity:.6;font-weight:400">(optional · enter its game code on any computer)</span></label><input id="lg-resume" class="lg-in" maxlength="6" autocomplete="off" spellcheck="false" style="text-transform:uppercase" placeholder="Leave blank to continue on this laptop" onkeydown="if(event.key==='Enter')lgGo()"></div>
-      <div id="lg-roombox" style="display:none"><label class="lg-lbl" for="lg-room">Join code <span style="opacity:.6;font-weight:400">(shown on the projector · leave blank on the instructor laptop)</span></label><input id="lg-room" class="lg-in" maxlength="6" autocomplete="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:6px;font-family:Consolas,monospace" onkeydown="if(event.key==='Enter')lgGo()"></div>
+      <div id="lg-roombox" style="display:none"><label class="lg-lbl" for="lg-room">Game code <span style="opacity:.6;font-weight:400">(shown on the projector · leave blank on the instructor laptop)</span></label><input id="lg-room" class="lg-in" maxlength="6" autocomplete="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:6px;font-family:Consolas,monospace" onkeydown="if(event.key==='Enter')lgGo()"></div>
       <div id="lg-err" class="lg-err"></div>
       <button class="lg-go" onclick="lgGo()">Sign in</button>
       <div class="lg-note">Open the Instructor window first. It runs the game for the projector and the wing screens.</div>
@@ -689,11 +696,11 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
         <button onclick="gmDo('check')"><b>Pre-class check</b><span>Confirms network, join code, saving and windows before students arrive</span></button>
         <button onclick="gmDo('save')"><b>Download a copy</b><span>Optional file backup. The game already saves online by itself.</span></button>
         <button onclick="gmDo('exit')"><b>Pause and exit</b><span>Stops the timer and signs out. Sign back in here, or enter the game code on any computer, to continue.</span></button>
-        <button onclick="gmDo('restart')"><b>Restart game</b><span>Starts a new game. This one is kept on the laptop as a backup.</span></button>
+        <button onclick="gmDo('restart')"><b>New game</b><span>Starts a new game. This one is kept on the laptop as a backup.</span></button>
         <button onclick="gmDo('prev')"><b>Restore last game</b><span>Brings back the game that was running before the last restart.</span></button>
         <button onclick="togglePanel()"><b>Hide panel</b><span>More room for the board (H)</span></button>
         <button onclick="go('')"><b>Sign out</b><span>The game stays saved online and on this laptop.</span></button>
-      </div></span>
+      <div class="gmv" id="gm-ver"></div></div></span>
       </div>
     <div class="ptabs" id="ptabs"></div>
 
@@ -812,7 +819,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 
     <div class="sec">
       <h3>WINGS</h3>
-      <div class="row" style="align-items:center;margin-bottom:8px"><b style="font-size:13px">Target points to win</b><input class="field" type="number" min="50" step="10" style="width:80px" value="${''}" id="winpts" onchange="S.winPts=Math.max(10,+this.value||200);log('Points to win set to '+S.winPts);render()"><span class="hint">(schoolhouse 200 · rulebook 100)</span></div>
+      <div class="row" style="align-items:center;margin-bottom:8px"><b style="font-size:13px">Target points to win</b><input class="field" type="number" min="50" step="10" style="width:80px" value="${''}" id="winpts" onchange="S.winPts=Math.max(10,+this.value||200);log('Points to win set to '+S.winPts);render()"><span class="hint">(course standard 200)</span></div>
       <div class="row" id="i-show" style="margin-bottom:6px"></div>
       <div class="row" id="i-wingscr" style="margin-bottom:8px"></div>
       <div id="i-teams"></div>
@@ -1005,7 +1012,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.12.1';   // shown on every screen; bump on each release
+const APP_VER='1.13.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1119,7 +1126,7 @@ function lockedSet(team,hex){ const s=(S.rfiSet||{})[team]; if(!s||!s.length) re
 function rfiChosen(team,hex){ return S.bases[team].some(b=>b.hex===hex&&b.role!=='mob'&&b.role!=='hub'); }
 function noteRfiSet(team,hex){ if(rfiInfo(team,hex).cap!==5) return; S.rfiSet=S.rfiSet||{}; S.rfiSetHex=S.rfiSetHex||{}; const asked=Object.keys(rfiAns(team,hex)).map(Number);
   if(!S.rfiSet[team]){ S.rfiSet[team]=asked.slice(0,5); S.rfiSetHex[team]=hex; } else if(S.rfiSetHex[team]===hex){ for(const i of asked) if(!S.rfiSet[team].includes(i)&&S.rfiSet[team].length<5) S.rfiSet[team].push(i); } }
-function unlockRfi(){ gmSnap('unlock RFIs'); const o=ownerOf(S.sel); if(!o||o.b.role==='mob') return; const add=(o.b.rfiMax||5)>=5?5:3; o.b.rfiMax=Math.min(10,(o.b.rfiMax||5)+add); if(S.rfiSet) delete S.rfiSet[o.team];
+function unlockRfi(){ gmSnap('unlock RFIs'); const o=ownerOf(S.sel); if(!o||o.b.role==='mob') return; const add=(o.b.rfiMax||5)>=5?5:3; o.b.rfiMax=Math.min(10,(o.b.rfiMax||5)+add);
   log(`${TM[o.team].n} ${S.sel}: instructor unlocked ${add} new RFIs`); banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} · ${add} NEW RFIs UNLOCKED BY THE INSTRUCTOR`,false); render(); }
 function rfiKey(){ return S.opening?0:S.turn; }
 function rfiAns(team,hex){ return ((S.rfi||{})[team]||{})[hex]||{}; }
@@ -1204,7 +1211,7 @@ const ACCESS={Indonesia:[5,3],Brunei:[5,3],India:[5,3],Malaysia:[4,2],Philippine
 const PLAN_MIN=30;   // planning phase timer (owner's default)
 const blank=()=>({winPts:200,turn:1,turns:12,clock:PLAN_MIN*60,running:false,hidden:false,sel:null,highlights:[],targets:[],
   bases:{alpha:[{hex:'408',st:'foc',role:'mob',sid:1,rfi:{},rfiMax:5,since:0}],bravo:[{hex:'711',st:'foc',role:'mob',sid:1,rfi:{},rfiMax:5,since:0}],charlie:[{hex:'712',st:'foc',role:'mob',sid:1,rfi:{},rfiMax:5,since:0}],delta:[{hex:'310',st:'foc',role:'mob',sid:1,rfi:{},rfiMax:5,since:0}]},opened:{},rb:1,flights:[],fSeq:1,plot:null,airApprove:false,show:{alpha:true,bravo:true,charlie:true,delta:true},scores:{alpha:0,bravo:0,charlie:0,delta:0},pts:{alpha:{mp:0,dp:0,rp:0},bravo:{mp:0,dp:0,rp:0},charlie:{mp:0,dp:0,rp:0},delta:{mp:0,dp:0,rp:0}},
-  inv:startInv(),fighters:{alpha:{'408':16},bravo:{'711':16},charlie:{'712':16},delta:{'310':16}},fmoves:[],sorties:[],redz:{},tasks:{},orders:{sit:'crisis',intent:'—',targets:'—',acft:'roll at start of day',access:'—'},requests:[],movesOpen:true,opening:true,reqSeq:1,ticker:{text:'Kingfish ACE · MOIC. Planning phase · wings choose spokes and plot airlift',alarm:false},flash:null,log:[]});
+  inv:startInv(),fighters:{alpha:{'408':16},bravo:{'711':16},charlie:{'712':16},delta:{'310':16}},fmoves:[],sorties:[],redz:{},tasks:{},orders:{sit:'crisis',intent:'—',targets:'—',acft:'roll at start of day',access:'—'},requests:[],movesOpen:true,opening:true,reqSeq:1,ticker:{text:'Planning phase · wings choose spokes and plot airlift',alarm:false},flash:null,log:[]});
 const SAVE_V=3;   // bump to discard older saved games
 let S; try{S=JSON.parse(localStorage.getItem('kfa-game'))}catch(e){} window.__bootSavedAt=S&&S.savedAt; if(!S||!S.bases||S.v!==SAVE_V){ S=blank(); }
 function upgradeState(){
@@ -1222,6 +1229,7 @@ if(!S.flights){ S.flights=[]; S.fSeq=1; S.plot=null; }
 for(const k in S.bases) for(const b of S.bases[k]){ if(!b.role) b.role='spoke'; if(!b.rfi){ b.rfi={}; b.rfiMax=5; } }
 if(!S.rb){ for(const k in S.bases) for(const b of S.bases[k]) if(b.role==='hub'&&b.st==='foc'&&['408','711','712','209'].includes(b.hex)&&!Object.keys(b.rfi||{}).length){ b.role='mob'; b.sid=1; if(b.hex==='209') b.hex='310'; }
   S.bases.delta=S.bases.delta.filter(b=>!(b.hex==='210'&&b.role==='mob')); if(S.fighters&&S.fighters.delta&&S.fighters.delta['210']&&!S.bases.delta.some(b=>b.hex==='210')){ S.fighters.delta['310']=(S.fighters.delta['310']||0)+S.fighters.delta['210']; delete S.fighters.delta['210']; } S.opened=S.opened||{}; S.rb=1; }
+if(S.inv&&S.inv.delta&&S.inv.delta['210']&&!S.bases.delta.some(b=>b.hex==='210')){ const a=S.inv.delta['210'], h=(S.inv.delta['310']=S.inv.delta['310']||{}); for(const k in a) h[k]=(h[k]||0)+a[k]; delete S.inv.delta['210']; if(S.tax) delete S.tax['delta:210']; }   /* QA 11-10: Misawa stock merged into the Yokota hub */
 for(const k in S.bases) for(const b of S.bases[k]) if(b.role!=='hub'&&!b.sid) b.sid=nextSid(k,b.role);
 }
 upgradeState();
@@ -1339,6 +1347,10 @@ function resumeChoice(){ const when=new Date(window.__bootSavedAt||S.savedAt), d
 if(BC&&MODE==='wing') setInterval(()=>{ const lost=lastHb>0&&Date.now()-lastHb>6000; let b=document.getElementById('kfa-recon');
   if(lost&&!b){ b=document.createElement('div'); b.id='kfa-recon'; b.textContent='Reconnecting to the instructor window… Your actions will send when it is back.'; document.body.appendChild(b); }
   if(!lost&&b) b.remove(); },1000);
+function keepFresh(catchUp){ let last=null; const rev=()=>{ try{ return localStorage.getItem('kfa-rev'); }catch(e){ return null; } };
+  const check=force=>{ const r=rev(); if(force||r!==last){ last=r; try{ window.__gk=null; catchUp(); }catch(e){ console.error(e); } } };
+  last=rev(); setInterval(()=>check(false),1500); addEventListener('focus',()=>check(true)); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) check(true); }); addEventListener('pageshow',()=>check(true)); }
+try{ if(navigator.locks&&navigator.locks.request) navigator.locks.request('kfa-awake-'+Math.random().toString(36).slice(2),()=>new Promise(()=>{})); }catch(e){}   /* R10.23 a tab holding a lock is not frozen by the browser */
 function gameKey(g){ return g?String(g).replace(/"savedAt":\d+,?/,'').replace(/"clock":\d+,?/,''):''; }
 function validSave(n){ return n&&n.bases&&n.v===SAVE_V; }
 function localUi(){ return {plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined}; }
@@ -1347,7 +1359,7 @@ function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; cons
 const CMD_OK=['attackDefend','wingPickAf','wingCancelFlight','wingResReq','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
 function go(route){ location.hash=route; location.reload(); }
 function save(){ if(MODE!=='instructor'&&MODE!=='wing') return; if(window.__saveQ) return; window.__saveQ=true; const go=()=>{ if(window.__saveQ) saveNow(); }; requestAnimationFrame(()=>setTimeout(go,0)); setTimeout(go,80); }
-function saveNow(){ window.__saveQ=false; if(window.__noSave||(MODE!=='instructor'&&MODE!=='wing')) return; try{ S.savedAt=Date.now(); { const str=JSON.stringify({...S,v:SAVE_V,running:false,endsAt:S.running?S.endsAt:null}); localStorage.setItem('kfa-game',str); window.__mySave=str; } if(MODE==='instructor'){ publishTick(); if(window.cloudSave) cloudSave(); } }catch(e){} }
+function saveNow(){ window.__saveQ=false; if(window.__noSave||(MODE!=='instructor'&&MODE!=='wing')) return; try{ S.savedAt=Date.now(); { const str=JSON.stringify({...S,v:SAVE_V,running:false,endsAt:S.running?S.endsAt:null}); localStorage.setItem('kfa-game',str); window.__mySave=str; try{ localStorage.setItem('kfa-rev',String(S.savedAt)); }catch(e){} } if(MODE==='instructor'){ publishTick(); if(window.cloudSave) cloudSave(); } }catch(e){} }
 function publishTick(){ try{ localStorage.setItem('kfa-tick',JSON.stringify({clock:S.clock,hidden:S.hidden,running:S.running,endsAt:S.endsAt||null,t:Date.now()})); }catch(e){} if(window.cloudLive) cloudLive(); }
 function day(){return Math.floor((S.turn-1)/3)+1} function shift(){return SHIFTS[(S.turn-1)%3]}
 function log(m){S.log.push(`[T${S.turn} D${day()} ${shift()[0].split(' ')[0]}] ${m}`);}
@@ -1532,7 +1544,7 @@ function showRoll(rs){ if(!Array.isArray(rs)) rs=[rs]; __rollBusy=true; const do
   ov.innerHTML=`<div class="rlp${rs.length>1?' multi':''}"><div class="cbk">DICE${rs.length>1?' · '+(rs.length+extra)+' ROLLS':''}</div>${rs.map((r,g)=>`<div class="rlg"><div class="rlt">${r.title}</div>${r.note?`<div class="rln">${r.note}</div>`:''}<div class="rlrow">${r.dice.map((d,i)=>`<div class="rlc" id="rl${g}_${i}"><div class="rld">${dieSvg(d.s,'?','spin')}</div><div class="rll">${d.l}</div><div class="rls">D${d.s}</div><div class="rlr"></div></div>`).join('')}</div></div>`).join('')}${extra?`<div class="rln" style="margin:16px 0 0">${extra} earlier roll${extra>1?'s are':' is'} in the log.</div>`:''}<div class="cbhint">click anywhere to close</div></div>`;
   document.body.appendChild(ov);
   rs.forEach((r,g)=>r.dice.forEach((d,i)=>{ const c=ov.querySelector('#rl'+g+'_'+i); const box=c.querySelector('.rld'); const spin=setInterval(()=>{ const v=1+Math.floor(Math.random()*d.s); box.querySelector('.dv').textContent=v; },80);
-    setTimeout(()=>{ clearInterval(spin); box.innerHTML=dieSvg(d.s,d.v,'land'); c.classList.add('done'); c.querySelector('.rlr').textContent=d.sub||''; }, 900+(g*2+i)*300); })); const last=900+rs.reduce((a,r,g)=>Math.max(a,(g*2+r.dice.length)*300),0); setTimeout(()=>{ if(ov.isConnected){ ov.classList.add('out'); setTimeout(()=>{ if(ov.isConnected){ ov.remove(); done(); } },400); } },last+8000); }
+    setTimeout(()=>{ clearInterval(spin); box.innerHTML=dieSvg(d.s,d.v,'land'); c.classList.add('done'); c.querySelector('.rlr').textContent=d.sub||''; { const s=d.sub||''; c.querySelector('.rlr').classList.add(/DENIED|HIT|CONFLICT|TARGETED|JAMMED|CYBER/.test(s)?'bad':/OVERFLIGHT/.test(s)?'warn':'ok'); }; }, 900+(g*2+i)*300); })); const last=900+rs.reduce((a,r,g)=>Math.max(a,(g*2+r.dice.length)*300),0); setTimeout(()=>{ if(ov.isConnected){ ov.classList.add('out'); setTimeout(()=>{ if(ov.isConnected){ ov.remove(); done(); } },400); } },last+8000); }
 setInterval(()=>{ try{ playRoll(); }catch(e){} },300);
 (function(){ const tag=document.createElement('div'); tag.id='kfa-ver'; tag.textContent='Kingfish ACE v'+APP_VER; document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(tag)); if(document.body) document.body.appendChild(tag);
   if(!/^https?:/.test(location.protocol)) return;
@@ -1542,7 +1554,7 @@ let __seenCombat=null, __combatPrimed=false;
 function playCombat(){ const c=S&&S.lastCombat; if(!__combatPrimed){ __combatPrimed=true; __seenCombat=c?c.id:null; return; } if(!c||c.id===__seenCombat) return; __seenCombat=c.id; if(!(MODE==='wing'&&WING_ID===c.team)) return;   // owner: only the wing that flew sees it, not the main board
   const T=TM[c.team], ov=document.createElement('div'); ov.className='cbx'; ov.onclick=()=>ov.remove();
   ov.innerHTML=`<div class="cbp" style="border-top-color:${T.c}"><div class="cbk">AIR COMBAT · CONFLICT</div>
-    <div class="cbt"><span style="color:${T.c}">${T.n}</span> · ${c.n} × ${c.ftype} <i>vs</i> <span class="cbr">${c.zname.toUpperCase()}</span></div>
+    <div class="cbt"><span class="ktag" style="background:${T.c}">${T.n}</span> · ${c.n} × ${c.ftype} <i>vs</i> <span class="cbr">${c.zname.toUpperCase()}</span></div>
     <div class="cbs">Hex ${c.target} · your D18 against Red's D${c.die} · higher roll wins, ties go to you${c.jamTxt?' · <b>'+c.jamTxt+'</b>':''}</div>
     ${(c.jamDice||[]).length?`<div class="cbjam">${c.jamDice.map(j=>`<div class="cbj"><b class="cbd red">${dieSvg(10,j.v,'land')}</b><span>${j.l}<br><i>${j.sub}</i></span></div>`).join('')}</div>`:''}
     <div class="cbrows">${c.rolls.map((r,i)=>`<div class="cbrow" id="cbr${i}"><img src="${FSIL[c.ftype]}"><span class="cbn">${c.ftype} #${i+1}</span><b class="cbd blue">${dieSvg(18,'–','')}</b><span class="cbvs">vs</span><b class="cbd red">${dieSvg(c.die,'–','')}</b><span class="cbres"></span></div>`).join('')}</div>
@@ -1595,12 +1607,12 @@ function boardHtml(clickable){ return hsplit(boardHtml0(clickable)); }
 function boardHtml0(clickable){
   const [sn,sh]=shift(); const m=Math.floor(Math.max(S.clock,0)/60), sec=Math.max(S.clock,0)%60;
   const cls='clock'+(S.hidden?' hidden':S.clock<=0?' zero':S.clock<=60?' warn':'');
-  return `<div class="board"><div class="topbar"><span class="t">KINGFISH ACE</span><span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Planning before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp" style="margin-left:auto"></span>${ROOM&&(MODE==='instructor'||MODE==='projector')?`<span class="room" title="Wings on other laptops: open the Kingfish ACE site, pick your wing and enter this code">JOIN CODE <b>${ROOM}</b></span>`:''}${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}${sitRolled()?`<span class="sit ${S.orders.sit}">${S.orders.sit.toUpperCase()}</span>`:(S.opening?'':'<span class="sit mw">SETTING THE THEATER</span>')}</div>
+  return `<div class="board"><div class="topbar"><span class="t">KINGFISH ACE</span><span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp" style="margin-left:auto"></span>${ROOM&&(MODE==='instructor'||MODE==='projector')?`<span class="room" title="Wings on other laptops: open the Kingfish ACE site, pick your wing and enter this code">GAME CODE <b>${ROOM}</b></span>`:''}${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}${sitRolled()?`<span class="sit ${S.orders.sit}">${S.orders.sit.toUpperCase()}</span>`:(S.opening?'':'<span class="sit mw">SETTING THE THEATER</span>')}</div>
   <div class="boardbody"><div class="mapbox">${mapSvg(clickable)}</div>
   <div class="side"><div class="${cls}"><div class="big">${S.hidden?'--:--':m+':'+String(sec).padStart(2,'0')}</div><div class="lbl">${S.opening?'PLANNING TIMER':'SHIFT TIMER · 8-HR TURN'}</div></div>
    <div class="sbox"><h4 class="pth">POINTS<b><span>SCORE</span><span>MP</span><span>DP</span><span>RP</span></b></h4>${VIS().map(t=>{const p=S.pts[t.id], net=netScore(p);return `<div class="score"><i style="background:${t.c}"></i>${t.n}<b style="display:flex;gap:14px"><span title="Score: Mission Points minus 1 for every 5 Demoralization Points" style="color:#F2F4F6;min-width:34px;text-align:right">${net}</span><span title="Mission Points" style="color:var(--mute)">${p.mp}</span><span title="Demoralization Points" style="color:${p.dp?'#FF9C8C':'var(--mute)'}">${p.dp}</span><span title="Resource Points" style="color:#A8E6C1">${p.rp}</span></b></div>`}).join('')}${(()=>{ const all=TEAMS.map(x=>S.pts[x.id]); const sc=all.reduce((a,p)=>a+netScore(p),0), mp=all.reduce((a,p)=>a+p.mp,0), dp=all.reduce((a,p)=>a+p.dp,0), rp=all.reduce((a,p)=>a+p.rp,0);
   return `<div class="score total"><i style="background:transparent;border:1px solid var(--mute)"></i>Class total<b style="display:flex;gap:14px"><span style="color:#F2D28A;min-width:34px;text-align:right">${sc}</span><span style="color:var(--mute)">${mp}</span><span style="color:${dp?'#FF9C8C':'var(--mute)'}">${dp}</span><span style="color:#A8E6C1">${rp}</span></b></div>`; })()}<div class="sbnote">Score = Mission Points − 1 per 5 Demoralization. Win: ${S.winPts||200} plus 1 hub and 3 spokes.</div></div>
-   ${(()=>{ const o=S.orders, rows=[['Mission intent',o.intent],['Mission hexes',o.targets],['Base access',o.access],['Risk tokens',o.risk===undefined?'':o.risk+' per wing']].filter(r=>r[1]&&r[1]!=='—'&&r[1]!=='roll at start of day');
+   ${(()=>{ const o=S.orders, rows=[['Mission intent',o.intent],['Mission hexes',o.targets],['Base access',(o.access||'').split(' · ').join('<br>')],['Risk tokens',o.risk===undefined?'':o.risk+' per wing']].filter(r=>r[1]&&r[1]!=='—'&&r[1]!=='roll at start of day');
      return rows.length?`<div class="sbox ord"><h4>SITUATION AND MISSION INTENT</h4>${rows.map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}${sitRolled()?`<div class="sitx">${sitExplain()}</div>`:(!S.opening&&S.turn<(S.sitStart||3)?`<div class="sitx">Setting the theater: open bases and move forces. No Mission hexes yet. The first Situation roll is at the start of ${sitStartLabel()}.</div>`:'')}</div>`:`<div class="sbox ord"><h4>SITUATION AND MISSION INTENT</h4><div class="hint" style="border:0">${S.opening?`Wings are planning. The first Situation roll is at the start of ${sitStartLabel()}.`:S.turn<(S.sitStart||3)?`Setting the theater: open bases and move forces. No Mission hexes yet. The first Situation roll is at the start of ${sitStartLabel()}.`:'Waiting on the Situation roll.'}</div></div>`; })()}
    <div class="sbox legend"><h4>AIRFIELDS</h4>${Object.entries(CHIPC).map(([k,c])=>`<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:1px 0"><i style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:1px solid #fff;flex-shrink:0"></i>${CHIPN[k]}</div>`).join('')}<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:3px 0 1px"><svg width="26" height="12" viewBox="0 0 26 12" style="flex-shrink:0"><rect x="1" y="1" width="10" height="10" fill="#9AA5AF" fill-opacity=".6" stroke="#9AA5AF" stroke-width="2"/><rect x="15" y="1" width="10" height="10" fill="none" stroke="#9AA5AF" stroke-width="2"/></svg>Solid hex = wing hub · outline = spoke (wing color)</div>${Object.values(S.access||{}).includes('denied')?'<div class="lgd"><i style="background:repeating-linear-gradient(45deg,rgba(200,70,58,.55) 0 2px,rgba(200,70,58,.12) 2px 6px);border:1px solid #C8463A"></i>Denied: no bases, no overflight</div>':''}${Object.values(S.access||{}).includes('overflight')?'<div class="lgd"><i style="background:repeating-linear-gradient(45deg,rgba(217,162,58,.5) 0 2px,rgba(217,162,58,.08) 2px 6px);border:1px solid #D9A23A"></i>Overflight only: no bases</div>':''}${(S.targets||[]).length?`<div class="lgd"><i style="border:3px solid #F2C14E;background:rgba(242,193,78,.18)"></i>Mission hex: 5 MP per fighter sent from a spoke</div>`:''}${(Object.keys(S.redz||{}).length||Object.keys(S.redJam||{}).length)?`<div class="lgd"><i style="background:rgba(200,40,40,.55);border:2px solid #C8463A"></i>Red strong defense (D20)</div><div class="lgd"><i style="background:rgba(200,40,40,.35);border:2px solid #C8463A"></i>Red medium defense (D12)</div><div class="lgd"><i style="background:rgba(200,40,40,.18);border:2px solid #C8463A"></i>Red light defense (D10)</div><div class="lgd"><i style="border:2px dashed #C8463A;border-radius:50%"></i>Red jammer reach</div>`:''}</div>
    <div class="ticker ${S.ticker.alarm?'':'calm'}">${S.ticker.text}</div></div></div></div>`;
@@ -1651,11 +1663,12 @@ const SILBADGE={"c5": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAY
 const SILSZ={c5:62,c17:54,c130:48};
 function silhouette(type,color,used){ const s=SILSZ[type]; return `<i class="kimg ${kid('SILIMG',type)}" style="flex-shrink:0;width:${s}px;height:${s}px" role="img" aria-label="${ACFT[type].n}${used?' (tasked)':''}" title="${ACFT[type].n}${used?' · tasked':' · available'}"></i>`; }
 function baseDelivered(team,hex){ const fl=S.flights.filter(f=>f.team===team&&f.st==='arrived'&&f.path[f.path.length-1]===hex); return {pp:fl.reduce((a,f)=>a+f.pp,0),pax:fl.reduce((a,f)=>a+f.pax,0),n:fl.length}; }
-function wingForm(team){ const f=S.wform[team]||(S.wform[team]={acft:'c17',n:1,pp:0,pax:0}); if(!f.cargo) f.cargo={}; if(!f.from||!S.bases[team].some(b=>b.hex===f.from)) f.from=(S.bases[team][0]||{}).hex; return f; }
+function wingForm(team){ const f=S.wform[team]||(S.wform[team]={acft:'c17',n:1,pp:0,pax:0}); if(!f.cargo) f.cargo={}; if(!f.from||!(S.bases[team].some(b=>b.hex===f.from)||Object.keys(invAt(team,f.from)).length)) f.from=(S.bases[team][0]||{}).hex; return f; }
+function loadSpots(team){ const L=S.bases[team].map(b=>({hex:b.hex,label:longId(team,b)})); for(const hx of Object.keys((S.inv||{})[team]||{})) if(!S.bases[team].some(b=>b.hex===hx)&&Object.keys(invAt(team,hx)).length) L.push({hex:hx,label:'Left behind'}); return L; }   /* QA: stranded supplies can be flown out */
 function planOf(team){ const f=wingForm(team), tot=cargoTotals(f.cargo); return {team,acft:f.acft,n:f.n,pp:tot.pp,pax:tot.pax,cargo:f.cargo}; }
 function chalkLoc(team,k,i){ const L=(((S.chalkLoc||{})[team]||{})[k]||{})[i]; return (L&&S.bases[team].some(b=>b.hex===L))?L:(S.bases[team].find(b=>b.role==='mob'||b.role==='hub')||{}).hex; }
 function wingTail(team,k,i){ if(MODE==='wing') WSTAB='air'; const f=wingForm(team); const same=f.tail&&f.tail.k===k&&f.tail.i===i; f.tail=same?null:{k,i}; f.acft=k; f.n=1; f.msg=''; if(!same){ f.cargo={}; f.from=chalkLoc(team,k,i); } render(); }
-function wingFrom(team,hex){ const f=wingForm(team); if(f.from!==hex){ f.from=hex; f.cargo={}; } render(); }
+function wingFrom(team,hex){ const f=wingForm(team); if(f.tail){ const at=chalkLoc(team,f.tail.k,f.tail.i); if(at&&at!==hex) return alert(`${ACFT[f.tail.k].n} Chalk ${f.tail.i+1} is at hex ${at}. It loads there. Pick another aircraft to load at hex ${hex}.`); } if(f.from!==hex){ f.from=hex; f.cargo={}; } render(); }
 function capFor(acft,pax){ const L=ACFT[acft].loads; const pp=Math.max(0,...L.filter(l=>pax<=l[1]||(pax===0)).map(l=>l[0])); const ppl=Math.max(...L.map(l=>l[1])); return {pp,ppl}; }
 function fitsLoad(acft,n,cargo){ const tt=cargoTotals(cargo), per=[Math.ceil(tt.pp/n),Math.ceil(tt.pax/n)]; return ACFT[acft].loads.some(([pp,px])=>per[0]<=pp&&per[1]<=px); }
 function wingCargo(team,id,dn){ const f=wingForm(team), have=availAt(team,f.from)[id]||0; f.msg='';
@@ -1840,7 +1853,7 @@ function wingHtml(team,call,view){ const C=call||'opener.'; const T=TM[team], [s
   al+=`<div class="tailhd">${silhouette(f.acft,T.c,false)}<div><b>${chalk(team,f.tail.k,f.tail.i)}</b><span>Moves ${A.range} hexes a turn · holds ${A.loads.map(([a,b])=>a&&b?a+' PP + '+b+' people':a?a+' PP':b+' people').join(' or ')}</span></div></div>
    ${(()=>{ const c=capFor(f.acft,tt.pax); const peopleCap=Math.max(...A.loads.filter(l=>tt.pp<=l[0]).map(l=>l[1]).concat([0]));
      return `<div class="capbar"><i style="width:${Math.min(100,Math.round(tt.pp/(c.pp||1)*100))}%"></i></div><div class="hint" style="margin:2px 0 6px">${tt.pp} of ${c.pp} PP${tt.pax?` · ${tt.pax} of ${peopleCap} people (mixed load)`:' · cargo only'}</div>`; })()}
-   <div class="dice" style="grid-template-columns:70px 1fr"><span>Load at</span><select class="field" onchange="${C}wingFrom('${team}',this.value)">${mine.map(b=>`<option value="${b.hex}" ${f.from===b.hex?'selected':''}>${longId(team,b)} · hex ${b.hex}</option>`).join('')}</select></div>
+   <div class="dice" style="grid-template-columns:70px 1fr"><span>Load at</span><select class="field" onchange="${C}wingFrom('${team}',this.value)">${loadSpots(team).map(o=>`<option value="${o.hex}" ${f.from===o.hex?'selected':''}>${o.label} · hex ${o.hex}</option>`).join('')}</select></div>
    <div class="hint" style="margin-top:8px"><b style="color:var(--ink)">Load plan</b> · add chips with + and −</div>
    <div class="ldbox">${loadHtml(team,C)}</div>
    ${f.msg?`<div class="capmsg" style="cursor:pointer" title="Click to dismiss" onclick="wingForm('${team}').msg='';render()">${f.msg} <span style="opacity:.7">(click to close)</span></div>`:''}
@@ -1890,7 +1903,7 @@ function wingHtml(team,call,view){ const C=call||'opener.'; const T=TM[team], [s
   const rq=S.requests.filter(q=>q.team===team).slice(-5).reverse();
   const req=`<div class="sec"><h3>MY REQUESTS</h3>${rq.length?rq.map(q=>`<div class="kv"><span>${q.from?'move '+q.from+' → '+q.hex:'base at '+q.hex+' as '+(q.role==='cl'?'contingency location':q.role)}</span><span class="hint" style="color:${q.st==='approved'?'#8FC7A3':q.st==='denied'?'#F09A8F':'var(--mute)'}">${q.st}</span></div>`).join(''):'<div class="hint">None yet.</div>'}</div>`;
   const tabs=call==='cmd.'?`<span class="wtabs"><button class="${view!=='res'?'on':''}" onclick="setWView('map')">Hex map</button><button class="${view==='res'?'on':''}" onclick="setWView('res')">Resources</button></span>`:'';
-  return `<div class="wing"><div class="topbar"><span class="t" style="color:${T.c}">${T.n.toUpperCase()}</span><span class="hrs">${T.full}</span>${tabs}<span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Planning before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp"></span>${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}<span class="sit" style="font-family:Consolas,monospace;font-size:22px;letter-spacing:2px;color:var(--ink)" id="wtime">${clockText()}</span></div>
+  return `<div class="wing"><div class="topbar"><span class="t" style="color:${T.c}">${T.n.toUpperCase()}</span><span class="hrs">${T.full}</span>${tabs}<span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp"></span>${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}<span class="sit" style="font-family:Consolas,monospace;font-size:22px;letter-spacing:2px;color:var(--ink)" id="wtime">${clockText()}</span></div>
    ${(S.comms||{})[team]>=S.turn?'<div class="commsbar">COMMUNICATIONS DISRUPTED (jamming or cyber attack): no talking to other teams this turn</div>':''}
    <div class="wbody"><div class="mapbox"${view==='res'?' style="align-items:stretch;overflow:auto"':''}>${view==='res'?resourcesHtml(team):mapSvg(true,team)}</div><div class="wside">${sideTabs(team,{plan:(S.opening?planList(team):'')+hx+req+'<div class="sec hint">Your screen only shows your wing. Base requests go to the instructor for approval.</div>',air:air+al,fx:S.opening?'<div class="sec hint">Fighters move and fly once turn 1 starts.</div>':fx,rq:rq2+resReqList(team)})}</div></div></div>`; }
 function planList(team){ const ac=S.acft[team]&&S.acft[team].day===day();
@@ -1911,6 +1924,7 @@ function wingRequest(team,role,from){ const hex=S.wsel[team]; if(!hex) return;
     if(cs.length>1&&!af) return alert(`Hex ${hex} has ${cs.length} airfields. Pick which one first.`); }
   if(!MD.chips.some(c=>c.hex===hex)) return alert(`Hex ${hex} has no airfield. Pick a hex with an airfield dot.`);
   { const tk=TEAMS.find(x=>x.id!==team&&(S.bases[x.id].some(b=>b.hex===hex&&(!b.af||!af||b.af===af))||S.requests.some(q=>q.st==='pending'&&q.team===x.id&&q.hex===hex&&(!q.af||!af||q.af===af)))); if(tk) return alert(`That airfield belongs to ${tk.n}. Pick another airfield or another hex.`); }
+  { const co=airfieldCountry(hex,af); if(ADVERSARY.has(co)) return alert(`${co} is adversary territory. No US bases there. Pick another airfield.`); }
   { const co=airfieldCountry(hex,af), ac=accessOf(co); if(ac!=='granted') return alert(`${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today. You cannot open a base there. Pick an airfield in an open country.`); }
   if(S.requests.some(q=>q.st==='pending'&&q.team===team&&q.hex===hex)) return alert(`Your request for hex ${hex} is already waiting for the instructor.`);
   S.requests.push({id:S.reqSeq++,team,hex,af,from:from||null,role:role||'spoke',turn:S.turn,st:'pending'});
@@ -1948,8 +1962,8 @@ function renderPanel(){
   document.getElementById('i-req').innerHTML=(pend.length?pend.map(q=>`<div class="teamrow" style="flex-wrap:wrap"><i style="background:${TM[q.team].c}"></i><b>${TM[q.team].n}</b>
      <span style="cursor:pointer;text-decoration:underline" onclick="selectHex('${q.hex}')">${q.from?'move '+q.from+' → '+q.hex:'new base at '+q.hex}</span>
      <span class="sc"><button class="btn sm p" ${S.movesOpen?'':'disabled title="Open the move window first"'} onclick="decide(${q.id},true)">Approve</button><button class="btn sm d" onclick="decide(${q.id},false)">Deny</button></span></div>`).join(''):'<div class="hint">No pending requests.</div>')
-     +(S.requests.some(q=>q.st!=='pending')?`<div class="hint" style="margin-top:6px">Recent: ${S.requests.filter(q=>q.st!=='pending').slice(-4).reverse().map(q=>`${TM[q.team].n} ${q.from?q.from+'→':''}${q.hex} ${q.st}`).join(' · ')}</div>`:'');
-  const fold=(key,title,lines,alert)=>`<details class="fold" ${(window.__open||{})[key]?'open':''} ontoggle="(window.__open=window.__open||{})['${key}']=this.open"><summary><span class="${alert?'fbad':''}">${title}</span><em>${lines.length} line${lines.length===1?'':'s'}</em></summary><div>${lines.join('<br>')}</div></details>`;
+     +(S.requests.some(q=>q.st!=='pending')?`<div class="hint" style="margin-top:6px">Recent: ${S.requests.filter(q=>q.st!=='pending').slice(-4).reverse().map(q=>`${TM[q.team].n} · hex ${q.from?q.from+' → ':''}${q.hex} ${q.st}`).join(' · ')}</div>`:'');
+  const fold=(key,title,lines,alert)=>`<details class="fold" ${(window.__open||{})[key]?'open':''} ontoggle="(window.__open=window.__open||{})['${key}']=this.open"><summary><span class="${alert?'fbad':''}">${title}</span><em></em></summary><div>${lines.join('<br>')}</div></details>`;
   document.getElementById('i-tax').innerHTML=S.taxReport?fold('tax'+S.taxReport.day,`Logistics tax, day ${S.taxReport.day}`,S.taxReport.lines,S.taxReport.lines.some(l=>/OUT OF|NO FUEL/.test(l))):'';
   document.getElementById('b-conflict').style.display=S.orders.sit==='conflict'&&!S.opening?'':'none';
   document.getElementById('i-conflict').innerHTML=S.conflictReport&&S.conflictReport.turn===S.turn?fold('cf'+S.turn,`Conflict phase, turn ${S.turn}`,S.conflictReport.lines,S.conflictReport.lines.some(l=>/hit|STRIKE/.test(l))):(S.orders.sit==='conflict'&&!S.opening?'Conflict day: the Red attacks (intel warning, jamming and cyber, missile strikes) roll by themselves when the turn ends. Use this only to roll them again.':'');
@@ -2049,17 +2063,18 @@ function staffTask(team,hex,id){ const T=TASK[id], c=canStaff(team,hex,T); if(!c
   const st=taskState(team,hex)[id]=taskState(team,hex)[id]||{p:0}; st.a=a; st.on=!Object.keys(a).length; st.need=taskTurns(team,hex,T);
   log(`${TM[team].n} ${hex}: staffed task ${id} ${T.n}`); render(); }
 function unstaffTask(team,hex,id){ const st=taskState(team,hex)[id]; if(st){ st.a={}; st.on=false; } render(); }
-function baseStage(team,hex){ const d=id=>taskDone(team,hex,id)||taskRunning(team,hex,id);
-  if([1,2,3,5,6,9,10,11,12,14,16].every(d)) return 'foc'; if([1,2,3,5,9].every(d)) return 'ioc'; return null; }
+function baseStage(team,hex){ const d=id=>taskDone(team,hex,id)||taskRunning(team,hex,id), done=id=>taskDone(team,hex,id);
+  if([1,2,3,5,9].every(done)&&[1,2,3,5,6,9,10,11,12,14,16].every(d)) return 'foc'; if([1,2,3,5,9].every(done)) return 'ioc'; return null; }   /* QA R6.2 */
 function progressTasks(){ for(const tm of TEAMS) for(const hex in (S.tasks[tm.id]||{})){ const ts=S.tasks[tm.id][hex];
     for(const id in ts){ const st=ts[id], T=TASK[id]; if(!st.a||!(Object.keys(st.a).length||st.on)) continue;
       if(T.once&&!st.done){ st.p=(st.p||0)+1; if(st.p>=st.need){ st.done=true; st.a={}; st.on=false; log(`${tm.n} ${hex}: task ${id} ${T.n} complete`);
           if(id==15){ const b=S.bases[tm.id].find(x=>x.hex===hex); if(b&&b.st==='struck'){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${tm.n} ${hex}: airfield repaired`); } } } }
-      else if(T.each){ st.done=true; if(T.mp){ S.pts[tm.id].mp+=T.mp; log(`${tm.n} ${hex}: ${T.n} +${T.mp} MP`); } if(id==13) S.pts[tm.id].rp+=1;
-        if(id==12){ const inv=invAt(tm.id,hex); if(inv.fuel>0){ inv.fuel--; if(!inv.fuel) delete inv.fuel; } } } }
+      else if(T.each){ { const b0=S.bases[tm.id].find(x=>x.hex===hex); if(b0&&b0.st==='struck') continue; }   /* QA R8.2c: a closed base scores nothing */
+        if(id==12){ const inv=invAt(tm.id,hex); if(!((st.a.fuel||0)>0&&(inv.fuel||0)>0)){ st.a={}; st.on=false; log(`${tm.n} ${hex}: task 12 ${T.n} stopped: out of fuel`); continue; } inv.fuel--; if(!inv.fuel) delete inv.fuel; st.a.fuel--; if(!st.a.fuel) delete st.a.fuel; }
+        st.done=true; if(T.mp){ S.pts[tm.id].mp+=T.mp; log(`${tm.n} ${hex}: ${T.n} +${T.mp} MP`); } if(id==13) S.pts[tm.id].rp+=1; } }
     const b=S.bases[tm.id].find(x=>x.hex===hex); if(b&&b.st!=='struck'&&b.role!=='mob'){ const s=baseStage(tm.id,hex); if(s&&s!==b.st&&(s==='foc'||b.st!=='foc')){ b.st=s; log(`${tm.n} ${hex} reached ${s.toUpperCase()}`); }
       // Owner 11-09: a spoke earns its +5 Mission Points for being opened when it reaches IOC (tasks 1, 2, 3, 5, 9). Once per airfield, first wing to get there.
-      if(b&&b.role!=='mob'&&(b.st==='ioc'||b.st==='foc')&&!(S.opened||{})[hex]){ (S.opened=S.opened||{})[hex]=tm.id; S.pts[tm.id].mp+=5; log(`${tm.n} opened ${hex} (IOC): +5 Mission Points`); banner(`${tm.n.toUpperCase()} · HEX ${hex} AT IOC · +5 MISSION POINTS`,false); } } } }
+      if(b&&b.role!=='mob'&&(b.st==='ioc'||b.st==='foc')&&!(S.opened||{})[hex+':'+(b.af||'')]){ (S.opened=S.opened||{})[hex+':'+(b.af||'')]=tm.id; S.pts[tm.id].mp+=5; log(`${tm.n} opened ${hex} (IOC): +5 Mission Points`); banner(`${tm.n.toUpperCase()} · HEX ${hex} AT IOC · +5 MISSION POINTS`,false); } } } }
 function checkAssess(){ for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.assessed) continue; const inv=invAt(tm.id,b.hex);
     if(ASSESS_NEED.some(n=>Object.keys(n).every(k=>(inv[k]||0)>=n[k]))){ b.assessed=true; b.landed=true; S.pts[tm.id].mp+=5; log(`${tm.n} assessed ${b.hex}: +5 MP, remaining RFIs open`); banner(`${tm.n.toUpperCase()} ASSESSED HEX ${b.hex} · +5 MISSION POINTS · remaining RFIs open`,false); } } }
 function checkIdleDP(){ const lines=[]; // Deployed vs tasked (scenario card): 2:1 = D4 DP, 3:1 = D10 DP
@@ -2133,10 +2148,10 @@ function applyCard(kind,idx,team,hex){ const c=(kind==='risk'?RISK_DECK:EVENT_DE
   if(fx.taskDone&&hex){ const ts=((S.tasks[team]=S.tasks[team]||{})[hex]=S.tasks[team][hex]||{}); ts[fx.taskDone]={...(ts[fx.taskDone]||{}),done:true,a:{},on:false}; done.push(`task ${fx.taskDone} complete at ${hex}`); }
   if(fx.sickD12){ const r=d(12); done.push(`D12 = ${r} personnel sick for 4 turns (instructor removes them from tasks)`); }
   const where=hex?` at ${hex}`:'';
-  if(fx.out&&hex){ let need=fx.out.pax, rolled=''; if(need==='d12'){ need=d(12); rolled=`D12 = ${need}: `; } const got=takeOut(team,hex,need,fx.out.n,false); done.push(rolled+(got.length?`${got.join(', ')} out of action for ${fx.out.n} turn${fx.out.n>1?'s':''}${where}`:`no people${where}: no effect`)); }
-  if(fx.gone&&hex){ const got=takeOut(team,hex,fx.gone.pax,0,true); done.push(got.length?`${got.join(', ')} removed${where}`:`no people${where}: no effect`); }
-  if(fx.eq&&hex){ const got=takeEq(team,hex,fx.eq.ids,fx.eq.cnt,fx.eq.n,false); done.push(got.length?`${got.join(', ')} unusable for ${fx.eq.n} turn${fx.eq.n>1?'s':''}${where}`:`none on hand${where}: no effect`); }
-  if(fx.eqGone&&hex){ const got=takeEq(team,hex,fx.eqGone.ids,fx.eqGone.cnt,0,true); done.push(got.length?`${got.join(', ')} lost${where} until a replacement is airlifted in`:`none on hand${where}: no effect`); }
+  if(fx.out&&hex){ let need=fx.out.pax, rolled=''; if(need==='d12'){ need=d(12); rolled=`D12 = ${need}: `; } const got=takeOut(team,hex,need,fx.out.n,false); done.push(rolled+(got.length?`${got.join(', ')} out of action for ${fx.out.n} turn${fx.out.n>1?'s':''}${where}`:`No effect: no personnel at hex ${hex}`)); }
+  if(fx.gone&&hex){ const got=takeOut(team,hex,fx.gone.pax,0,true); done.push(got.length?`${got.join(', ')} removed${where}`:`No effect: no personnel at hex ${hex}`); }
+  if(fx.eq&&hex){ const got=takeEq(team,hex,fx.eq.ids,fx.eq.cnt,fx.eq.n,false); done.push(got.length?`${got.join(', ')} unusable for ${fx.eq.n} turn${fx.eq.n>1?'s':''}${where}`:`No effect: none on hand at hex ${hex}`); }
+  if(fx.eqGone&&hex){ const got=takeEq(team,hex,fx.eqGone.ids,fx.eqGone.cnt,0,true); done.push(got.length?`${got.join(', ')} lost${where} until a replacement is airlifted in`:`No effect: none on hand at hex ${hex}`); }
   if(fx.hold&&hex){ const b=S.bases[team].find(x=>x.hex===hex); if(b){ b.hold={until:S.turn+fx.hold.n,k:fx.hold.k}; done.push(`${({all:'all flight operations',ftr:'fighter operations',arr:'arrivals',dep:'departures'})[fx.hold.k]} suspended${where} through turn ${S.turn+fx.hold.n}`); } }
   if(fx.grounded){ const free=x=>((S.acft[team]||{}).day===day()?((S.acft[team]||{})[x]||0):0)-acftUsed(x,team); const k=['c17','c130','c5'].find(x=>free(x)>0); if(!k) done.push('every aircraft is already flying or not rolled yet: no effect'); else { (S.grounded=S.grounded||[]).push({team,k,until:S.turn+fx.grounded.n}); done.push(`1 ${ACFT[k].n} grounded through turn ${S.turn+fx.grounded.n}`); } }
   if(fx.revoke&&hex){ const co=airfieldCountry(hex); if(co&&ACCESS[co]){ (S.access=S.access||{})[co]='denied'; S.orders.access=accessText(); done.push(`${co} base access revoked`); setTimeout(()=>banner(`ACCESS REVOKED · ${co.toUpperCase()} · ${TM[team].n.toUpperCase()} HEX ${hex} · game master decides how long operations there are restricted`,true),1600); } else done.push(`${co||'this country'} is not in the access table: no effect`); }
@@ -2146,8 +2161,8 @@ function applyCard(kind,idx,team,hex){ const c=(kind==='risk'?RISK_DECK:EVENT_DE
 //      when their turns are up; removed or lost ones do not. A team taken out pauses any task it was working.
 function outAt(team,hex){ const o={}; for(const x of ((S.out||{})[team]||[])) if(x.hex===hex&&(x.gone||x.until>=S.turn)) o[x.c]=(o[x.c]||0)+x.n; return o; }
 function freeChips(team,hex){ const inv=invAt(team,hex), out=outAt(team,hex), as=assignedAt(team,hex), L=[]; for(const c in inv){ const n=(inv[c]||0)-(out[c]||0); for(let i=0;i<n;i++) L.push({c,assigned:i>=n-(as[c]||0)}); } return L; }
-function benchChip(team,hex,c,n,gone,why){ if(gone){ const inv=invAt(team,hex); inv[c]=Math.max(0,(inv[c]||0)-1); if(!inv[c]) delete inv[c]; } else ((S.out=S.out||{})[team]=S.out[team]||[]).push({hex,c,n:1,until:S.turn+n,why});
-  const ts=taskState(team,hex), short=()=>(invAt(team,hex)[c]||0)-(outAt(team,hex)[c]||0)-(assignedAt(team,hex)[c]||0)<0; for(const id in ts){ if(!short()) break; const a=ts[id].a||{}; if(a[c]){ ts[id].a={}; ts[id].on=false; log(`${TM[team].n} ${hex}: task ${id} ${TASK[id].n} paused (${CHIT[c].name} out of action)`); } } }
+function benchChip(team,hex,c,n,gone,why){ if(gone){ const inv=invAt(team,hex); inv[c]=Math.max(0,(inv[c]||0)-1); if(!inv[c]) delete inv[c]; } let rec=null; if(!gone){ rec={hex,c,n:1,until:S.turn+n,why,paused:[]}; ((S.out=S.out||{})[team]=S.out[team]||[]).push(rec); }
+  const ts=taskState(team,hex), short=()=>(invAt(team,hex)[c]||0)-(outAt(team,hex)[c]||0)-(assignedAt(team,hex)[c]||0)<0; for(const id in ts){ if(!short()) break; const a=ts[id].a||{}; if(a[c]){ ts[id].a={}; ts[id].on=false; if(rec) rec.paused.push(+id); log(`${TM[team].n} ${hex}: task ${id} ${TASK[id].n} paused (${CHIT[c].name} out of action)`); } } }
 function takeOut(team,hex,pax,n,gone){ const L=freeChips(team,hex).filter(x=>CHIT[x.c]&&CHIT[x.c].pax>0); if(!L.length) return [];
   L.sort((a,b)=>(a.assigned-b.assigned)||(CHIT[a.c].pax-CHIT[b.c].pax)); let pick=L.find(x=>CHIT[x.c].pax>=pax); const got=[];
   if(pick){ benchChip(team,hex,pick.c,n,gone); got.push(`${CHIT[pick.c].name} team (${CHIT[pick.c].pax})`); return got; }
@@ -2165,13 +2180,13 @@ function cardFor(kind,team,hexWanted){ const spokes=S.bases[team].filter(b=>b.ro
   log(`${kind==='risk'?'RISK':'EVENT'} CARD ${TM[team].n}${rec.hex?' at '+rec.hex:''}: ${c.t}${done.length?' ['+done.join('; ')+']':''}`);
   return rec; }
 function showCards(recs){ S.cardShow={recs,t:Date.now()}; }
-function cardHtml(r){ const T=TM[r.team]; if(r.free) return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK':'EVENT'} CARD</b><span style="color:${T.c}">${T.n}</span></div><p>D4 = ${r.d4}: no airfield there. Free pass.</p></div>`;
-  return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK CARD':'EVENT CARD'}</b><span style="color:${T.c}">${T.n}${r.hex?' · hex '+r.hex:''}</span></div>${r.cat?`<div class="kc">If ${r.cat} is a risk in this country:</div>`:''}<p>${r.text}</p>${r.done&&r.done.length?`<div class="kd">Applied: ${r.done.join(' · ')}</div>`:`<div class="kd">Instructor applies this card.</div>`}</div>`; }
+function cardHtml(r){ const T=TM[r.team]; if(r.free) return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK':'EVENT'} CARD</b><span class="ktag" style="background:${T.c}">${T.n}</span></div><p>D4 = ${r.d4}: no airfield there. Free pass.</p></div>`;
+  return `<div class="kcard ${r.kind}"><div class="kh"><b>${r.kind==='risk'?'RISK CARD':'EVENT CARD'}</b><span class="ktag" style="background:${T.c}">${T.n}${r.hex?' · hex '+r.hex:''}</span></div>${r.cat?`<div class="kc">If ${r.cat.toLowerCase()} is a risk in this country:</div>`:''}<p>${r.text}</p>${r.done&&r.done.length?`<div class="kd">${r.done.every(x=>/^No effect/.test(x))?r.done.join(' · '):'Applied: '+r.done.join(' · ')}</div>`:`<div class="kd">Instructor applies this card.</div>`}</div>`; }
 addEventListener('pointerdown',e=>{ try{ if(e.target.closest&&(e.target.closest('.rlx>*')||e.target.closest('#kfa-cards .kcard'))) return; const c=document.getElementById('kfa-cards'); if(c){ closeCards(); } document.querySelectorAll('.rlx').forEach(o=>o.click()); }catch(x){} },true);   // R10.4 pop-ups close on any click and never block it
 function closeCards(){ const el=document.getElementById('kfa-cards'); window.__cardSeen=S.cardShow&&S.cardShow.t; if(el) el.remove(); if(MODE==='instructor'&&S.cardShow){ S.cardShow=null; save(); } }
-function cardOverlay(){ const cs=S.cardShow; let el=document.getElementById('kfa-cards'); if(!cs||Date.now()-cs.t>20000||window.__cardSeen===cs.t){ if(el) el.remove(); return; }
+function cardOverlay(){ const cs=S.cardShow; let el=document.getElementById('kfa-cards'); if(document.querySelector('.rlx')){ if(el) el.style.display='none'; return; } if(el&&el.style.display==='none') el.style.display='';   /* R10.24 cards wait until the dice pop-up closes */ if(!cs||Date.now()-cs.t>20000||window.__cardSeen===cs.t){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='kfa-cards'; el.onclick=()=>closeCards(); document.body.appendChild(el); }
-  if(el.dataset.t!==String(cs.t)){ el.dataset.t=String(cs.t); const real=cs.recs.filter(r=>!r.free), free=cs.recs.filter(r=>r.free); el.innerHTML=`<div class="kwrap">${real.map(cardHtml).join('')||'<div class="kcard event"><p>No cards apply this turn.</p></div>'}</div>${free.length?`<div class="kx">Free pass (no airfield on the D4): ${free.map(r=>TM[r.team].n+' '+r.kind).join(' · ')}</div>`:''}<div class="kx">click anywhere to close</div>`; } }
+  if(el.dataset.t!==String(cs.t)){ el.dataset.t=String(cs.t); const real=cs.recs.filter(r=>!r.free), free=cs.recs.filter(r=>r.free); el.innerHTML=`<div class="kwrap">${real.map(cardHtml).join('')}${free.length?`<div class="kcard free"><div class="kh"><b>FREE PASS</b></div><p>No airfield on the D4 roll: ${free.map(r=>TM[r.team].n+' '+r.kind).join(', ')}.</p></div>`:''}</div><div class="kx">click anywhere to close</div>`; } }
 if(MODE==='instructor'||MODE==='projector') setInterval(()=>{ try{ cardOverlay(); }catch(e){} },500);
 
 function drawCards(){ const recs=[]; for(const tm of TEAMS){ recs.push(cardFor('event',tm.id)); recs.push(cardFor('risk',tm.id)); }
@@ -2185,7 +2200,7 @@ function sortiePreview(team,from,target,n){ const dist=hexDist(from,target); if(
   return L.join(' · '); }
 function fUi(team,hx){ const W=(window.__fui=window.__fui||{}), k=team+':'+hx, have=fightersAt(team,hx)||1; const u=W[k]=W[k]||{s:Math.min(4,have),r:Math.min(4,have),d:''}; u.s=Math.max(1,Math.min(u.s,have)); u.r=Math.max(1,Math.min(u.r,have)); return u; }
 function fSet(team,hx,k,dv){ const u=fUi(team,hx); u[k]+=dv; fUi(team,hx); render(); }
-function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return; if(baseStruck(team,from)) return alert(`Hex ${from} is struck and closed. Fighters cannot leave until Base recovery is done.`); { const h=holdOf(team,from)||holdOf(team,to); if(h&&(h.k==='all'||h.k==='ftr')) return alert(`Fighter operations are suspended there through turn ${h.until}.`); } if(baseStruck(team,to)) return alert(`Hex ${to} is struck and closed. Fighters cannot move there until Base recovery is done.`);   // R8.2c
+function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base of yours is within range of these fighters.'); if(fightersAt(team,from)<1) return alert(`No fighters at hex ${from}.`); n=Math.max(1,Math.min(n|0,fightersAt(team,from))); if(!n||from===to) return; if(baseStruck(team,from)) return alert(`Hex ${from} is struck and closed. Fighters cannot leave until Base recovery is done.`); for(const hx of [from,to]){ const h=holdOf(team,hx); if(h&&(h.k==='all'||h.k==='ftr')) return alert(`Fighter operations at hex ${hx} are suspended through turn ${h.until}.`); } if(baseStruck(team,to)) return alert(`Hex ${to} is struck and closed. Fighters cannot move there until Base recovery is done.`);   // R8.2c
   if(hexDist(from,to)>FRANGE) return alert(`Fighters move ${FRANGE} hexes at most.`);
   { const e=afEff(team,to); if(e&&e.c==='r') return alert(`Hex ${to} is a red airfield: C-17 and C-130 only. Fly in a Mobile Arresting System (4 PP) first, then fighters can use it.`); }
   const inbound=S.fmoves.filter(m=>m.team===team&&m.to===to).reduce((s,m)=>s+m.n,0);
@@ -2198,13 +2213,13 @@ function sortieReady(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); if(!
   if(b.role!=='mob'&&!(taskDone(team,hex,11)||taskRunning(team,hex,11))) return 'needs Integrated combat turn staffed';
   if(b.role!=='mob'&&!(taskDone(team,hex,12)||taskRunning(team,hex,12))) return 'needs Specialized refueling staffed';
   return ''; }
-function sortiedThisTurn(team,hex){ return (S.sorties||[]).filter(s=>s.team===team&&s.from===hex&&s.turn===S.turn).reduce((a,s)=>a+s.n,0); }
+function sortiedThisTurn(team,hex){ return (S.sorties||[]).filter(s=>s.team===team&&s.from===hex&&s.turn===S.turn).reduce((a,s)=>a+s.n-(s.lost||0),0); }
 function wingSortie(team,from,target,n){ const why=sortieReady(team,from); if(why) return alert('Cannot launch: '+why+'.'); { const den=deniedAlong(from,target); if(den.length) return alert(`Cannot launch: ${den.join(', ')} denied overflight today. Pick a target that does not cross ${den.length>1?'them':'it'}.`); }
   const ready=fightersAt(team,from)-sortiedThisTurn(team,from); if(ready<=0) return alert('Every fighter at '+from+' has already flown this turn. Each fighter flies one sortie per turn.');   // owner 11-09 stress test: no repeat sorties
   n=Math.max(1,Math.min(n|0,ready));
   if(hexDist(from,target)>FRANGE) return alert(`Target is beyond ${FRANGE} hexes.`);
   const conflict=S.orders.sit==='conflict', inv=invAt(team,from);
-  if(conflict){ if((inv.bomb||0)<n||(inv.aamissile||0)<n) return alert(`Conflict: each fighter expends 1 bomb and 1 air-to-air missile. ${from} has ${inv.bomb||0} bombs and ${inv.aamissile||0} missiles.`);
+  if(conflict){ const av=availAt(team,from); if((av.bomb||0)<n||(av.aamissile||0)<n) return alert(`Conflict: each fighter expends 1 bomb and 1 air-to-air missile. ${from} has ${av.bomb||0} bombs and ${av.aamissile||0} missiles free (not assigned to a task).`);
     inv.bomb-=n; inv.aamissile-=n; if(!inv.bomb) delete inv.bomb; if(!inv.aamissile) delete inv.aamissile; }
   const b=S.bases[team].find(x=>x.hex===from), inIntent=S.targets.includes(target), spoke=b&&b.role!=='mob';
   let mp=0, lost=0, res=[];
@@ -2292,7 +2307,7 @@ function runConflict(){
   banner(hit.length?`CONFLICT PHASE · ${hit.length} AIRFIELD${hit.length>1?'S':''} HIT: ${hit.join(', ')}`:(atkPending().length?`CONFLICT PHASE · ${atkPending().length} MISSILE ATTACK${atkPending().length>1?'S':''} · instructor rolls D20, each wing rolls D10`:`CONFLICT PHASE · no airfields attacked`),true); render(); }
 function atkPending(team){ return (S.attacks||[]).filter(a=>!a.done&&(!team||a.team===team)); }
 function atkBase(a){ return S.bases[a.team].find(x=>x.hex===a.hex&&(!a.af||x.af===a.af))||S.bases[a.team].find(x=>x.hex===a.hex); }
-function atkResolve(a){ if(a.red===null||a.blue===null||a.done) return; a.done=true; const total=a.blue+a.mod, hitIt=a.red>total, b=atkBase(a); let res='defended';
+function atkResolve(a){ if(a.red===null||a.blue===null||a.done) return; a.done=true; const total=a.blue+a.mod, b=atkBase(a), hitIt=a.red>total&&!!b; let res='defended';
   if(hitIt&&b){ res=strikeBase(a.team,b); S.flash={hex:a.hex,t:Date.now()}; } a.res=hitIt?res:'defended';
   const dice=[{s:20,v:a.red,l:'Red attack (instructor)',sub:hitIt?'HIT':'defended'},{s:10,v:a.mod?`${a.blue}+${a.mod}`:a.blue,l:`${TM[a.team].n} defense`,sub:a.mod?'missile defense / hardening':''}];
   pushRoll({team:null,title:`Missile attack · ${TM[a.team].n} · hex ${a.hex}`,note:'Higher roll wins. A tie is defended.',dice}); pushRoll({team:a.team,title:`Missile attack on hex ${a.hex}`,note:'Higher roll wins. A tie is defended.',dice});
@@ -2359,8 +2374,8 @@ function payLogisticsTax(){ const lines=[];
     if(short.includes('food')||short.includes('water')){ rec.hungry++; const dp=(b&&b.st==='struck')?0:(rec.hungry>=2?30:10); S.pts[t.id].dp+=dp; lines.push(`${t.n} ${hex}: OUT OF ${short.join(', ').toUpperCase()} · +${dp} DP`); }
     else { rec.hungry=0; lines.push(`${t.n} ${hex}: paid 1 food, 1 water${short.includes('fuel')?' (NO FUEL)':', 1 fuel'}`); } }
   if(lines.length){ log('LOGISTICS TAX · '+lines.join(' | ')); S.taxReport={day:day(),lines}; const bad=lines.filter(l=>/OUT OF|NO FUEL/.test(l)); banner(bad.length?`LOGISTICS TAX · DAY ${day()} · ${bad.join(' · ')}`:`LOGISTICS TAX PAID · DAY ${day()} · ${lines.length} airfield${lines.length>1?'s':''}`,bad.length>0); } }
-function cardUpkeep(){ for(const tm of TEAMS){ const L=((S.out||{})[tm.id]||[]); const back=L.filter(x=>!x.gone&&x.until===S.turn-1); for(const x of back) log(`${tm.n} ${x.hex}: ${CHIT[x.c].name} back in action`); S.out&&(S.out[tm.id]=L.filter(x=>x.gone||x.until>=S.turn));
-    for(const b of S.bases[tm.id].slice()){ if(!b.vacateBy) continue; if(S.turn>b.vacateBy){ const hub=HOME[tm.id], left=invAt(tm.id,b.hex), fl=(S.fighters[tm.id]||{})[b.hex]||0; S.bases[tm.id]=S.bases[tm.id].filter(x=>x!==b); if(Object.keys(left).length) addInv(tm.id,hub,{...left},1); if(S.inv[tm.id]) delete S.inv[tm.id][b.hex]; if(fl){ S.fighters[tm.id][hub]=(S.fighters[tm.id][hub]||0)+fl; delete S.fighters[tm.id][b.hex]; } if(S.tasks[tm.id]) delete S.tasks[tm.id][b.hex]; if(S.out&&S.out[tm.id]) S.out[tm.id]=S.out[tm.id].filter(x=>x.hex!==b.hex); log(`${tm.n} ${b.hex}: vacate deadline passed; base closed; people, equipment${fl?' and fighters':''} returned to the hub at ${hub}`); setTimeout(()=>banner(`VACATE DEADLINE · ${tm.n.toUpperCase()} HEX ${b.hex} CLOSED · assets returned to the hub`,true),1500); }   /* R9.4a owner 11-10: returned, not lost */ else if(S.turn===b.vacateBy) setTimeout(()=>banner(`LAST TURN TO VACATE · ${tm.n.toUpperCase()} HEX ${b.hex}`,true),1500); } } }
+function cardUpkeep(){ for(const tm of TEAMS){ const L=((S.out||{})[tm.id]||[]); const back=L.filter(x=>!x.gone&&x.until===S.turn-1); for(const x of back){ log(`${tm.n} ${x.hex}: ${CHIT[x.c].name} back in action`); for(const id of (x.paused||[])){ try{ if(!taskRunning(tm.id,x.hex,id)&&canStaff(tm.id,x.hex,TASK[id]).ok){ staffTask(tm.id,x.hex,id); log(`${tm.n} ${x.hex}: task ${id} ${TASK[id].n} restarted`); } }catch(e){} } } S.out&&(S.out[tm.id]=L.filter(x=>x.gone||x.until>=S.turn));
+    for(const b of S.bases[tm.id].slice()){ if(!b.vacateBy) continue; if(S.turn>b.vacateBy){ (S.flights||[]).forEach(f=>{ if(f.team===tm.id&&f.st!=='arrived'&&f.st!=='denied'&&f.path[f.path.length-1]===b.hex){ f.path=[f.path[0]]; f.dist=0; f.moved=0; f.st='arrived'; f.arrTurn=S.turn; if(f.cargo) addInv(tm.id,f.path[0],f.cargo,1); log(`${tm.n}: flight to ${b.hex} turned back (base closed)`); } }); const hub=HOME[tm.id], left=invAt(tm.id,b.hex), fl=(S.fighters[tm.id]||{})[b.hex]||0; S.bases[tm.id]=S.bases[tm.id].filter(x=>x!==b); if(Object.keys(left).length) addInv(tm.id,hub,{...left},1); if(S.inv[tm.id]) delete S.inv[tm.id][b.hex]; if(fl){ S.fighters[tm.id][hub]=(S.fighters[tm.id][hub]||0)+fl; delete S.fighters[tm.id][b.hex]; } if(S.tasks[tm.id]) delete S.tasks[tm.id][b.hex]; if(S.out&&S.out[tm.id]) S.out[tm.id]=S.out[tm.id].filter(x=>x.hex!==b.hex); log(`${tm.n} ${b.hex}: vacate deadline passed; base closed; people, equipment${fl?' and fighters':''} returned to the hub at ${hub}`); setTimeout(()=>banner(`VACATE DEADLINE · ${tm.n.toUpperCase()} HEX ${b.hex} CLOSED · assets returned to the hub`,true),1500); }   /* R9.4a owner 11-10: returned, not lost */ else if(S.turn===b.vacateBy) setTimeout(()=>banner(`LAST TURN TO VACATE · ${tm.n.toUpperCase()} HEX ${b.hex}`,true),1500); } } }
 function recoverBases(){ try{ cardUpkeep(); }catch(e){ console.error(e); } for(const k in S.bases) for(const b of S.bases[k]) if(b.st==='struck'&&b.recUntil&&S.turn>=b.recUntil){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${TM[k].n} ${b.hex}: airfield operations restored`); } }
 function setRole(role){ const o=ownerOf(S.sel); if(!o) return; role=giveRole(o.team,o.b,role); log(`${TM[o.team].n} ${S.sel} set as ${role==='cl'?'contingency location':role}`);
   banner(`${TM[o.team].n.toUpperCase()} · hex ${S.sel} is now a ${role==='cl'?'contingency location':role.toUpperCase()}`,false); render(); }
@@ -2379,6 +2394,7 @@ function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false
   if(S.bases[f.team].some(b=>b.hex===from&&b.st==='struck')){ out.push(`<span class="ck-bad">NO</span> Hex ${from} is struck: nothing can depart until it recovers.`); block=true; }
   const ownTo=S.bases[f.team].find(b=>b.hex===to); const chips=MD.chips.filter(c=>c.hex===to&&(!ownTo||!ownTo.af||c.id===ownTo.af)), mine=!!ownTo;
   if(!chips.length&&!mine) out.push(`<span class="ck-warn">CHECK</span> No airfield in destination hex ${to}.`);
+  { const co=airfieldCountry(to,ownTo&&ownTo.af); if(ADVERSARY.has(co)&&!ownTo){ out.push(`<span class="ck-bad">NO</span> ${co} is adversary territory: no landing at hex ${to}.`); block=true; } }
   { const co=airfieldCountry(to,ownTo&&ownTo.af), ac=accessOf(co); if(ac!=='granted'){ out.push(`<span class="ck-bad">NO</span> ${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today: no landing at hex ${to}.`); block=true; } }
   { const over=[...new Set(path.slice(1,-1).map(hexCountry).filter(c=>c&&accessOf(c)==='denied'))]; if(over.length){ out.push(`<span class="ck-bad">NO</span> Route crosses ${over.join(', ')}: overflight denied today. Plot around it.`); block=true; } }
   { const hT=holdOf(f.team,to), hF=holdOf(f.team,path[0]); if(hF&&(hF.k==='all'||hF.k==='dep')) out.push(`<span class="ck-warn">CHECK</span> Departures from ${path[0]} are suspended through turn ${hF.until}: the chalk waits.`); if(hT&&(hT.k==='all'||hT.k==='arr')) out.push(`<span class="ck-warn">CHECK</span> Arrivals at ${to} are suspended through turn ${hT.until}: the chalk holds until then.`); }
@@ -2391,7 +2407,7 @@ function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false
   const have=acftToday(f.acft,f.team); if(have!==null){ const used=acftUsed(f.acft,f.team,skipId);
     if(used+f.n>have){ out.push(`<span class="ck-bad">NO</span> Only ${Math.max(0,have-used)} ${A.n} left today (${have} rolled, ${used} already flying).`); block=true; } else out.push(`<span class="ck-ok">OK</span> ${have-used-f.n} ${A.n} still available today.`); }
   else out.push('<span class="ck-warn">CHECK</span> Today\'s aircraft not rolled yet.');
-  if(TEAMS.some(x=>S.bases[x.id].some(b=>b.hex===to&&b.st==='struck'))){ out.push(`<span class="ck-bad">NO</span> Hex ${to} is struck: airfield operations are down until it recovers.`); block=true; }
+  if(ownTo?ownTo.st==='struck':TEAMS.some(x=>S.bases[x.id].some(b=>b.hex===to&&b.st==='struck'))){ out.push(`<span class="ck-bad">NO</span> Hex ${to} is struck: airfield operations are down until it recovers.`); block=true; }
   // Max on ground (rulebook: set by the ramp-space RFI). 1: one C-130 + 2 fighters. 2: two C-17 + 7 fighters. 3: six C-17 + 42 fighters. A C-5 takes two C-17 spots.
   const destMob=TEAMS.some(x=>S.bases[x.id].some(b=>b.hex===to&&b.role==='mob'));
   if(!destMob&&chips.length){ const ramp=rfiAns(f.team,to)[4], arr=S.turn+turns-1;
@@ -2411,7 +2427,7 @@ function submitPlot(){ const f=planForm(); const c=checkPlan(f,S.plot.path); if(
   const fl={id:S.fSeq++,...f,path:[...S.plot.path],dist:c.dist,moved:0,day:day(),turn:S.turn,st:S.airApprove?'requested':'approved'}; S.flights.push(fl); S.plot=null;
   log(`AIRLIFT ${S.airApprove?'REQUEST':'PLANNED'} ${TM[f.team].n}: ${f.n}× ${ACFT[f.acft].n} ${fl.path.join(' → ')} (${f.pp} PP, ${f.pax} pax, ${c.turns} turn${c.turns>1?'s':''})`);
   banner(`${TM[f.team].n.toUpperCase()} ${S.airApprove?'requests':'launches'} ${f.n}× ${ACFT[f.acft].n}: ${fl.path[0]} → ${fl.path[fl.path.length-1]}`,false); render(); }
-function decideFlight(id,ok){ const f=S.flights.find(x=>x.id===id); if(!f) return; f.st=ok?'approved':'denied';
+function decideFlight(id,ok){ const f=S.flights.find(x=>x.id===id); if(!f||f.st==='denied'||f.st==='arrived') return; if(!ok&&f.moved===0&&f.cargo&&Object.keys(f.cargo).length) addInv(f.team,f.path[0],f.cargo,1); f.st=ok?'approved':'denied';   /* QA: cargo returns on a denial */
   log(`AIRLIFT ${ok?'APPROVED':'DENIED'} ${TM[f.team].n}: ${f.n}× ${ACFT[f.acft].n} ${f.path.join(' → ')}`);
   banner(`${TM[f.team].n.toUpperCase()} airlift ${f.path[0]} → ${f.path[f.path.length-1]}: ${ok?'APPROVED · moves at end of turn':'DENIED'}`,!ok); render(); }
 // a wing can cancel its own chalk until it starts flying; the cargo goes back to where it was loaded
@@ -2480,7 +2496,9 @@ function addRequest(team,from){ team=team||document.getElementById('r-team').val
 function decide(id,ok){ const q=S.requests.find(q=>q.id===id); if(!q) return;
   if(ok&&!S.movesOpen) return alert('Moves happen at the end of the turn. Press "End turn · open move window" first.');
   if(ok){ const other=TEAMS.map(x=>({team:x.id,b:S.bases[x.id].find(b=>b.hex===q.hex&&(!b.af||!q.af||b.af===q.af))})).find(o=>o.b&&o.team!==q.team); if(other) return alert(`${TM[other.team].n} already holds that airfield in hex ${q.hex}. Deny this request.`);
+    { const co=airfieldCountry(q.hex,q.af); if(ADVERSARY.has(co)&&!window.__yesNow) return alert(`${co} is adversary territory. Deny this request.`); }
     { const co=airfieldCountry(q.hex,q.af), ac=accessOf(co); if(ac!=='granted'&&!window.__yesNow) return alert(`${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today. Deny this request, or use Game master to place the base anyway.`); }
+    if(q.from&&!window.__yesNow&&atkPending(q.team).some(a=>a.hex===q.from)) return alert(`A missile attack on hex ${q.from} is still waiting to be rolled. Roll it first (Turn tab, Missile attacks).`);
     if(q.from){ const ob=S.bases[q.team].find(b=>b.hex===q.from); { const F=(S.fighters||{})[q.team]; if(F&&F[q.from]){ F[q.hex]=(F[q.hex]||0)+F[q.from]; delete F[q.from]; log(`${TM[q.team].n}: fighters at ${q.from} move with the base to ${q.hex}`); } } if(ob){ q.fromRole=ob.role; q.fromSid=ob.sid; const hv=((S.hnInv||{})[q.team]||{})[q.from]; if(hv){ addInv(q.team,q.from,hv,-1); delete S.hnInv[q.team][q.from]; log(`${TM[q.team].n} left ${q.from}: its host-nation support stays behind`); } } S.bases[q.team]=S.bases[q.team].filter(b=>b.hex!==q.from); }
     if(!S.bases[q.team].some(b=>b.hex===q.hex)){ const nb={hex:q.hex,af:q.af||null,st:q.from?'moving':'selected',role:null,rfi:{},rfiMax:(q.from||spokePicks(q.team)>=3)?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[q.team]=spokePicks(q.team)+1; S.bases[q.team].push(nb);
       if(q.from&&q.fromRole){ nb.role=q.fromRole; nb.sid=q.fromSid; } else giveRole(q.team,nb,q.role||'spoke'); }
@@ -2519,7 +2537,7 @@ function nextTurn(){ const snap=JSON.stringify({...S,undo:null});
   S.undo=snap; if(atkPending().length) attackRollAll();   // R8.2a never stall the game
   if(S.opening){ S.opening=false; S.movesOpen=false; S.running=false; S.endsAt=null; S.clock=CLOCK_MIN(1)*60; log('Planning phase ended · Turn 1 begins'); banner('PLANNING COMPLETE · TURN 1 BEGINS · DAY SHIFT 0600–1400'+((S.sitStart||3)<=1?' · roll Situation':' · setting the theater'),false); render(); return; }
   if(S.turn>=S.turns){ S.debrief=true; render(); return; }
-  S.movesOpen=false; S.turn++; recoverBases(); S.clock=CLOCK_MIN(S.turn)*60; S.running=false; log(`— TURN ${S.turn} · Day ${day()} ${shift()[0]} · timer ${CLOCK_MIN(S.turn)} min`);
+  S.movesOpen=false; S.turn++; window.__gmU=[]; recoverBases();   /* QA: undo stays inside the turn */ S.clock=CLOCK_MIN(S.turn)*60; S.running=false; log(`— TURN ${S.turn} · Day ${day()} ${shift()[0]} · timer ${CLOCK_MIN(S.turn)} min`);
   banner(S.turn===(S.sitStart||3)&&(S.turn-1)%3!==0?`TURN ${S.turn} · FIRST SITUATION ROLL DUE`:(S.turn-1)%3===0?`DAY ${day()} BEGINS · ${S.turn>=(S.sitStart||3)?'roll Situation and aircraft for today':'roll aircraft for today'}`:`TURN ${S.turn} · ${shift()[0]} ${shift()[1]}`,false); if((S.turn-1)%3===0) payLogisticsTax(); render(); }
 function prevTurn(){ if(!S.undo) return alert('Nothing to undo. Only the last End turn step can be undone.');
   if(!confirmThen('Undo the last End turn step? The game goes back exactly as it was before it, including points, flights and dice.',()=>prevTurn(),'Undo')) return;
@@ -2555,6 +2573,7 @@ function countryAt(x,y){ try{ if(!__cpaths){ const c=document.createElement('can
 function airfieldCountry(hex,af){ const k=hex+':'+(af||''); if(k in __ctry) return __ctry[k]; const c=(af&&MD.chips.find(x=>x.id===af))||MD.chips.find(x=>x.hex===hex); const h=HX[hex]; const x=c?c.x:(h?h.x:0), y=c?c.y:(h?h.y:0); let co=countryAt(x,y); for(let r=6;!co&&r<=60;r+=6) for(let a=0;a<16&&!co;a++) co=countryAt(x+r*Math.cos(a*Math.PI/8),y+r*Math.sin(a*Math.PI/8));   // coastal airfields sit just offshore on the outline
   return __ctry[k]=co; }
 function hexCountry(hex){ const k='h'+hex; if(k in __ctry) return __ctry[k]; const h=HX[hex]; return __ctry[k]=h?countryAt(h.x,h.y):null; }
+const ADVERSARY=new Set(['China','North Korea','Russia','Hong Kong']);   /* QA 11-10: no US bases in adversary territory */
 function accessOf(country){ if(!country||!ACCESS[country]||!S.access) return 'granted'; return S.access[country]||'granted'; }
 // R8.3c Owner 11-10: closed countries are hatched on every map: faint red lines = denied (no bases, no overflight),
 //       faint amber lines = overflight only (no bases). Redrawn only when base access changes.
@@ -2639,7 +2658,7 @@ function showGuide(){ let el=document.getElementById('kfa-guide'); const i=windo
   if(!el){ el=document.createElement('div'); el.id='kfa-guide'; document.body.appendChild(el); }
   const [h,p]=GUIDE[i]; el.innerHTML=`<b>${h}</b><p>${p}</p><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn sm" onclick="window.__gi=99;showGuide()">Skip</button><button class="btn sm p" onclick="window.__gi++;showGuide()">${i===GUIDE.length-1?'Finish':'Next'}</button></div><small>${i+1} of ${GUIDE.length}</small>`; }
 if(MODE==='wing') setTimeout(()=>{ let g=null; try{ g=localStorage.getItem('kfa-guided'); }catch(e){} if(!g&&S.opening) startGuide(); },1500);
-function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm'); const on=m.style.display==='none'; if(on&&m.parentNode!==document.body) document.body.appendChild(m); const r=document.getElementById('gm-btn').getBoundingClientRect(); m.style.position='fixed'; m.style.top=Math.round(r.bottom+6)+'px'; m.style.right=Math.max(8,Math.round(innerWidth-r.right))+'px'; m.style.left='auto'; m.style.zIndex='9000'; m.style.display=on?'block':'none'; const p=document.getElementById('gm-pause'); if(p) p.textContent=S.running?'Pause timer':'Start timer'; if(on) setTimeout(()=>document.addEventListener('click',()=>{ m.style.display='none'; },{once:true}),0); }
+function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm'); const on=m.style.display==='none'; if(on&&m.parentNode!==document.body) document.body.appendChild(m); const r=document.getElementById('gm-btn').getBoundingClientRect(); m.style.position='fixed'; m.style.top=Math.round(r.bottom+6)+'px'; m.style.right=Math.max(8,Math.round(innerWidth-r.right))+'px'; m.style.left='auto'; m.style.zIndex='9000'; m.style.display=on?'block':'none'; const p=document.getElementById('gm-pause'); if(p){ p.textContent=S.running?'Pause timer':'Start timer'; const sub=p.nextElementSibling; if(sub) sub.textContent=S.running?'Stops the shift timer on every screen':'Starts the shift timer on every screen'; } { const v=document.getElementById('gm-ver'); if(v) v.textContent='Kingfish ACE · version '+APP_VER; } if(on) setTimeout(()=>document.addEventListener('click',()=>{ m.style.display='none'; },{once:true}),0); }
 function gmDo(k){ document.getElementById('gm').style.display='none';
   if(k==='pause'){ clockStartPause(); render(); }
   else if(k==='save'){ saveFile(); banner('GAME SAVED TO FILE',false); render(); }
@@ -2649,7 +2668,7 @@ function gmDo(k){ document.getElementById('gm').style.display='none';
   else if(k==='restart') newGame();
   else if(k==='prev'){ let g=null; try{ g=JSON.parse(localStorage.getItem('kfa-game-prev')); }catch(e){} if(!g||!validSave(g)) return alert('No earlier game is stored on this laptop.'); if(!confirmThen('Bring back the last game? The current game is swapped out and kept as the backup.',()=>gmDo('prev'),'Restore')) return; try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} S=g; upgradeState(); save(); render(); } }
 function pauseAndSave(){ if(S.running) clockStartPause(); saveFile(); banner('GAME PAUSED AND SAVED',false); }
-function saveStatus(){ const t=x=>new Date(x).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}).replace(' ','\u00A0'); const on=window.__cloudAt, bad=window.__cloudBad&&(!on||window.__cloudBad>on);
+function saveStatus(){ const t=x=>new Date(x).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false}).replace(':','').replace(' ','\u00A0'); const on=window.__cloudAt, bad=window.__cloudBad&&(!on||window.__cloudBad>on);
   return `Day ${day()} · turn ${S.turn} of ${S.turns}${S.opening?' · planning':''}. `+(ROOM&&!bad?`Saved online${on?' at '+t(on):''} · game code <b style="color:#F2C14E;letter-spacing:2px">${ROOM}</b>. Also saved on this laptop.`:`<b style="color:#F2D28A">The game server is not reachable from this network.</b> Saved on this laptop at ${t(S.savedAt||Date.now())}. Use Download a copy to move it to another computer.`); }
 function loadFile(inp){ const f=inp.files[0]; if(!f) return; f.text().then(t=>{ try{ const n=JSON.parse(t); if(!n||typeof n!=='object'||!n.bases||!n.pts||!TEAMS.every(x=>Array.isArray(n.bases[x.id])&&n.pts[x.id])||!(n.turn>=1)) throw 0; S={...blank(),...n,running:false,endsAt:null}; upgradeState(); log(`Game resumed from file (day ${day()}, turn ${S.turn})`); render(); banner(`GAME RESUMED · DAY ${day()} · TURN ${S.turn}`,false); }catch(e){ alert('That file is not a Kingfish ACE save.'); } }); inp.value=''; }
 function exportLog(){ download('kfa-aar-log.txt',S.log.join('\r\n'),'text/plain'); }
@@ -2657,8 +2676,8 @@ let __dbShown=false;
 function debriefHtml(){ const rows=TEAMS.map(tm=>{ const p=S.pts[tm.id], sc=netScore(p), sp=S.bases[tm.id].filter(b=>b.role==='spoke'), st=(S.stats||{})[tm.id]||{sorties:0,lost:0,struck:0};
     return {tm,p,sc,ioc:sp.filter(b=>{ const s=baseStage(tm.id,b.hex); return s==='ioc'||s==='foc'; }).length,foc:sp.filter(b=>baseStage(tm.id,b.hex)==='foc').length,st}; }).sort((a,b)=>b.sc-a.sc);
   return `<div class="dbp"><div class="cbk">DEBRIEF</div><h2>Final results</h2><div class="sub">Day ${day()} · turn ${S.turn} of ${S.turns} · score = Mission Points minus 1 per 5 Demoralization Points · target ${S.winPts||200}</div>
-   <table class="dbt"><thead><tr><th>Wing</th><th>Score</th><th>MP</th><th>DP</th><th>IOC</th><th>FOC</th><th>Sorties</th><th>Lost</th><th>Struck</th></tr></thead><tbody>
-   ${rows.map((r,i)=>`<tr class="${i===0?'win':''}"><td><span class="rk">${i+1}</span><span style="color:${r.tm.c}">■</span> ${r.tm.n}<span class="hint" style="display:block;font-size:12px">${r.tm.full}</span></td><td><b>${r.sc}</b></td><td>${r.p.mp}</td><td>${r.p.dp}</td><td>${r.ioc}</td><td>${r.foc}</td><td>${r.st.sorties}</td><td>${r.st.lost}</td><td>${r.st.struck}</td></tr>`).join('')}<tr class="tot"><td>Class total</td><td><b>${rows.reduce((a,r)=>a+r.sc,0)}</b></td><td>${rows.reduce((a,r)=>a+r.p.mp,0)}</td><td>${rows.reduce((a,r)=>a+r.p.dp,0)}</td><td>${rows.reduce((a,r)=>a+r.ioc,0)}</td><td>${rows.reduce((a,r)=>a+r.foc,0)}</td><td>${rows.reduce((a,r)=>a+r.st.sorties,0)}</td><td>${rows.reduce((a,r)=>a+r.st.lost,0)}</td><td>${rows.reduce((a,r)=>a+r.st.struck,0)}</td></tr></tbody></table>
+   <table class="dbt"><thead><tr><th>Wing</th><th>Score</th><th>MP</th><th>DP</th><th>Spokes IOC</th><th>Spokes FOC</th><th>Sorties</th><th>Lost</th><th>Struck</th></tr></thead><tbody>
+   ${rows.map((r,i)=>`<tr class="${i===0?'win':''}"><td><span class="rk">${rows.filter(x=>x.sc>r.sc).length+1}</span><span style="color:${r.tm.c}">■</span> ${r.tm.n}<span class="hint" style="display:block;font-size:12px">${r.tm.full}</span></td><td><b>${r.sc}</b></td><td>${r.p.mp}</td><td>${r.p.dp}</td><td>${r.ioc}</td><td>${r.foc}</td><td>${r.st.sorties}</td><td>${r.st.lost}</td><td>${r.st.struck}</td></tr>`).join('')}<tr class="tot"><td>Class total</td><td><b>${rows.reduce((a,r)=>a+r.sc,0)}</b></td><td>${rows.reduce((a,r)=>a+r.p.mp,0)}</td><td>${rows.reduce((a,r)=>a+r.p.dp,0)}</td><td>${rows.reduce((a,r)=>a+r.ioc,0)}</td><td>${rows.reduce((a,r)=>a+r.foc,0)}</td><td>${rows.reduce((a,r)=>a+r.st.sorties,0)}</td><td>${rows.reduce((a,r)=>a+r.st.lost,0)}</td><td>${rows.reduce((a,r)=>a+r.st.struck,0)}</td></tr></tbody></table>
    <div class="hint" style="margin-top:12px">Talk through: where each wing dispersed, what it airlifted first, which RFIs paid off, and what Red cost them. Export the AAR log from the Save tab for the full record.</div>
    ${MODE==='instructor'?'<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="S.debrief=false;render()">Close debrief</button></div>':''}</div>`; }
 function showDebrief(){ let o=document.getElementById('kfa-db'); if(S&&S.debrief&&(MODE==='instructor'||MODE==='projector'||MODE==='wing')){ if(!o){ o=document.createElement('div'); o.id='kfa-db'; o.className='dbx'; document.body.appendChild(o); } o.innerHTML=debriefHtml(); } else if(o) o.remove(); }
@@ -2745,6 +2764,7 @@ if(MODE==='login'){
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.clock=v.clock; S.hidden=v.hidden; S.running=v.running; S.endsAt=v.endsAt; } }catch(x){} };
   window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; pull(); render(); } else if(e.key==='kfa-tick'){ pull(); const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } });
   pull(); { let ok=false; try{ ok=validSave(JSON.parse(localStorage.getItem('kfa-game'))); }catch(e){} if(!ok) save(); } render();
+  keepFresh(()=>{ pull(); render(); });   /* R10.23 */
   setInterval(()=>{ if(S.running&&S.endsAt){ const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c!==S.clock){ S.clock=c; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } } },250);
 } else if(MODE==='projector'){
   document.title='Kingfish ACE · Projector';
@@ -2754,7 +2774,7 @@ if(MODE==='login'){
   const pull=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g){ const keep={clock:S.clock,running:S.running,hidden:S.hidden}; { const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); } } }
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.clock=v.clock; S.hidden=v.hidden; S.running=v.running; S.endsAt=v.endsAt; } }catch(x){} };
   window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; pull(); render(); } else if(e.key==='kfa-tick'){ pull(); renderClockOnly(); animateFlights(); } });
-  pull(); render();
+  pull(); render(); keepFresh(()=>{ pull(); render(); });   /* R10.23 */
   setInterval(()=>{ if(S.running&&S.endsAt){ const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c!==S.clock){ S.clock=c; renderClockOnly(); animateFlights(); } } },250);
 } else { render(); setupTabs();
   if(MODE==='instructor'){ const fresh=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g&&g===window.__mySave) return; const sel=S.sel; syncIn(); S.sel=sel; }catch(x){} };   /* R10.9 skip when this window wrote the last save */ document.addEventListener('pointerdown',fresh,true); document.addEventListener('keydown',fresh,true); }
