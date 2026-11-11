@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.16.5';   // shown on every screen; bump on each release
+const APP_VER='1.16.6';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1274,7 +1274,7 @@ const MODE=ROUTE==='projector'?'projector':/^wing[1-4]$/.test(ROUTE)?'wing':ROUT
 const WING_ID=MODE==='wing'?['alpha','bravo','charlie','delta'][+ROUTE.slice(4)-1]:null;
 // ===== Cloud rooms: the instructor laptop stays the only writer; wings on other laptops join with a 6-character code =====
 const FB_ROOT='https://kingfish-ace-default-rtdb.firebaseio.com/rooms/';
-let ROOM=null, REMOTE=false, __remoteSeen=0, __rev=0;
+let ROOM=null, REMOTE=false, __remoteSeen=0, __rev=Date.now();
 try{ if(MODE==='instructor'){ ROOM=localStorage.getItem('kfa-room'); if(!/^[A-Z0-9]{6}$/.test(ROOM||'')){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; ROOM=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join(''); localStorage.setItem('kfa-room',ROOM); } }
   else if(MODE==='projector'){ ROOM=localStorage.getItem('kfa-room'); }
   else if(MODE==='wing'){ const j=sessionStorage.getItem('kfa-join'); if(/^[A-Z0-9]{6}$/.test(j||'')){ ROOM=j; REMOTE=true; } } }catch(e){}
@@ -1317,7 +1317,7 @@ function instructorAlive(){ return REMOTE?Date.now()-__remoteSeen<9000:(BC&&Date
 const cmd=new Proxy({},{get:(_,fn)=>(...args)=>{ if(!CMD_OK.includes(fn)) return;
   if(MODE==='wing'&&UI_ONLY.has(fn)){ window[fn](...args); return; }          // stays on this screen
   if(MODE==='wing'&&instructorAlive()) window.__waitN=0;
-  if(MODE==='wing'&&REMOTE&&!instructorAlive()&&!window.__slowSaid){ window.__slowSaid=1; notice('The instructor screen is slow to answer. Your clicks are queued and go through in order.'); setTimeout(()=>{ window.__slowSaid=0; },15000); }
+  if(MODE==='wing'&&REMOTE&&!instructorAlive()&&!window.__slowSaid&&!window.__insPaused){ window.__slowSaid=1; notice('The instructor screen is slow to answer. Your clicks are queued and go through in order.'); setTimeout(()=>{ window.__slowSaid=0; },15000); }
   if(MODE==='wing'&&BC&&!REMOTE&&!instructorAlive()&&(performance.now()<4000||lastHb>0)&&(window.__waitN=(window.__waitN||0)+1)<40){ if(BC&&!REMOTE) BC.postMessage({ping:1}); if(window.__waitN===2) notice('Waiting for the instructor screen. Your action goes through when it answers.'); setTimeout(()=>cmd[fn](...args),250); return; }
   if(MODE==='wing') window.__waitN=0;   // wait for the instructor window; never write alongside it   // just opened: wait to hear from the instructor window
   if(MODE==='wing'&&(REMOTE||instructorAlive())){ const team=args[0];
@@ -1349,7 +1349,7 @@ if(MODE==='instructor') setTimeout(()=>{ document.querySelectorAll('#panel [id],
 setTimeout(()=>{
   if(MODE==='instructor'&&ROOM&&!window.__noCloud){   /* test builds stay off the server unless a test asks (owner 11-10: no clutter) */
     let lastGame='', gameT=null, liveT=null, busy=false; const alerts={};
-    window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; return fbSend('sync/live','PUT',{rev:__rev,t:Date.now(),clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
+    window.cloudLive=now=>{ const send=()=>{ if(window.__standby) return; return fbSend('sync/live','PUT',{rev:__rev,t:Date.now(),paused:!!window.__pausedExit,clock:S.clock,hidden:!!S.hidden,running:!!S.running,endsAt:S.endsAt||null,alerts}); };
       if(now===true){ clearTimeout(liveT); liveT=null; return send(); } if(liveT) return; liveT=setTimeout(()=>{ liveT=null; send(); },900); };
     let upBusy=false, upAgain=false, forceQ=false, prevK=null, prevLen={}, lastFullAt=0, fullT=null, needFull=true;   /* R10.27 one upload at a time; R10.45 changes only */
     const scheduleFull=()=>{ if(fullT) return; fullT=setTimeout(()=>{ fullT=null; window.cloudSave('full'); },Math.max(50,2000-(Date.now()-lastFullAt))); };
@@ -1381,7 +1381,7 @@ setTimeout(()=>{
     const applyDelta=d=>{ if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return; } } if(!d||d.rev==null||d.rev<=gotRev) return; if(d.full||d.base!==gotRev){ pullFull(); return; }
       try{ const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); for(const k in (d.set||{})) S[k]=d.set[k]; for(const k in (d.app||{})) S[k]=(Array.isArray(S[k])?S[k]:[]).concat(d.app[k]); for(const k of (d.del||[])) delete S[k];
         Object.assign(S,keep); restoreUi(ui); gotRev=d.rev; window.__gk=null; lagAt=0; try{ localStorage.setItem('kfa-game',JSON.stringify(S)); }catch(e){} render(); showSending(false); }catch(e){ pullFull(); } };
-    const tick=async(pre)=>{ if(busy) return; busy=true; try{ const L=pre||await fbGet('sync/live'); if(L===null&&window.__lastLiveT&&!window.__goneSaid){ window.__goneSaid=1; notice('The instructor closed this game. Ask the instructor for the game code to rejoin.'); } if(L&&L.t){ window.__goneSaid=0; if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
+    const tick=async(pre)=>{ if(busy) return; busy=true; try{ const L=pre||await fbGet('sync/live'); if(L===null&&window.__lastLiveT&&!window.__goneSaid){ window.__goneSaid=1; notice('The instructor closed this game. Ask the instructor for the game code to rejoin.'); } if(L&&L.t){ window.__goneSaid=0; if(L.paused&&!window.__insPaused){ window.__insPaused=1; notice('The instructor paused the game. Your clicks are kept and go through when the instructor is back.'); } else if(!L.paused&&window.__insPaused){ window.__insPaused=0; notice('The instructor is back. The game continues.'); } if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
         const a=L.alerts&&L.alerts[WING_ID]; if(a&&a.t!==window.__lastAlert){ if(window.__lastAlert!==undefined) alert(a.text); window.__lastAlert=a.t; }
         if(gotRev>=L.rev){ rev=L.rev; lagAt=0; } else { if(!lagAt) lagAt=Date.now(); else if(Date.now()-lagAt>1200){ lagAt=Date.now(); pullFull(); } }
         S.clock=L.clock; S.hidden=L.hidden; S.running=L.running; S.endsAt=L.endsAt; const el=document.getElementById('wtime'); if(el) el.textContent=clockText(); animateFlights(); } }finally{ busy=false; } };
@@ -1402,9 +1402,9 @@ function resumeChoice(){ const when=new Date(window.__bootSavedAt||S.savedAt), d
    <div class="cfr" style="flex-wrap:wrap;gap:8px"><button class="btn" data-a="new">Start new game</button><label class="btn">Resume from file<input type="file" accept=".json" style="display:none"></label><button class="btn p" data-a="go">Continue saved game</button></div>
    <div class="hint" style="margin-top:10px">Start new game keeps this game as a backup on this laptop (Game menu: Restore last game).</div></div>`;
   const done=()=>{ ov.remove(); try{ sessionStorage.setItem('kfa-asked','1'); }catch(e){} };
-  ov.querySelector('[data-a=go]').onclick=()=>{ done(); log(`Game continued (day ${day()}, turn ${S.turn})`); render(); banner(`CONTINUING · DAY ${day()} · TURN ${S.turn}`,false); };
+  ov.querySelector('[data-a=go]').onclick=()=>{ done(); log(`Game continued (day ${day()}, turn ${S.turn})`); banner(`CONTINUING · DAY ${day()} · TURN ${S.turn}`,false); render(); };   /* banner first so it is saved and reaches every screen */
   ov.querySelector('[data-a=new]').onclick=()=>{ done(); if(S.log&&S.log.length>2){ try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} }   // R10.5 no download
-    keepSetup(()=>{ S=blank(); upgradeState(); }); newGid(); log(`New game · 4 teams · ${S.turns} turns`); render(); banner('NEW GAME',false); };
+    keepSetup(()=>{ S=blank(); upgradeState(); }); newGid(); log(`New game · 4 teams · ${S.turns} turns`); banner('NEW GAME',false); render(); };
   ov.querySelector('input[type=file]').onchange=function(){ done(); loadFile(this); };
   document.body.appendChild(ov); setTimeout(()=>ov.querySelector('[data-a=go]').focus(),30); }
 if(BC&&MODE==='wing') setInterval(()=>{ const lost=lastHb>0&&Date.now()-lastHb>6000; let b=document.getElementById('kfa-recon');
@@ -2827,7 +2827,8 @@ function gameMenu(e){ e.stopPropagation(); const m=document.getElementById('gm')
 function gmDo(k){ document.getElementById('gm').style.display='none';
   if(k==='pause'){ clockStartPause(); render(); }
   else if(k==='save'){ saveFile(); banner('GAME SAVED TO FILE',false); render(); }
-  else if(k==='exit'){ if(S.running) clockStartPause(); window.__keepRoom=true; saveNow(); if(window.cloudSave) cloudSave(true); setTimeout(()=>go(''),400); }
+  else if(k==='exit'){ if(S.running) clockStartPause(); window.__keepRoom=true; window.__pausedExit=true; saveNow(); if(window.cloudSave) cloudSave(true); const sent=window.cloudLive?Promise.resolve(cloudLive(true)):Promise.resolve();   /* leave only after the wings were told and the game is up */
+    Promise.race([sent.then(()=>new Promise(r=>setTimeout(r,900))), new Promise(r=>setTimeout(r,3000))]).then(()=>go('')); }
   else if(k==='undo') gmUndo();
   else if(k==='check') preClassCheck();
   else if(k==='restart') newGame();
