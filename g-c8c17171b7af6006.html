@@ -675,12 +675,12 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 .samx{opacity:0;animation:samFly .45s ease-out forwards}.sfall{opacity:0;transform-box:fill-box;transform-origin:center;animation:sFall 1.6s ease-in forwards}.sdown{opacity:0;animation:sDown .6s ease-out forwards}.sgone{animation:sGone .3s ease-out forwards}
 .btrail{stroke-dashoffset:var(--len);animation:bTrail 4s ease-in forwards}.bhead{opacity:0;animation:bHead 1.8s ease-in forwards}
 @keyframes eShot{0%{opacity:1;transform:translate(var(--sx),var(--sy))}92%{opacity:1}100%{opacity:0;transform:translate(var(--ex),var(--ey))}}
-@keyframes dChip{0%{opacity:0;transform:scale(.6)}8%{opacity:1;transform:scale(1)}88%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+@keyframes dChip{0%{opacity:0;transform:scale(.6)}6%{opacity:1;transform:scale(1)}92%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
 @keyframes dRes{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}
 .eshot{opacity:0;animation:eShot .55s ease-in forwards}.dchip{opacity:0;transform-box:fill-box;transform-origin:center;animation:dChip 1.7s ease-out forwards}.dres{opacity:0;animation:dRes .25s ease-out forwards}
 @keyframes dTum{0%{transform:rotate(-600deg) scale(.3)}100%{transform:rotate(0) scale(1)}}
 @keyframes dFl{0%{opacity:1}100%{opacity:0}}
-.dtum{transform-box:fill-box;transform-origin:center;animation:dTum .6s cubic-bezier(.2,.8,.3,1) both}.dfl{opacity:0;animation:dFl .085s steps(1,end) forwards}.dfin{opacity:0;animation:dRes .2s ease-out forwards}
+.dtum{transform-box:fill-box;transform-origin:center;animation:dTum 1s cubic-bezier(.2,.8,.3,1) both}.dfl{opacity:0;animation:dFl .093s steps(1,end) forwards}.dfin{opacity:0;animation:dRes .2s ease-out forwards}
 @keyframes munHit{0%{opacity:.95;transform:scale(.25)}100%{opacity:.5;transform:scale(1)}}
 .sfly{animation:sfly 6s linear forwards}@keyframes sfly{0%{transform:translate(0,0)}41.7%{transform:translate(var(--dx),var(--dy));animation-timing-function:ease-in-out}58.3%{transform:translate(var(--dx),var(--dy))}100%{transform:translate(0,0)}}
 .srot{animation:srot 6s linear forwards}@keyframes srot{0%{transform:rotate(var(--a1))}43%{transform:rotate(var(--a1));animation-timing-function:ease-in-out}57%{transform:rotate(var(--a2))}100%{transform:rotate(var(--a2))}}
@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.15.3';   // shown on every screen; bump on each release
+const APP_VER='1.15.4';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1526,7 +1526,7 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
   for(const so of (S.sorties||[])){ if(so.turn!==S.turn) continue; if(only?so.team!==only:S.show[so.team]===false) continue; const A=HX[so.from], B=HX[so.target]; if(!A||!B||so.from===so.target) continue; const t=TM[so.team];
     const d=`M${A.x},${A.y} L${B.x},${B.y} L${A.x},${A.y}`;
     s+=`<g pointer-events="none"><path d="M${A.x},${A.y} L${B.x},${B.y}" fill="none" stroke="${t.c}" stroke-width="4" stroke-dasharray="4 10" stroke-opacity=".8"/><circle cx="${B.x}" cy="${B.y}" r="54" fill="none" stroke="${t.c}" stroke-width="4" stroke-dasharray="10 8"/><path d="M${B.x-70},${B.y}h40M${B.x+30},${B.y}h40M${B.x},${B.y-70}v40M${B.x},${B.y+30}v40" stroke="${t.c}" stroke-width="4"/>
-`; ac+=`<g pointer-events="none">${so.t&&Date.now()-so.t<(so.fight?fightPlan(so,A,B).T*1000+600:6500)?`<g transform="translate(${A.x},${A.y})">${sortieFly(so,A,B)}${fmJets(so,A,B)}</g></g></g>`:''}${munitionFx(so,A,B)}</g>`; s+=`
+`; ac+=`<g pointer-events="none">${so.t&&Date.now()-so.t<flightPlan(so,A,B).T*1000+600?`<g transform="translate(${A.x},${A.y})">${sortieFly(so,A,B)}${fmJets(so,A,B)}</g></g></g>`:''}${munitionFx(so,A,B)}</g>`; s+=`
       <g transform="translate(${B.x},${sortieTagY(so,B)})">${planeTag(`${so.n} × ${FTYPE[so.team]} · ${so.lost?`${so.n-so.lost} of ${so.n} back`:so.mp?`+${so.mp} MP`:(so.conflict?'mission flown':'presence')}`,t.c,0)}</g></g>`; }
   ac+=dfFx();
   { const arr={}; for(const f of S.flights){ if(f.st!=='arrived'||!f.arrAt||Date.now()-f.arrAt>15000) continue; if(only?f.team!==only:S.show[f.team]===false) continue; const hx=f.path[f.path.length-1]; if(!HX[hx]) continue; (arr[hx]=arr[hx]||[]).push(f); }
@@ -1592,7 +1592,7 @@ function playCombat(){ const c=S&&S.lastCombat; if(!__combatPrimed){ __combatPri
   const T=TM[c.team], ov=document.createElement('div'); ov.className='cbx'; ov.onclick=()=>ov.remove();
   ov.innerHTML=`<div class="cbp" style="border-top-color:${T.c}"><div class="cbk">AIR COMBAT · CONFLICT</div>
     <div class="cbt"><span class="ktag" style="background:${T.c}">${T.n}</span> · ${c.n} × ${c.ftype} <i>vs</i> <span class="cbr">${c.zname.toUpperCase()}</span></div>
-    <div class="cbs">Hex ${c.target} · your D18 against Red's D${c.die} · higher roll wins, ties go to you${c.jamTxt?' · <b>'+c.jamTxt+'</b>':''}</div>
+    <div class="cbs">Hex ${c.target} · your D18 against Red's D${c.die} · higher roll wins, a tie goes to Red${c.jamTxt?' · <b>'+c.jamTxt+'</b>':''}</div>
     ${(c.jamDice||[]).length?`<div class="cbjam">${c.jamDice.map(j=>`<div class="cbj"><b class="cbd red">${dieSvg(10,j.v,'land')}</b><span>${j.l}<br><i>${j.sub}</i></span></div>`).join('')}</div>`:''}
     <div class="cbrows">${c.rolls.map((r,i)=>`<div class="cbrow" id="cbr${i}"><img src="${FSIL[c.ftype]}"><span class="cbn">${c.ftype} #${i+1}</span><b class="cbd blue">${dieSvg(18,'–','')}</b><span class="cbvs">vs</span><b class="cbd red">${dieSvg(c.die,'–','')}</b><span class="cbres"></span></div>`).join('')}</div>
     <div class="cbsum" id="cbsum"></div><div class="cbhint">click anywhere to close</div></div>`;
@@ -2233,12 +2233,15 @@ function drawCards(){ const recs=[]; for(const tm of TEAMS){ recs.push(cardFor('
 // R10.28 Owner 11-10: when a conflict sortie spends bombs and missiles, a small red munition releases from the
 //       fighter as it reaches the target, flies the last stretch and strikes it; a faint impact ring then stays for
 //       the turn. Plays once, timed by the sortie's own clock, never blinks or loops.
-function sortieFly(so,A,B){ const age=((Date.now()-so.t)/1000).toFixed(2), ang=Math.atan2(B.y-A.y,B.x-A.x)*180/Math.PI;   /* R10.28 CSS flight: out, turn, back */
-  if((so.fight||[]).length){ const P=fightPlan(so,A,B), id=(so.team[0]+so.t).replace(/\W/g,''), dx=(B.x-A.x).toFixed(1), dy=(B.y-A.y).toFixed(1), sx=((B.x-A.x)*P.p).toFixed(1), sy=((B.y-A.y)*P.p).toFixed(1), pc=x=>(Math.min(100,x/P.T*100)).toFixed(2)+'%', a1=ang.toFixed(1), a2=(ang+180).toFixed(1);
-    const kf=`@keyframes f${id}{0%{transform:translate(0,0)}${pc(P.tA)}{transform:translate(${sx}px,${sy}px)}${pc(P.tEnd)}{transform:translate(${sx}px,${sy}px)}`+(P.won?`${pc(P.tArr)}{transform:translate(${dx}px,${dy}px)}${pc(P.tArr+0.8)}{transform:translate(${dx}px,${dy}px)}100%{transform:translate(0,0)}}`:`100%{transform:translate(${sx}px,${sy}px)}}`);
-    const kr=`@keyframes r${id}{0%{transform:rotate(${a1}deg)}`+(P.won?`${pc(P.tArr+0.05)}{transform:rotate(${a1}deg)}${pc(P.tArr+0.75)}{transform:rotate(${a2}deg)}100%{transform:rotate(${a2}deg)}}`:`100%{transform:rotate(${a1}deg)}}`);
-    return `<style>${kf}${kr}</style><g style="animation:f${id} ${P.T.toFixed(2)}s linear forwards;animation-delay:-${age}s"><g style="animation:r${id} ${P.T.toFixed(2)}s linear forwards;animation-delay:-${age}s">`; }
-  return `<g class="sfly" style="--dx:${(B.x-A.x).toFixed(1)}px;--dy:${(B.y-A.y).toFixed(1)}px;animation-delay:-${age}s"><g class="srot" style="--a1:${ang.toFixed(1)}deg;--a2:${(ang+180).toFixed(1)}deg;animation-delay:-${age}s">`; }
+function sortieFly(so,A,B){ const age=((Date.now()-so.t)/1000).toFixed(2), P=flightPlan(so,A,B), L=P.L, ux=(B.x-A.x)/L, uy=(B.y-A.y)/L, a1=Math.atan2(uy,ux)*180/Math.PI, id=('s'+so.team[0]+so.t).replace(/\W/g,''), pc=x=>(Math.max(0,Math.min(100,x/P.T*100))).toFixed(2)+'%', f=v=>v.toFixed(1), tr=(x,y)=>`{transform:translate(${f(x)}px,${f(y)}px)}`, ro=a=>`{transform:rotate(${f(a)}deg)}`;   /* R10.38 out, duel, arc turn, home */
+  const dx=B.x-A.x, dy=B.y-A.y, fight=(so.fight||[]).length>0; let kf=`0%${tr(0,0)}`, kr=`0%${ro(a1)}`;
+  if(fight) kf+=`${pc(P.tA)}${tr(dx*P.p,dy*P.p)}${pc(P.tEnd)}${tr(dx*P.p,dy*P.p)}`;
+  if(P.won){ const nx=-uy, ny=ux, cx=dx+nx*P.r, cy=dy+ny*P.r, bx=-nx*P.r, by=-ny*P.r; kf+=`${pc(P.tArr)}${tr(dx,dy)}`; kr+=`${pc(P.tArr)}${ro(a1)}`;
+    for(let k=1;k<=12;k++){ const th=Math.PI*k/12, c=Math.cos(th), s=Math.sin(th); kf+=`${pc(P.tArr+P.tt*k/12)}${tr(cx+bx*c-by*s,cy+bx*s+by*c)}`; kr+=`${pc(P.tArr+P.tt*k/12)}${ro(a1+15*k)}`; }
+    const ex=dx+2*nx*P.r, ey=dy+2*ny*P.r; let aR=Math.atan2(-ey,-ex)*180/Math.PI; while(aR<a1) aR+=360; while(aR>a1+360) aR-=360;
+    kr+=`${pc(P.tArr+P.tt+0.25)}${ro(aR)}100%${ro(aR)}`; kf+=`100%${tr(0,0)}`; }
+  else { kf+=`100%${tr(dx*P.p,dy*P.p)}`; kr+=`100%${ro(a1)}`; }
+  return `<style>@keyframes f${id}{${kf}}@keyframes r${id}{${kr}}</style><g style="animation:f${id} ${P.T.toFixed(2)}s linear forwards;animation-delay:-${age}s"><g style="animation:r${id} ${P.T.toFixed(2)}s linear forwards;animation-delay:-${age}s">`; }
 function munitionFx(so,A,B){ if(!so.conflict||!so.t) return ''; const age=(Date.now()-so.t)/1000; if(age>20) return ''; const L=Math.hypot(B.x-A.x,B.y-A.y)||1, rel=Math.min(260,L*0.8), tRel=Math.max(0.4,2.5*(1-rel/L)-0.1), ux=(B.x-A.x)/L, uy=(B.y-A.y)/L, dx0=0; let dx=(-ux*rel).toFixed(1), dy=(-uy*rel).toFixed(1); const ang=(Math.atan2(uy,ux)*180/Math.PI).toFixed(1), hit0=tRel+0.9;
   if((so.fight||[]).length) return engageFx(so,A,B,age);
   const tR=tRel, rD=rel, hit=tR+0.9, sam='';
@@ -2252,16 +2255,18 @@ function munitionFx(so,A,B){ if(!so.conflict||!so.t) return ''; const age=(Date.
     <circle class="mflash" r="22" fill="#FFF6D8" style="animation-delay:${(hit-age).toFixed(2)}s"/>
     <circle class="mshock" r="60" fill="none" stroke="#FFB347" stroke-width="5" style="animation-delay:${(hit-age).toFixed(2)}s"/>
     <circle class="mimp" r="34" fill="#E5533D" fill-opacity=".12" stroke="#E5533D" stroke-width="6" style="animation-delay:${(hit-age+0.5).toFixed(2)}s"/></g>`; }
-function fightPlan(so,A,B){ const L=Math.hypot(B.x-A.x,B.y-A.y)||1, F=(so.fight||[]).slice(-6).map(f=>typeof f==='number'?{w:f}:f), k=F.length, won=!!(k&&F[k-1].w), sd=Math.min(L*0.55,200), p=1-sd/L, tA=1.3, R=1.9, tEnd=tA+k*R, tArr=won?tEnd+0.7:tEnd, T=won?tArr+0.8+2.2:tEnd+0.6; return {L,F,k,won,sd,p,tA,R,tEnd,tArr,T}; }
+function turnArc(L){ const r=Math.max(34,Math.min(60,L*0.16)), v=L/2.5, tt=Math.max(0.9,Math.min(1.6,Math.PI*r/v)); return {r,tt}; }
+function fightPlan(so,A,B){ const L=Math.hypot(B.x-A.x,B.y-A.y)||1, F=(so.fight||[]).slice(-6).map(f=>typeof f==='number'?{w:f}:f), k=F.length, won=!!(k&&F[k-1].w), sd=Math.min(L*0.55,200), p=1-sd/L, tA=1.3, R=3.0, tEnd=tA+k*R, tArr=won?tEnd+0.7:tEnd, a=turnArc(L), T=won?tArr+a.tt+2.2:tEnd+0.6; return {L,F,k,won,sd,p,tA,R,tEnd,tArr,T,r:a.r,tt:a.tt}; }
+function flightPlan(so,A,B){ if((so.fight||[]).length) return fightPlan(so,A,B); const L=Math.hypot(B.x-A.x,B.y-A.y)||1, a=turnArc(L); return {L,won:true,p:1,tA:2.5,tEnd:2.5,tArr:2.5,k:0,R:0,F:[],r:a.r,tt:a.tt,T:2.5+a.tt+2.5}; }
 function engageFx(so,A,B,age){ const P=fightPlan(so,A,B), ux=(B.x-A.x)/P.L, uy=(B.y-A.y)/P.L, Jx=-ux*P.sd, Jy=-uy*P.sd, nx=uy, ny=-ux, up=ny>0?-1:1, ox=nx*up, oy=ny*up, die=so.zdie||12, ft=FTYPE[so.team], dl=x=>`animation-delay:${(x-age).toFixed(2)}s`, f1=v=>(+v).toFixed(1);
   const angTo=(x1,y1,x2,y2)=>(Math.atan2(y2-y1,x2-x1)*180/Math.PI).toFixed(1);
   let s='', g='';
-  if(P.won){ const tk=P.tA+(P.k-1)*P.R+1.3, op={20:.42,12:.28,10:.15}[die]||.28;   /* the real zone is already off the board: draw it until the hit */
+  if(P.won){ const tk=P.tA+(P.k-1)*P.R+2.35, op={20:.42,12:.28,10:.15}[die]||.28;   /* the real zone is already off the board: draw it until the hit */
     g=`<g class="sgone" style="${dl(tk)}"><polygon points="${hexPts(B)}" fill="rgba(200,40,40,${op})" stroke="#C8463A" stroke-width="6"/>${samSite(B.x-4,B.y+4)}</g>`; }
   const showDice=(MODE==='wing'&&WING_ID===so.team)||!!window.__diceAll, ca=Math.atan2(uy,ux), cs=Math.cos(ca), sn=Math.sin(ca), J0x=Jx, J0y=Jy, off=(P.F.length>6?(so.fight.length-6):0);
-  P.F.forEach((f,i)=>{ const t0=P.tA+i*P.R, tL=t0+0.75, tH=t0+1.3, last=i===P.k-1, w=!!f.w, jn=fmJetOf(so,i+off), fo=FORM[jn], Jx=J0x+fo[0]*cs-fo[1]*sn, Jy=J0y+fo[0]*sn+fo[1]*cs;
+  P.F.forEach((f,i)=>{ const t0=P.tA+i*P.R, tL=t0+1.8, tH=t0+2.35, last=i===P.k-1, w=!!f.w, jn=fmJetOf(so,i+off), fo=FORM[0], Jx=J0x+fo[0]*cs-fo[1]*sn, Jy=J0y+fo[0]*sn+fo[1]*cs;
     const mx=J0x/2-ox*84, my=J0y/2-oy*84;
-    if(showDice){ const dur=`${dl(t0)};animation-duration:${last?2.6:P.R}s`, rr=(txt,ok)=>`<g class="dres" style="${dl(tH)}"><rect x="-52" y="44" width="104" height="24" rx="4" fill="${ok?'#1F4D33':'#5A1A14'}" stroke="${ok?'#8FC7A3':'#C8463A'}" stroke-width="2"/><text y="61" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">${txt}</text></g>`;
+    if(showDice){ const dur=`${dl(t0)};animation-duration:${last?3.8:P.R}s`, rr=(txt,ok)=>`<g class="dres" style="${dl(tH)}"><rect x="-52" y="44" width="104" height="24" rx="4" fill="${ok?'#1F4D33':'#5A1A14'}" stroke="${ok?'#8FC7A3':'#C8463A'}" stroke-width="2"/><text y="61" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">${txt}</text></g>`;
       s+=`<g class="dchip" style="${dur}">${mapDie(f1(Jx),f1(Jy-96),18,f.a??'',`${ft} #${i+off+1} · D18`,rr(w?'WIN':'SHOT DOWN',w),TM[so.team].c,'#0E1A26',t0,age)}</g>`;
       s+=`<g class="dchip" style="${dur}">${mapDie(0,140,die,f.r??'',`S-400 · D${die}`,rr(w?'DESTROYED':'WIN',!w),'#C8463A','#2A0E0C',t0,age)}</g>`; }
     /* blue missile: jet -> site (hits on a win, decoyed halfway on a loss) */
@@ -2277,7 +2282,7 @@ function engageFx(so,A,B,age){ const P=fightPlan(so,A,B), ux=(B.x-A.x)/P.L, uy=(
     if(w) s+=`<circle class="mflash" r="32" fill="#FFF6D8" style="${dl(tH)}"/><circle class="mfire" r="58" fill="url(#munFire)" style="${dl(tH)}"/><circle class="mshock" r="86" fill="none" stroke="#FFB347" stroke-width="6" style="${dl(tH)}"/><circle class="mscorch" r="26" fill="#3A2A22" style="${dl(tH)}"/>
       <circle class="mflash" cx="${f1(bx+(Jx-bx)*0+0)}" cy="0" r="0"/>`
        + `<circle class="mflash" cx="${f1(rx)}" cy="${f1(ry)}" r="8" fill="#FFE2B8" style="${dl(tH)}"/>`;
-    else { const kx=Jx, ky=Jy;
+    else { const kx=Jx-ux*i*24, ky=Jy-uy*i*24;
       s+=`<circle class="mflash" cx="${f1(bx)}" cy="${f1(by)}" r="9" fill="#E8F4FF" style="${dl(tH-0.1)}"/>
       <g transform="translate(${f1(Jx)},${f1(Jy)})"><circle class="mflash" r="20" fill="#FFF6D8" style="${dl(tH)}"/><circle class="mfire" r="34" fill="url(#munFire)" style="${dl(tH)}"/>
         <g class="sfall" style="${dl(tH)}"><use href="#${kid('FSIL',ft)}" x="-24" y="-24" width="48" height="48" opacity=".9"/></g></g>
@@ -2287,16 +2292,19 @@ function engageFx(so,A,B,age){ const P=fightPlan(so,A,B), ux=(B.x-A.x)/P.L, uy=(
   return `<g pointer-events="none">${g}<g transform="translate(${B.x},${B.y})"><defs><radialGradient id="munFire"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".45" stop-color="#FFB347"/><stop offset=".8" stop-color="#E5533D"/><stop offset="1" stop-color="#E5533D" stop-opacity="0"/></radialGradient></defs>${s}</g></g>`; }
 function fmCount(so){ return Math.max(1,Math.min(6,so.n||1)); }
 function fmJetOf(so,i){ return Math.min(i,fmCount(so)-1); }
-function fmJets(so,A,B){ const m=fmCount(so), c=TM[so.team].c, F=(so.fight||[]).map(f=>typeof f==='number'?{w:f}:f), age=(Date.now()-so.t)/1000, P=F.length?fightPlan(so,A,B):null, sc=m===1?.42:m>4?.27:.3;
-  let s=''; for(let j=0;j<m;j++){ let fade=null;
-    if(P){ const allLost=so.lost>=so.n; if(j<m-1&&F[j]&&!F[j].w) fade=P.tA+j*P.R+1.3; else if(j===m-1&&allLost) fade=P.tA+(F.length-1)*P.R+1.3; }
-    const o=FORM[j]; s+=`<g transform="translate(${o[0]},${o[1]})"><g transform="rotate(90) scale(${sc}) translate(-100,-100)" ${fade!==null?`class="sgone" style="animation-delay:${(fade-age).toFixed(2)}s"`:''}><circle cx="100" cy="100" r="92" fill="#0E1318" fill-opacity=".82"/><circle cx="100" cy="100" r="92" fill="${c}" fill-opacity=".35" stroke="${c}" stroke-width="${m===1?7:9}"/><use href="#${kid('FSIL',FTYPE[so.team])}" x="10" y="10" width="180" height="180"/></g></g>`; }
-  return s; }
+function fmJets(so,A,B){ const m=fmCount(so), c=TM[so.team].c, F=(so.fight||[]).map(f=>typeof f==='number'?{w:f}:f), age=(Date.now()-so.t)/1000, P=F.length?fightPlan(so,A,B):null, sc=m===1?.42:m>4?.27:.3, id=('m'+so.team[0]+so.t).replace(/\W/g,'');
+  const tHit=k=>P.tA+k*P.R+2.35, pc=x=>(Math.max(0,Math.min(100,x/P.T*100))).toFixed(2)+'%', tr=o=>`{transform:translate(${o[0]}px,${o[1]}px)}`;
+  let s='', css=''; for(let j=0;j<m;j++){ let fade=null, anim='';
+    if(P){ const allLost=so.lost>=so.n; if(j<m-1&&F[j]&&!F[j].w) fade=tHit(j); else if(j===m-1&&allLost) fade=tHit(F.length-1);
+      const losses=[]; for(let k=0;k<j;k++) if(F[k]&&!F[k].w) losses.push(tHit(k));
+      if(losses.length){ let rank=j, kf=`0%${tr(FORM[j])}`; for(const tl of losses){ kf+=`${pc(tl+0.15)}${tr(FORM[rank])}`; rank--; kf+=`${pc(tl+0.75)}${tr(FORM[rank])}`; } kf+=`100%${tr(FORM[rank])}`; css+=`@keyframes ${id}j${j}{${kf}}`; anim=` style="animation:${id}j${j} ${P.T.toFixed(2)}s linear both;animation-delay:-${age.toFixed(2)}s"`; } }
+    const o=FORM[j]; s+=`<g transform="translate(${o[0]},${o[1]})"${anim}><g transform="rotate(90) scale(${sc}) translate(-100,-100)" ${fade!==null?`class="sgone" style="animation-delay:${(fade-age).toFixed(2)}s"`:''}><circle cx="100" cy="100" r="92" fill="#0E1318" fill-opacity=".82"/><circle cx="100" cy="100" r="92" fill="${c}" fill-opacity=".35" stroke="${c}" stroke-width="${m===1?7:9}"/><use href="#${kid('FSIL',FTYPE[so.team])}" x="10" y="10" width="180" height="180"/></g></g>`; }
+  return (css?`<style>${css}</style>`:'')+s; }
 function mapDie(x,y,sides,val,head,res,col,bg,t0,age){ const P={4:'50,6 94,88 6,88',10:'50,4 94,40 50,96 6,40',12:'50,4 95,37 78,92 22,92 5,37',18:'50,3 90,25 90,75 50,97 10,75 10,25',20:'50,3 93,27 93,73 50,97 7,73 7,27'}[sides]||'50,3 90,25 90,75 50,97 10,75 10,25', v=+val||1;
-  const fl=[0,1,2,3,4,5].map(i=>`<text class="dfl" y="11" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" style="animation-delay:${(t0+0.06+i*0.085-age).toFixed(2)}s">${(v*7+i*5)%sides+1}</text>`).join('');
+  const fl=[0,1,2,3,4,5,6,7,8,9].map(i=>`<text class="dfl" y="11" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" style="animation-delay:${(t0+0.05+i*0.093-age).toFixed(2)}s">${(v*7+i*5)%sides+1}</text>`).join('');
   return `<g transform="translate(${x},${y})"><text y="-48" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" stroke="#0B0F14" stroke-width="4" paint-order="stroke">${head}</text>
     <g class="dtum" style="animation-delay:${(t0-age).toFixed(2)}s"><g transform="translate(-39,-39) scale(.78)"><polygon points="${P}" fill="${bg}" stroke="${col}" stroke-width="7" stroke-linejoin="round"/></g></g>
-    ${fl}<text class="dfin" y="11" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" style="animation-delay:${(t0+0.6-age).toFixed(2)}s">${val}</text>${res}</g>`; }
+    ${fl}<text class="dfin" y="11" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" style="animation-delay:${(t0+1.0-age).toFixed(2)}s">${val}</text>${res}</g>`; }
 function chipFx(x,y,head,val,res,good,col,bg){ return `<g transform="translate(${x},${y})"><rect x="-58" y="-21" width="116" height="40" rx="6" fill="${bg}" stroke="${col}" stroke-width="3"/><text y="-5" text-anchor="middle" font-size="12" font-weight="700" fill="#C9D3DC">${head}</text><text y="14" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">${val}</text>${res}</g>`; }
 function samFx(so,F,L,ux,uy,age,meet){ if(!F.length) return ''; let s='';
   F.forEach((w,i)=>{ const tm=meet(i), ts=tm-0.45, d=L*(1-tm/2.5), px=-ux*d, py=-uy*d, off=w?34:0, qx=(px-uy*off).toFixed(1), qy=(py+ux*off).toFixed(1), ang=(Math.atan2(+qy,+qx)*180/Math.PI).toFixed(1), len=Math.hypot(+qx,+qy).toFixed(0);
