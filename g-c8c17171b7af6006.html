@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.15.2';   // shown on every screen; bump on each release
+const APP_VER='1.15.3';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1588,7 +1588,7 @@ setInterval(()=>{ try{ playRoll(); }catch(e){} },300);
   const check=async()=>{ try{ const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return; const v=(await r.json()).v; if(v&&v!==APP_VER&&!document.getElementById('kfa-upd')){ const b=document.createElement('div'); b.id='kfa-upd'; b.innerHTML=`A newer version of Kingfish ACE is available (v${v}). <button class="btn sm p">Reload</button>`; b.querySelector('button').onclick=()=>location.reload(); document.body.appendChild(b); } }catch(e){} };
   setTimeout(check,4000); setInterval(check,60000); })();
 let __seenCombat=null, __combatPrimed=false;
-function playCombat(){ const c=S&&S.lastCombat; if(!__combatPrimed){ __combatPrimed=true; __seenCombat=c?c.id:null; return; } if(!c||c.id===__seenCombat) return; __seenCombat=c.id; if(!(MODE==='wing'&&WING_ID===c.team)) return;   // owner: only the wing that flew sees it, not the main board
+function playCombat(){ const c=S&&S.lastCombat; if(!__combatPrimed){ __combatPrimed=true; __seenCombat=c?c.id:null; return; } if(!c||c.id===__seenCombat) return; __seenCombat=c.id; return;   /* R10.37 owner 11-10: "map fight only" -- the square-off on the map (dice on the flying wing's screen) replaces this pop-up */
   const T=TM[c.team], ov=document.createElement('div'); ov.className='cbx'; ov.onclick=()=>ov.remove();
   ov.innerHTML=`<div class="cbp" style="border-top-color:${T.c}"><div class="cbk">AIR COMBAT · CONFLICT</div>
     <div class="cbt"><span class="ktag" style="background:${T.c}">${T.n}</span> · ${c.n} × ${c.ftype} <i>vs</i> <span class="cbr">${c.zname.toUpperCase()}</span></div>
