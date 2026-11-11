@@ -1044,7 +1044,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.16.6';   // shown on every screen; bump on each release
+const APP_VER='1.17.1';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||30;     // owner 11-09: 30-minute turns by default; Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1419,7 +1419,7 @@ function validSave(n){ return n&&n.bases&&n.v===SAVE_V; }
 function localUi(){ return {plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined}; }
 function restoreUi(k){ S.plot=k.plot===undefined?null:k.plot; if(WING_ID){ (S.wsel=S.wsel||{})[WING_ID]=k.wsel; (S.wselAf=S.wselAf||{})[WING_ID]=k.wselAf||null; if(k.wform) (S.wform=S.wform||{})[WING_ID]=k.wform; if(k.rfiPick) (S.rfiPick=S.rfiPick||{})[WING_ID]=k.rfiPick; } }
 function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } }
-const CMD_OK=['attackDefend','wingPickAf','wingCancelFlight','wingResReq','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
+const CMD_OK=['claimRP','attackDefend','wingPickAf','wingCancelFlight','wingResReq','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
 function go(route){ location.hash=route; location.reload(); }
 function save(){ if(MODE!=='instructor'&&MODE!=='wing') return; if(document.hidden){ saveNow(); return; } if(window.__saveQ) return; window.__saveQ=true; const go=()=>{ if(window.__saveQ) saveNow(); }; requestAnimationFrame(()=>setTimeout(go,0)); setTimeout(go,80); }
 function saveNow(){ window.__saveQ=false; if(window.__noSave||(MODE!=='instructor'&&MODE!=='wing')) return; try{ S.savedAt=Date.now(); { const str=JSON.stringify({...S,v:SAVE_V,running:false,endsAt:S.running?S.endsAt:null}); localStorage.setItem('kfa-game',str); window.__mySave=str; try{ localStorage.setItem('kfa-rev',String(S.savedAt)); }catch(e){} } if(MODE==='instructor'){ publishTick(); if(window.cloudSave) cloudSave(); } }catch(e){} }
@@ -1952,7 +1952,8 @@ function wingHtml(team,call,view){ const C=call||'opener.'; const T=TM[team], [s
   // resource requests
   const mobs=S.bases[team].filter(b=>b.role==='mob');
   const rr=(S.resReq||[]).filter(x=>x.team===team).slice(-4).reverse();
-  let rq2=`<div class="sec"><h3>REQUEST SUPPLIES <span class="r">food, water, fuel, munitions and more, delivered to your hub · the instructor approves</span></h3>
+  const rpNow=(S.pts[team]||{}).rp||0, rpHub=(mobs[0]||{}).hex;
+  let rq2=(rpNow>=5?`<div class="sec"><h3>RESOURCE POINTS <span class="r">${rpNow} RP · every 5 buys one chit, delivered to your hub</span></h3><div class="row" style="gap:6px;flex-wrap:wrap">${['food','water','tent','fuel'].map(c=>`<button class="btn sm p" onclick="${C}claimRP('${team}','${c}')">${CHIT[c]?CHIT[c].name:c} (5 RP)</button>`).join('')}</div></div>`:'')+`<div class="sec"><h3>REQUEST SUPPLIES <span class="r">food, water, fuel, munitions and more, delivered to your hub · the instructor approves</span></h3>
     <div class="dice" style="grid-template-columns:70px 1fr 70px 70px"><span>Item</span><select class="field" id="rr-chit">${CHIT_IDS.map(id=>`<option value="${id}">${CHIT[id].name}${CHIT[id].pp?' · '+CHIT[id].pp+' PP':''}</option>`).join('')}</select><span>How many</span><input class="field" id="rr-n" type="number" min="1" value="2"></div>
     <div class="row" style="margin-top:6px;align-items:center"><span class="hint">Deliver to</span><select class="field" style="width:auto" id="rr-hex">${mobs.map(b=>`<option value="${b.hex}">${longId(team,b)}</option>`).join('')}</select>
     <button class="btn p" onclick="${C}wingResReq('${team}',document.getElementById('rr-hex').value,document.getElementById('rr-chit').value,+document.getElementById('rr-n').value)">Send request</button></div>
@@ -2105,7 +2106,7 @@ function peopleAt(team,hex){ return cargoTotals(invAt(team,hex)).pax; }
 function taskTurns(team,hex,T){ if(T.turns!=='people') return T.turns; const p=peopleAt(team,hex);
   if(T.id===1) return p>=21?2:p>=11?4:p>=5?8:99; return p>=21?1:p>=11?2:4; }
 function rfiDoneTasks(team,hex){ const ans=rfiAns(team,hex), out=new Set(); for(const i in RFI_DONE){ const v=ans[i]; const l=v&&RFI_DONE[i][v]; if(l) l.forEach(x=>out.add(x)); } return out; }
-function taskDone(team,hex,id){ const st=taskState(team,hex)[id]; return rfiDoneTasks(team,hex).has(+id)||!!(st&&st.done); }
+function taskDone(team,hex,id){ const st=taskState(team,hex)[id]; if(rfiDoneTasks(team,hex).has(+id)) return true; if(!st||!st.done) return false; return TASK[id]&&TASK[id].each?taskRunning(team,hex,id):true; }
 function taskNeed(team,hex,T){ // returns the chip list still needed, using RFI cover
   const ans=rfiAns(team,hex), need=Object.assign({},T.need);
   if(T.id===9){ for(const i in RFI_COVERS){ const v=ans[i]; const l=v&&RFI_COVERS[i][v]; if(l) l.forEach(c=>delete need[c]); } }
@@ -2131,22 +2132,24 @@ function staffTask(team,hex,id){ const T=TASK[id], c=canStaff(team,hex,T); if(!c
 function unstaffTask(team,hex,id){ const st=taskState(team,hex)[id]; if(st){ st.a={}; st.on=false; } render(); }
 function baseStage(team,hex){ const d=id=>taskDone(team,hex,id)||taskRunning(team,hex,id), done=id=>taskDone(team,hex,id);
   if([1,2,3,5,9].every(done)&&[1,2,3,5,6,9,10,11,12,14,16].every(d)) return 'foc'; if([1,2,3,5,9].every(done)) return 'ioc'; return null; }   /* QA R6.2 */
-function progressTasks(){ for(const tm of TEAMS) for(const hex in (S.tasks[tm.id]||{})){ const ts=S.tasks[tm.id][hex];
+function progressTasks(){ for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role!=='mob'&&!b.opSince&&peopleAt(tm.id,b.hex)>0) b.opSince=S.turn; }   /* R11.1e */
+  for(const tm of TEAMS) for(const hex in (S.tasks[tm.id]||{})){ const ts=S.tasks[tm.id][hex];
     for(const id in ts){ const st=ts[id], T=TASK[id]; if(!st.a||!(Object.keys(st.a).length||st.on)) continue;
       if(T.once&&!st.done){ st.p=(st.p||0)+1; if(st.p>=st.need){ st.done=true; st.a={}; st.on=false; log(`${tm.n} ${hex}: task ${id} ${T.n} complete`);
           if(id==15){ const b=S.bases[tm.id].find(x=>x.hex===hex); if(b&&b.st==='struck'){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${tm.n} ${hex}: airfield repaired`); } } } }
       else if(T.each){ { const b0=S.bases[tm.id].find(x=>x.hex===hex); if(b0&&b0.st==='struck') continue; }   /* QA R8.2c: a closed base scores nothing */
+        { const miss=(T.pre||[]).filter(q=>!taskDone(tm.id,hex,q)); if(miss.length){ log(`${tm.n} ${hex}: task ${id} ${T.n} paused: needs task ${miss.join(', ')} running`); continue; } }   /* R11.1a */
         if(id==12){ const inv=invAt(tm.id,hex); if(!((st.a.fuel||0)>0&&(inv.fuel||0)>0)){ st.a={}; st.on=false; log(`${tm.n} ${hex}: task 12 ${T.n} stopped: out of fuel`); continue; } inv.fuel--; if(!inv.fuel) delete inv.fuel; st.a.fuel--; if(!st.a.fuel) delete st.a.fuel; }
         st.done=true; if(T.mp){ S.pts[tm.id].mp+=T.mp; log(`${tm.n} ${hex}: ${T.n} +${T.mp} MP`); } if(id==13) S.pts[tm.id].rp+=1; } }
     const b=S.bases[tm.id].find(x=>x.hex===hex); if(b&&b.st!=='struck'&&b.role!=='mob'){ const s=baseStage(tm.id,hex); if(s&&s!==b.st&&(s==='foc'||b.st!=='foc')){ b.st=s; log(`${tm.n} ${hex} reached ${s.toUpperCase()}`); }
       // Owner 11-09: a spoke earns its +5 Mission Points for being opened when it reaches IOC (tasks 1, 2, 3, 5, 9). Once per airfield, first wing to get there.
       if(b&&b.role!=='mob'&&(b.st==='ioc'||b.st==='foc')&&!(S.opened||{})[hex+':'+(b.af||'')]){ (S.opened=S.opened||{})[hex+':'+(b.af||'')]=tm.id; S.pts[tm.id].mp+=5; log(`${tm.n} opened ${hex} (IOC): +5 Mission Points`); banner(`${tm.n.toUpperCase()} · HEX ${hex} AT IOC · +5 MISSION POINTS`,false); } } } }
 function checkAssess(){ for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.assessed) continue; const inv=invAt(tm.id,b.hex);
-    if(ASSESS_NEED.some(n=>Object.keys(n).every(k=>(inv[k]||0)>=n[k]))){ b.assessed=true; b.landed=true; S.pts[tm.id].mp+=5; log(`${tm.n} assessed ${b.hex}: +5 MP, remaining RFIs open`); banner(`${tm.n.toUpperCase()} ASSESSED HEX ${b.hex} · +5 MISSION POINTS · remaining RFIs open`,false); } } }
+    if(ASSESS_NEED.some(n=>Object.keys(n).every(k=>(inv[k]||0)>=n[k]))){ b.assessed=true; b.landed=true; const ak=tm.id+':'+b.hex+':'+(b.af||''); S.assessedAf=S.assessedAf||{}; if(S.assessedAf[ak]) continue; S.assessedAf[ak]=S.turn; S.pts[tm.id].mp+=5; log(`${tm.n} assessed ${b.hex}: +5 MP, remaining RFIs open`); banner(`${tm.n.toUpperCase()} ASSESSED HEX ${b.hex} · +5 MISSION POINTS · remaining RFIs open`,false); } } }
 function checkIdleDP(){ const lines=[]; // Deployed vs tasked (scenario card): 2:1 = D4 DP, 3:1 = D10 DP
   const cap={}; for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role==='mob'||b.st==='struck') continue; const people=peopleAt(tm.id,b.hex); if(!people) continue;
     if(S.flights.some(f=>f.team===tm.id&&f.st==='arrived'&&f.arrTurn===S.turn&&f.path[f.path.length-1]===b.hex)) continue; if((cap[tm.id]||0)>=10) continue;
-    const tasked=cargoTotals(assignedAt(tm.id,b.hex)).pax; const ratio=people/Math.max(1,tasked);
+    let tasked=cargoTotals(assignedAt(tm.id,b.hex)).pax; if(TASKS.some(T=>T.turns==='people'&&!taskDone(tm.id,b.hex,T.id)&&taskRunning(tm.id,b.hex,T.id))) tasked=people;   /* R11.1b */ const ratio=people/Math.max(1,tasked);
     if(ratio>=3){ const r=Math.min(d(10),10-(cap[tm.id]||0)); cap[tm.id]=(cap[tm.id]||0)+r; S.pts[tm.id].dp+=r; pushRoll({team:tm.id,title:`${longId(tm.id,b)} · too many people`,note:`${people} people for ${tasked} tasked (3 to 1): roll D10 for Demoralization Points`,dice:[{s:10,v:r,l:'Demoralization',sub:`+${r} DP`}]}); lines.push(`${tm.n} ${b.hex}: ${people} people, ${tasked} tasked, 3:1, D10 = +${r} DP`); }
     else if(ratio>=2){ const r=Math.min(d(4),10-(cap[tm.id]||0)); cap[tm.id]=(cap[tm.id]||0)+r; S.pts[tm.id].dp+=r; pushRoll({team:tm.id,title:`${longId(tm.id,b)} · too many people`,note:`${people} people for ${tasked} tasked (2 to 1): roll D4 for Demoralization Points`,dice:[{s:4,v:r,l:'Demoralization',sub:`+${r} DP`}]}); lines.push(`${tm.n} ${b.hex}: ${people} people, ${tasked} tasked, 2:1, D4 = +${r} DP`); } }
   if(lines.length) log('DEPLOYED VS TASKED · '+lines.join(' | ')); return lines; }
@@ -2442,7 +2445,7 @@ function strikeBase(team,b){ if(b.st!=='struck') b.prevSt=b.st; b.strikes=(b.str
   b.st='struck'; b.recUntil=null; if(S.tasks[team]&&S.tasks[team][b.hex]&&S.tasks[team][b.hex][15]) S.tasks[team][b.hex][15]={p:0};   // R8.2b
   return b.strikes===2?'SECOND STRIKE: closed; Base recovery starts over':'hit: closed until Base recovery (task 15) is done'; }
 function baseStruck(team,hex){ const b=S.bases[team].find(x=>x.hex===hex); return !!(b&&b.st==='struck'); }
-function daysOperating(team,b){ return b.role==='mob'?99:Math.floor((S.turn-(b.since||S.turn))/3)+1; }
+function daysOperating(team,b){ if(b.role==='mob') return 99; if(!b.opSince) return 1; return Math.floor((S.turn-b.opSince)/3)+1; }
 function runConflict(){
   if(S.orders.sit!=='conflict') return alert('The situation is a crisis. The conflict phase only runs in conflict.');
   if(S.conflictDone===S.turn&&!confirmThen('The conflict phase already ran this turn. Run it again?',()=>runConflict(),'Run it again')) return;
@@ -2664,15 +2667,15 @@ function decide(id,ok){ const q=S.requests.find(q=>q.id===id); if(!q) return;
     { const co=airfieldCountry(q.hex,q.af); if(ADVERSARY.has(co)&&!window.__yesNow) return alert(`${co} is adversary territory. Deny this request.`); }
     { const co=airfieldCountry(q.hex,q.af), ac=accessOf(co); if(ac!=='granted'&&!window.__yesNow) return alert(`${co} has ${ac==='overflight'?'granted overflight only':'denied base access'} today. Deny this request, or use Game master to place the base anyway.`); }
     if(q.from&&!window.__yesNow&&atkPending(q.team).some(a=>a.hex===q.from)) return alert(`A missile attack on hex ${q.from} is still waiting to be rolled. Roll it first (Turn tab, Missile attacks).`);
-    if(q.from){ const ob=S.bases[q.team].find(b=>b.hex===q.from); { const F=(S.fighters||{})[q.team]; if(F&&F[q.from]){ F[q.hex]=(F[q.hex]||0)+F[q.from]; delete F[q.from]; log(`${TM[q.team].n}: fighters at ${q.from} move with the base to ${q.hex}`); } } if(ob){ q.fromRole=ob.role; q.fromSid=ob.sid; const hv=((S.hnInv||{})[q.team]||{})[q.from]; if(hv){ addInv(q.team,q.from,hv,-1); delete S.hnInv[q.team][q.from]; log(`${TM[q.team].n} left ${q.from}: its host-nation support stays behind`); } } S.bases[q.team]=S.bases[q.team].filter(b=>b.hex!==q.from); }
+    if(q.from){ const ob=S.bases[q.team].find(b=>b.hex===q.from); { const F=(S.fighters||{})[q.team]; if(F&&F[q.from]){ const hb=HOME[q.team]; F[hb]=(F[hb]||0)+F[q.from]; log(`${TM[q.team].n}: ${F[q.from]} fighters at ${q.from} return to the hub (${hb}); reposition them once ${q.hex} can take them`); delete F[q.from]; } } if(ob){ q.fromRole=ob.role; q.fromSid=ob.sid; const hv=((S.hnInv||{})[q.team]||{})[q.from]; if(hv){ addInv(q.team,q.from,hv,-1); delete S.hnInv[q.team][q.from]; log(`${TM[q.team].n} left ${q.from}: its host-nation support stays behind`); } } S.bases[q.team]=S.bases[q.team].filter(b=>b.hex!==q.from); }
     if(!S.bases[q.team].some(b=>b.hex===q.hex)){ const nb={hex:q.hex,af:q.af||null,st:q.from?'moving':'selected',role:null,rfi:{},rfiMax:(q.from||spokePicks(q.team)>=3)?3:5,since:S.turn}; (S.spokePicks=S.spokePicks||{})[q.team]=spokePicks(q.team)+1; S.bases[q.team].push(nb);
       if(q.from&&q.fromRole){ nb.role=q.fromRole; nb.sid=q.fromSid; } else giveRole(q.team,nb,q.role||'spoke'); }
     if(q.from) log(`${TM[q.team].n} moved ${q.from} → ${q.hex}: resources reset, 3 RFIs at the new airfield`); }
   q.st=ok?'approved':'denied'; if(ok) applyHN(q.team);
   log(`${ok?'APPROVED':'DENIED'} ${TM[q.team].n}: ${q.from?q.from+' → ':''}${q.hex}`);
   banner(`${TM[q.team].n.toUpperCase()} ${q.from?'move '+q.from+' → '+q.hex:'base at '+q.hex}: ${ok?'APPROVED':'DENIED'}`,!ok); render(); }
-function pts(team,k,n){ const p=S.pts[team]; p[k]=Math.max(0,p[k]+n);
-  if(k==='rp'&&p.rp>=5){ p.rp-=5; log(`${TM[team].n} reached 5 Resource Points: gains 1 resource chit (food, water, tent or fuel)`); banner(`${TM[team].n.toUpperCase()} · 5 RESOURCE POINTS · gains one resource chit: food, water, tent or fuel`,false); }
+function claimRP(team,chit){ const p=S.pts[team]; if(!['food','water','tent','fuel'].includes(chit)) return; if((p.rp||0)<5) return alert('A chit costs 5 Resource Points.'); p.rp-=5; addInv(team,HOME[team],{[chit]:1},1); const nm=CHIT[chit]?CHIT[chit].name:chit; log(`${TM[team].n}: 5 Resource Points spent on 1 ${nm} at the hub`); banner(`${TM[team].n.toUpperCase()} · 5 RESOURCE POINTS · 1 ${nm.toUpperCase()} AT THE HUB`,false); render(); }
+function pts(team,k,n){ const p=S.pts[team]; p[k]=Math.max(0,p[k]+n);   /* R11.2 Resource Points are spent by the wing on the Supplies tab */
   const name={mp:'Mission Points',dp:'Demoralization Points',rp:'Resource Points'}[k];
   log(`${TM[team].n} ${name} ${n>0?'+':''}${n} → ${p[k]}`);
   if(k==='dp'&&n>0&&p.dp>=5&&Math.floor(p.dp/5)>Math.floor((p.dp-n)/5)) banner(`${TM[team].n.toUpperCase()} demoralization at ${p.dp} DP (every 5 DP = −1 MP)`,true);
