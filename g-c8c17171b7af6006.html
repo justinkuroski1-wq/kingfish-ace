@@ -489,7 +489,7 @@ body{font-size:15px}
 #app.instr #panel .hint{display:none}
 #app.instr #a-sum{display:none}
 #app.projmode .side>.sbox.ord{display:none!important}
-.comms .clog{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;padding-right:4px}.cmsg{background:#121820;border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:14px;line-height:1.35}.cmsg b{font-size:13px}.cmsg .cto{color:var(--mute);font-size:11px;margin-left:8px}
+.comms .clog{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;padding-right:4px}.cmsg{background:#121820;border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:14px;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;min-width:0}.cmsg b{font-size:13px}.cmsg .cto{color:var(--mute);font-size:11px;margin-left:8px}
 .comms .crow{display:grid;grid-template-columns:120px 1fr auto;gap:6px}.crisk{font-size:13px;color:var(--mute);margin-bottom:8px}.crisk b{color:#F2D28A}.cjam{background:#3A1512;color:#FFD2CB;border:1px solid #C8463A;border-radius:4px;padding:8px 10px;font-weight:800;letter-spacing:1px;margin-bottom:8px;text-align:center}
 #app.instr #panel .sec>h3,#app.instr #i-pts tr.h td:first-child{cursor:pointer;user-select:none}
 #app.instr #panel .sec>h3::before,#app.instr #i-pts tr.h td:first-child::before{content:'▾ ';color:var(--mute);font-size:11px}
@@ -1094,7 +1094,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.128';   // shown on every screen; bump on each release
+const APP_VER='1.17.130';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -3360,7 +3360,7 @@ if(MODE==='login'){
     host.querySelectorAll('.hex.click').forEach(p=>!p.__kb&&(p.__kb=1)&&p.addEventListener('click',()=>{ try{ localStorage.setItem('kfa-cmd',JSON.stringify({hex:p.dataset.id,t:Date.now()})); }catch(x){} })); };
   const pull=()=>{ try{ const g=localStorage.getItem('kfa-game'); if(g){ const keep={clock:S.clock,running:S.running,hidden:S.hidden}; { const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); } } }
     const k=localStorage.getItem('kfa-tick'); if(k){ const v=JSON.parse(k); S.hidden=v.hidden; if(v.turn===undefined||(v.turn===S.turn&&!!v.mv===!!S.movesOpen&&!!v.op===!!S.opening)){ S.running=v.running; S.endsAt=v.endsAt; S.clock=(v.running&&v.endsAt)?Math.max(0,Math.ceil((v.endsAt-Date.now())/1000)):v.clock; } else { S.running=false; S.endsAt=null; S.clock=(S.movesOpen||S.opening)?S.clock:CLOCK_MIN(S.turn)*60; }   /* R11.47 only a clock from the same turn */ } }catch(x){} };
-  const projDraw=()=>{ if(window.__pdT) return; const wait=Math.max(0,200-(Date.now()-(window.__pdAt||0))); window.__pdT=setTimeout(()=>{ window.__pdT=null; window.__pdAt=Date.now(); try{ pull(); render(); }catch(x){ console.error(x); } },wait); };   /* R11.107 batched */
+  const projDraw=()=>{ if(window.__pdT) return; const wait=Math.max(0,(window.__pdGap||350)-(Date.now()-(window.__pdAt||0))); window.__pdT=setTimeout(()=>{ window.__pdT=null; window.__pdAt=Date.now(); try{ pull(); render(); }catch(x){ console.error(x); } },wait); };   /* R11.107 batched */
   window.addEventListener('storage',e=>{ if(e.key==='kfa-game'){ const k=gameKey(e.newValue); if(k&&k===window.__gk) return; window.__gk=k; projDraw(); } else if(e.key==='kfa-tick'){ pull(); renderClockOnly(); animateFlights(); } });
   pull(); render(); keepFresh(()=>{ pull(); render(); });   /* R10.23 */
   setInterval(()=>{ if(S.running&&S.endsAt){ const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c!==S.clock){ S.clock=c; renderClockOnly(); animateFlights(); } } },250);
