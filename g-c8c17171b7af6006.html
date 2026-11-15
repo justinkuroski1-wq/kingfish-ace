@@ -1100,7 +1100,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.205';   // shown on every screen; bump on each release
+const APP_VER='1.17.206';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1667,7 +1667,7 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
       s+=`<g pointer-events="none" style="animation-delay:-${age.toFixed(1)}s" class="arrp">${window.__mockArr===undefined&&boardLean()?'':`<circle cx="${h.x}" cy="${h.y}" r="70" fill="none" stroke="${TM[f.team].c}" stroke-width="6" class="arrc" style="animation-delay:-${age.toFixed(1)}s"/>`}${ty===null||(window.__mockArr===undefined&&boardLean())?'':`<text class="blab" x="${h.x}" y="${ty}" style="font-size:22px">${lab}</text>`}</g>`; } }
   const stk={}, parked=f=>f.moved===0&&(f.st==='requested'||flightStuck(f)||turnFrac()===0);
   for(const f of S.flights){ if(only?f.team!==only:S.show[f.team]===false) continue; if(!['requested','approved','enroute'].includes(f.st)||!parked(f)) continue; (stk[f.team+':'+f.path[0]]=stk[f.team+':'+f.path[0]]||[]).push(f); }
-  if(Object.keys(stk).length) window.__stk=true;
+  if(Object.keys(stk).length&&turnFrac()===0) window.__stk=true;   /* R11.193 DAY-2 FREEZE ROOT CAUSE: only a board drawn BEFORE the turn starts needs the one redraw at takeoff. Drawn mid-turn, a plane still parked (waiting for approval, departure hold from 'competing priorities') re-armed this every frame: animateFlights redrew and returned each frame, so no aircraft moved anywhere for the whole turn, then all jumped */
   const grp={}, heads=[]; for(const f of S.flights){ if(!['requested','approved','enroute'].includes(f.st)) continue; const g=flightGroup(f); (grp[g]=grp[g]||[]).push(f); }
   for(const f of S.flights){ if(only?f.team!==only:S.show[f.team]===false) continue; if(!['requested','approved','enroute'].includes(f.st)) continue; if(flightLanded(f)) continue; const t=TM[f.team];
     const G0=grp[flightGroup(f)]||[f]; if(G0[0]!==f) continue;   /* R11.6 one icon per group */
