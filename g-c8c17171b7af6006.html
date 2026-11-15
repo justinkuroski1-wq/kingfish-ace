@@ -780,6 +780,21 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
 @keyframes munHit{0%{opacity:.95;transform:scale(.25)}100%{opacity:.5;transform:scale(1)}}
 .sfly{animation:sfly 6s linear forwards}@keyframes sfly{0%{transform:translate(0,0)}41.7%{transform:translate(var(--dx),var(--dy));animation-timing-function:ease-in-out}58.3%{transform:translate(var(--dx),var(--dy))}100%{transform:translate(0,0)}}
 .srot{animation:srot 6s linear forwards}@keyframes srot{0%{transform:rotate(var(--a1))}43%{transform:rotate(var(--a1));animation-timing-function:ease-in-out}57%{transform:rotate(var(--a2))}100%{transform:rotate(var(--a2))}}
+
+/* R11.241/R11.258 the top bar never widens the board and never cuts a word (layout hunt 11-15: R11.241 let the status labels
+   and the STUDENT CLOCK clip). The shift and day text shorten with ... first, then spacing tightens, then the title and the
+   'GAME CODE' words drop; status labels, the game code and the clock always show in full. */
+.board{grid-template-columns:minmax(0,1fr);container-type:inline-size}.topbar{min-width:0;overflow:hidden}
+.topbar .sit,.topbar .tclock,.topbar .room,.topbar .t{flex-shrink:0}
+.topbar .hrs,.topbar .ds{display:block;align-self:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar .hrs{flex-shrink:6}.topbar .ds{flex-shrink:2}
+@container (max-width:1200px){.topbar>span{padding:0 10px}.topbar .t{letter-spacing:2px;font-size:14px}.topbar .sit{padding:0 12px;letter-spacing:2px}.topbar .tclock{padding:0 10px!important}}
+@container (max-width:1060px){.topbar .t{display:none}}
+@container (max-width:980px){.topbar .room{font-size:0;padding:0 10px}.topbar .room b{font-size:20px;margin-left:0}.topbar .sit{padding:0 10px;letter-spacing:1px}}
+@media (max-width:1600px){.wing .topbar>span{padding:0 10px}.wing .topbar .sit{padding:0 12px;letter-spacing:1.5px}.wing .topbar .t{letter-spacing:2px}}
+@media (max-width:1300px){.wing .topbar>span{padding:0 8px}.wing .topbar .sit{padding:0 8px;letter-spacing:1px}}
+@media (max-width:1400px){.wing .rtab tr.wh th{font-size:14px;padding-left:2px;padding-right:2px}}   /* R11.259 layout hunt: 'HUB 711' header clipped at 1280x720 */
+
+/* R11.245 */.ibots{margin-left:10px;padding:2px 8px;border:1px solid #E3B25C;color:#E3B25C;font-size:11px;font-weight:700;letter-spacing:2px;border-radius:3px;align-self:center}.ibots[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -815,7 +830,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
   <button id="showPanel" class="btn" onclick="togglePanel()" title="Show the instructor panel (H)">Show panel</button>
   <div id="projHint">PROJECTOR WINDOW · drag this window onto the projector screen, then press Full screen (top right) or F11. Everything here follows the instructor window.</div>
   <aside id="panel">
-    <div class="ph"><b>INSTRUCTOR</b><span class="sp"></span>
+    <div class="ph"><b>INSTRUCTOR</b><span id="i-bots" class="ibots" hidden>BOTS PLAYING</span><span class="sp"></span>
       <button class="btn sm p" onclick="openProjector()" title="Opens the board in a second window. Drag it onto the projector and press F11.">Projector</button>
       <span style="position:relative"><button class="btn sm" id="gm-btn" onclick="gameMenu(event)">Game ▾</button><div id="gm" class="gm" style="display:none">
         <button onclick="gmDo('pause')"><b id="gm-pause">Pause timer</b><span>Stops the shift timer on every screen</span></button>
@@ -825,6 +840,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
         <button onclick="gmDo('exit')"><b>Pause and exit</b><span>Stops the timer and signs out. Sign back in here, or enter the game code on any computer, to continue.</span></button>
         <button onclick="gmDo('restart')"><b>New game</b><span>Starts a new game. This one is kept on the laptop as a backup.</span></button>
         <button onclick="gmDo('prev')"><b>Restore last game</b><span>Brings back the game that was running before the last restart.</span></button>
+        <button onclick="gmDo('bots')"><b id="gm-bots">Bots take over</b><span id="gm-bots-s">Bots play all four wings from this laptop. You approve their requests as usual.</span></button>
         <button onclick="gmDo('demo')"><b id="gm-demo">Watch demo</b><span id="gm-demo-s">About 9 minutes at classroom pace, with captions and camera moves: Wing 1 through Set up, Positioning, Crisis and Conflict. Your game is kept as a backup.</span></button>
         <button onclick="gmDo('commercial')"><b id="gm-com">Play commercial</b><span>The same story in about 4 minutes, made for a briefing or the website.</span></button>
         <button onclick="gmDo('sfx')"><b id="gm-sfx">Sounds: off</b><span>Soft sounds on this laptop for a new turn, a Red zone eliminated and an airfield strike</span></button>
@@ -1016,7 +1032,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
         <label>Conflict possible from (turn)<input class="field" type="number" min="1" max="30" id="set-cf"></label>
         <label class="autochk" style="grid-column:1/-1;display:flex;flex-direction:row;gap:12px;align-items:center;justify-content:flex-start;cursor:pointer;margin:4px 0"><input type="checkbox" id="set-cards" style="width:22px;height:22px;flex:0 0 22px;margin:0;accent-color:#4C8DD6" onchange="S.cardsOff=!this.checked; log(this.checked?'Event and risk cards ON':'Event and risk cards OFF'); save(); render();"><b>Event and risk cards</b></label>
       </div>
-      <div class="roster"><div class="hint" style="margin:10px 0 6px"><b style="color:var(--ink)">STUDENTS</b> · optional · names show on the debrief and in the Excel file</div><div class="rgrid"><label>Wing 1<input class="field" id="ro-alpha" maxlength="200" placeholder="Names" oninput="rosterInput('alpha',this.value)" autocomplete="off"></label><label>Wing 2<input class="field" id="ro-bravo" maxlength="200" placeholder="Names" oninput="rosterInput('bravo',this.value)" autocomplete="off"></label><label>Wing 3<input class="field" id="ro-charlie" maxlength="200" placeholder="Names" oninput="rosterInput('charlie',this.value)" autocomplete="off"></label><label>Wing 4<input class="field" id="ro-delta" maxlength="200" placeholder="Names" oninput="rosterInput('delta',this.value)" autocomplete="off"></label></div></div>
+      <div class="roster"><div class="hint" style="margin:10px 0 6px"><b style="color:var(--ink)">STUDENTS</b> · optional · names show on the debrief</div><div class="rgrid"><label>Wing 1<input class="field" id="ro-alpha" maxlength="200" placeholder="Names" oninput="rosterInput('alpha',this.value)" autocomplete="off"></label><label>Wing 2<input class="field" id="ro-bravo" maxlength="200" placeholder="Names" oninput="rosterInput('bravo',this.value)" autocomplete="off"></label><label>Wing 3<input class="field" id="ro-charlie" maxlength="200" placeholder="Names" oninput="rosterInput('charlie',this.value)" autocomplete="off"></label><label>Wing 4<input class="field" id="ro-delta" maxlength="200" placeholder="Names" oninput="rosterInput('delta',this.value)" autocomplete="off"></label></div></div>
       <div class="ccards"><div class="hint" style="margin:10px 0 6px"><b style="color:var(--ink)">CUSTOM CARDS</b> · shuffled into the deck at once</div>
         <div class="row" style="gap:6px;flex-wrap:wrap"><select class="field" id="cc-kind" style="width:auto"><option value="event">Event</option><option value="risk">Risk</option></select>
         <select class="field" id="cc-fx" style="width:auto"><option value="">No automatic effect (instructor applies)</option><option value="dp5">+5 DP</option><option value="dp10">+10 DP</option><option value="rp1">+1 RP</option><option value="rpm1">-1 RP</option><option value="out">5 people out 1 turn</option><option value="veh">1 Vehicle out 1 turn</option><option value="hold">Flight ops stopped 1 turn</option></select></div>
@@ -1173,7 +1189,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.257';   // shown on every screen; bump on each release
+const APP_VER='1.17.272';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1420,7 +1436,7 @@ const FB_ROOT='https://kingfish-ace-default-rtdb.firebaseio.com/rooms/';
 let ROOM=null, REMOTE=false, __remoteSeen=0, __rev=Date.now();
 try{ if(MODE==='instructor'){ ROOM=localStorage.getItem('kfa-room'); if(!/^[A-Z0-9]{6}$/.test(ROOM||'')){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; ROOM=Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>A[x%A.length]).join(''); localStorage.setItem('kfa-room',ROOM); } }
   else if(MODE==='projector'){ ROOM=localStorage.getItem('kfa-room'); }
-  else if(MODE==='wing'){ const j=sessionStorage.getItem('kfa-join'); if(/^[A-Z0-9]{6}$/.test(j||'')){ ROOM=j; REMOTE=true; } } }catch(e){}
+  else if(MODE==='wing'){ const j=sessionStorage.getItem('kfa-join'); if(/^[A-Z0-9]{6}$/.test(j||'')&&window.top===window){ ROOM=j; REMOTE=true; } }   /* R11.251 a frame in the instructor page is always a same-laptop wing */ }catch(e){}
 function fbUrl(path){ return FB_ROOT+ROOM+'/'+path+'.json'; }
 async function fbGet(path){ try{ const r=await fetch(fbUrl(path)+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return undefined; return await r.json(); }catch(e){ return undefined; } }
 let __zw=null, __zwN=0, __zwP={}; function zWorker(){ if(__zw!==null) return __zw; try{ const src="onmessage=async e=>{ const [id,str]=e.data; try{ const cs=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip')); const b=new Uint8Array(await new Response(cs).arrayBuffer()); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); postMessage([id,'z1:'+btoa(s)]); }catch(x){ postMessage([id,null]); } };"; __zw=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'}))); __zw.onmessage=e=>{ const [id,r]=e.data; const f=__zwP[id]; delete __zwP[id]; if(f) f(r); }; __zw.onerror=()=>{ __zw=false; }; }catch(e){ __zw=false; } return __zw; }
@@ -1482,7 +1498,7 @@ const cmd=new Proxy({},{get:(_,fn)=>(...args)=>{ if(!CMD_OK.includes(fn)) return
     let undo=null; try{ const [,h,id]=args, T=TASK[+id];   /* R11.183 undo the two clicks that stop work */
       if(fn==='unstaffTask'&&T) undo=['Removed',`People taken off task ${T.id} ${T.n} at hex ${h}.`,()=>cmd.staffTask(team,h,+id)];
       if(fn==='takeForTask'&&T){ const pl=takePlan(team,h,T); if(pl&&pl.from.length) undo=['Moved',`People moved to task ${T.id} ${T.n}. Task ${pl.from.join(', ')} stopped.`,()=>{ cmd.unstaffTask(team,h,+id); for(const f of pl.from) cmd.staffTask(team,h,f); }]; } }catch(e){}
-    sendWing({cmd:fn,args,team,ui:{plot:S.plot,wsel:(S.wsel||{})[team],wselAf:((S.wselAf||{})[team]),wform:(S.wform||{})[team],rfiPick:((S.rfiPick||{})[team])}});   /* R11.191 sent FIRST, with the screen state as it was at the click; then shown here */
+    sendWing({cmd:fn,args,team,bot:window.top!==window?1:0,ui:{plot:S.plot,wsel:(S.wsel||{})[team],wselAf:((S.wselAf||{})[team]),wform:(S.wform||{})[team],rfiPick:((S.rfiPick||{})[team])}});   /* R11.191 sent FIRST, with the screen state as it was at the click; then shown here */
     if(OPTIMISTIC.has(fn)){ optApply(fn,args); window.__pend.push({fn,args,t:Date.now()}); }   /* R11.89 show it now */
     else if(OPT_ONCE.has(fn)) optApply(fn,args);
     else if(fn==='wingChat'){ try{ const txt=String(args[2]||'').trim().slice(0,300); if(txt&&!jammed(team)&&!(args[1]!=='all'&&args[1]!=='inst'&&jammed(args[1]))){ const pc={from:team,to:args[1],text:txt,t:Date.now()}; notice('Message sent.','Sent',{label:'Undo',ms:5000,fn:()=>{ window.__pchat=(window.__pchat||[]).filter(x=>x!==pc); S.chat=(S.chat||[]).filter(m=>!(m.pend&&m.text===pc.text&&m.from===pc.from)); cmd.wingUnsend(team,pc.to,pc.text); render(); }}); (window.__pchat=window.__pchat||[]).push(pc); S.chat=S.chat||[]; S.chat.push({id:'p'+pc.t,from:pc.from,to:pc.to,text:pc.text,turn:S.turn,t:pc.t,miss:[],pend:true}); } }catch(e){} }
@@ -1492,10 +1508,11 @@ const cmd=new Proxy({},{get:(_,fn)=>(...args)=>{ if(!CMD_OK.includes(fn)) return
     if(fn==='rfiRollPicked'&&S.rfiPick&&S.rfiPick[team]) S.rfiPick[team][args[1]]=[];
     render(); return; }
   if(REMOTE){ notice('Not connected to the instructor. Check the room code on the projector, or ask the instructor to open the game.'); return; }
+  if(window.top!==window) return;   /* R11.251 a frame never writes the game itself */
   const run=()=>{ try{ syncIn(); }catch(e){} window[fn](...args); save(); };   // no instructor window open: save directly
   if(navigator.locks&&navigator.locks.request) navigator.locks.request('kfa-game',run); else run(); }});
 const INS_ID=Date.now()+'-'+Math.random().toString(36).slice(2);
-function standDown(){ if(window.__standby) return; window.__standby=true; window.__noSave=true; save=function(){}; publishTick=function(){}; S.running=false;
+function standDown(){ if(window.__standby) return; window.__standby=true; window.__noSave=true; save=function(){}; publishTick=function(){}; S.running=false; try{ botsSync(); }catch(e){}
   const ov=document.createElement('div'); ov.className='cfx'; ov.innerHTML=`<div class="cfp"><div class="cfh">Open in another window</div><div class="cfb">Kingfish ACE was opened as instructor in another window or tab. This window has stopped so the two cannot overwrite each other. Use the newer window, or close it and reload this one.</div><div class="cfr"><button class="btn p" onclick="kfaReload()">Reload this window</button></div></div>`; document.body.appendChild(ov); }
 function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
   if(m.insHello&&MODE==='instructor'&&m.insHello!==INS_ID){ standDown(); return; }
@@ -1508,10 +1525,11 @@ function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
     window.alert=x=>{ said=String(x); };
     try{ window[m.cmd](...m.args); }catch(x){ console.error(x); } finally{ window.alert=realAlert||notice; S.plot=mine; }
     try{ reconcileAll('items no longer there'); }catch(x){ console.error(x); }   /* R11.139 */
-    save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,30); if(said){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }
+    save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,30); if(said&&!m.bot){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }   /* R11.251 a bot's refusals stay off the cloud and off students' screens */
     if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args);
-    if(!said&&m.cmd==='wingRequest'&&S.autoTurn!==false){ const q=S.requests.filter(x=>x.team===team&&x.st==='pending').slice(-1)[0]; if(q){ autoApprove(q); save(); clearTimeout(window.__rt); window.__rt=setTimeout(render,30); } } } }   /* R11.94 */
+  } }   /* R11.94; R11.246 owner 11-15: spoke requests wait for the instructor; automatic turns decide any still waiting at 0:00 */
 if(BC) BC.onmessage=onWingMsg;
+if(MODE==='instructor') setTimeout(()=>{ try{ botsSync(); }catch(e){} setInterval(()=>{ try{ if(!!(S&&S.botsOn&&!S.debrief&&!window.__demo)!==!!document.getElementById('kfa-bots')) botsSync(); }catch(e){} },3000); },2500);   /* R11.245 */
 if(MODE==='instructor') setTimeout(()=>{ document.querySelectorAll('#panel [id], #save-status').forEach(el=>{ if(!/^(lg-|set-)/.test(el.id)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) if(window.morphable) window.morphable(el); }); },0);
 setTimeout(()=>{
   if(MODE==='instructor'&&ROOM&&!window.__noCloud){   /* test builds stay off the server unless a test asks (owner 11-10: no clutter) */
@@ -1524,15 +1542,15 @@ setTimeout(()=>{
     window.cloudSave=(now)=>{ clearTimeout(gameT); if(now==='full'||now===true) forceQ=true; const run=async()=>{ if(window.__standby) return; if(upBusy){ upAgain=true; return; } upBusy=true; try{ do{ upAgain=false; const fz=forceQ; forceQ=false;
         let g=''; try{ g=localStorage.getItem('kfa-game')||''; }catch(e){} if(!g) continue; const same=g===lastGame; if(same&&!fz) continue;
         let cur; try{ cur=JSON.parse(g); }catch(e){ continue; } delete cur.undo; const ks={}; for(const k in cur) ks[k]=JSON.stringify(cur[k]);
-        let delta=null; if(!same&&prevK&&!needFull&&!fz){ const set={}, app={}, del=[]; let n=0;
-          for(const k in ks){ if(ks[k]===prevK[k]) continue; const v=cur[k]; if(Array.isArray(v)&&prevLen[k]!=null&&prevLen[k]>0&&v.length>=prevLen[k]&&JSON.stringify(v.slice(0,prevLen[k]))===prevK[k]){ app[k]=v.slice(prevLen[k]); n+=JSON.stringify(app[k]).length; } else { set[k]=v; n+=ks[k].length; } }
-          for(const k in prevK) if(!(k in ks)) del.push(k); if(n<40000) delta={set,app,del}; }
+        let delta=null; if(!same&&prevK&&!needFull&&!fz){ const set={}, app={}, at={}, del=[]; let n=0;
+          for(const k in ks){ if(ks[k]===prevK[k]) continue; const v=cur[k]; if(Array.isArray(v)&&prevLen[k]!=null&&prevLen[k]>0&&v.length>=prevLen[k]&&JSON.stringify(v.slice(0,prevLen[k]))===prevK[k]){ app[k]=v.slice(prevLen[k]); at[k]=prevLen[k]; n+=JSON.stringify(app[k]).length; } else { set[k]=v; n+=ks[k].length; } }
+          for(const k in prevK) if(!(k in ks)) del.push(k); if(n<40000) delta={set,app,at,del}; }
         const nr=same?__rev:__rev+1; let ok=false;
         if(window.__standby) break; if(delta){ ok=await fbSend('sync/delta','PUT',JSON.stringify({rev:nr,base:__rev,...delta})); window.__upKB=Math.round(JSON.stringify(delta).length/1024*10)/10; if(ok) scheduleFull(); }
         else { cur.__rev=nr; const up=await zPack(JSON.stringify(cur)); window.__fullKB=Math.round(up.length/1024); if(window.__standby) break; ok=await fbSend('game','PUT',up); if(ok){ lastFullAt=Date.now(); needFull=false; if(!same&&!window.__standby) await fbSend('sync/delta','PUT',JSON.stringify({rev:nr,base:__rev,full:1})); } }
         if(ok){ lastGame=g; __rev=nr; prevK=ks; prevLen={}; for(const k in cur) if(Array.isArray(cur[k])) prevLen[k]=cur[k].length; window.__cloudAt=Date.now(); cloudLive(true); }   /* R11.192 status ping no longer holds the next update (each update waited one extra network round trip) */ else { window.__cloudBad=Date.now(); needFull=true; break; } } while(upAgain||forceQ); } finally{ upBusy=false; } };
       if(now||document.hidden) run(); else gameT=setTimeout(run,0); };
-    window.cloudAlert=(team,text)=>{ alerts[team]={text,t:Date.now()}; cloudLive(true); };
+    window.cloudAlert=(team,text)=>{ const pv=alerts[team], now=Date.now(); alerts[team]={text:(pv&&now-pv.t<3000&&pv.text.indexOf(text)<0)?pv.text+' Also: '+text:text,t:now}; cloudLive(true); };   /* R11.253 */
     setInterval(()=>cloudLive(true),3000);
     let seen=new Set(), delQ={}, delT=null; const flushDel=()=>{ delT=null; const d=delQ; delQ={}; if(Object.keys(d).length) fbSend('cmds','PATCH',d); };
     let rT=null; const runCmd=(k,m)=>{ if(seen.has(k)) return; seen.add(k); if(seen.size>4000) seen=new Set([...seen].slice(-2000)); delQ[k]=null; if(!delT) delT=setTimeout(flushDel,250); window.__deferR=true; try{ if(typeof m==='string') m=JSON.parse(m); if(m) onWingMsg({data:m}); }catch(e){ console.error(e); } finally{ window.__deferR=false; } if(window.__needR&&!rT) rT=setTimeout(()=>{ rT=null; if(window.__needR){ window.__needR=false; render(); } },16); };
@@ -1547,7 +1565,7 @@ setTimeout(()=>{
     const apply=g=>{ try{ const n=JSON.parse(g); if(n&&n.__rev!=null){ if(n.__rev<gotRev) return; gotRev=n.__rev; delete n.__rev; } const k=gameKey(g); if(k&&k===window.__gk) return; window.__gk=k; if(!validSave(n)) return; window.__joinedOK=1; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); S=n; Object.assign(S,keep); restoreUi(ui); reapplyPend(); try{ localStorage.setItem('kfa-game',JSON.stringify(S)); }catch(e){} render(); }catch(e){} };
     const pullFull=async()=>{ if(fetching) return; fetching=true; try{ let g=await fbGet('game'); if(typeof g==='string'){ g=await zUnpack(g); if(typeof g==='string'){ apply(g); showSending(false); } } }catch(e){} finally{ fetching=false; } };
     const applyDelta=d=>{ if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(e){ return; } } if(!d||d.rev==null||d.rev<=gotRev) return; if(d.full||d.base!==gotRev){ pullFull(); return; }
-      try{ const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); for(const k in (d.set||{})) S[k]=d.set[k]; for(const k in (d.app||{})) S[k]=(Array.isArray(S[k])?S[k]:[]).concat(d.app[k]); for(const k of (d.del||[])) delete S[k];
+      try{ const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); for(const k in (d.set||{})) S[k]=d.set[k]; for(const k in (d.app||{})){ const a0=Array.isArray(S[k])?S[k]:[], b0=(d.at&&d.at[k]!=null)?Math.min(d.at[k],a0.length):a0.length; S[k]=a0.slice(0,b0).concat(d.app[k]); }   /* R11.238 drop what this laptop showed that the instructor never added */ for(const k of (d.del||[])) delete S[k];
         Object.assign(S,keep); restoreUi(ui); reapplyPend(); gotRev=d.rev; window.__gk=null; lagAt=0; try{ localStorage.setItem('kfa-game',JSON.stringify(S)); }catch(e){} render(); showSending(false); }catch(e){ pullFull(); } };
     const tick=async(pre)=>{ if(busy) return; busy=true; try{ const L=pre||await fbGet('sync/live'); if(L===null&&window.__lastLiveT){ if(!window.__nullSince) window.__nullSince=Date.now(); else if(!window.__goneSaid&&Date.now()-window.__nullSince>20000){ window.__goneSaid=1; notice('The instructor closed this game. Ask the instructor for the game code to rejoin.'); } } else if(L) window.__nullSince=0;   /* R11.129 */ if(L&&L.t){ window.__goneSaid=0; if(L.paused&&!window.__insPaused){ window.__insPaused=1; notice('The instructor paused the game. Your clicks are kept and go through when the instructor is back.'); } else if(!L.paused&&window.__insPaused){ window.__insPaused=0; notice('The instructor is back. The game continues.'); } if(L.t!==window.__lastLiveT){ window.__lastLiveT=L.t; __remoteSeen=Date.now(); }
         const a=L.alerts&&L.alerts[WING_ID]; if(a&&a.t!==window.__lastAlert){ if(window.__lastAlert!==undefined) alert(a.text); window.__lastAlert=a.t; }
@@ -1586,7 +1604,7 @@ function gameKey(g){ return g?String(g).replace(/"savedAt":\d+,?/,'').replace(/"
 function validSave(n){ return n&&n.bases&&n.v===SAVE_V; }
 function localUi(){ return {plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined}; }
 function restoreUi(k){ S.plot=k.plot===undefined?null:k.plot; if(WING_ID){ (S.wsel=S.wsel||{})[WING_ID]=k.wsel; (S.wselAf=S.wselAf||{})[WING_ID]=k.wselAf||null; if(k.wform) (S.wform=S.wform||{})[WING_ID]=k.wform; if(k.rfiPick) (S.rfiPick=S.rfiPick||{})[WING_ID]=k.rfiPick; } }
-function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); const n=JSON.parse(g); if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } }
+function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); const n=JSON.parse(g); if(MODE==='instructor'&&!(((n&&n.savedAt)||0)>(S.savedAt||0))) return;   /* R11.251 never take an older copy */ if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } }
 const CMD_OK=['wingSetReady','wingUnsend','releaseForPickup','loadForRequest','wingAskSupport','takeForTask','wingChat','wingRoute','claimRP','attackDefend','wingPickAf','wingCancelFlight','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
 function go(route){ location.hash=route; kfaReload(); }
 function save(){ if(MODE!=='instructor'&&MODE!=='wing') return; if(document.hidden){ saveNow(); return; } if(window.__saveQ) return; window.__saveQ=true; const go=()=>{ if(window.__saveQ) saveNow(); }; requestAnimationFrame(()=>setTimeout(go,0)); setTimeout(go,80); }
@@ -1741,7 +1759,7 @@ setInterval(()=>{ try{ if(MODE==='login') return; const role=MODE==='instructor'
 function ensureStatic(doc){ try{ tintDefsInto(doc); }catch(e){} try{ if(!doc||doc.getElementById('kfa-static')) return; const d=doc.createElement('div'); d.setAttribute('aria-hidden','true'); d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none'; d.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"><defs><g id="kfa-static">${STATIC}</g>${kimgDefs()}</defs></svg>`; { const st=doc.createElement('style'); st.id='kimg-css'; st.textContent=__kcss+`.mstack.vb0{aspect-ratio:1960/var(--vbh,1350);width:min(100%,calc(100cqh * 1960 / var(--vbh,1350)))}.mstack.vb1{aspect-ratio:${W}/${VH};width:min(100%,calc(100cqh * ${W} / ${VH}))}`; (doc.head||doc.documentElement).appendChild(st); } (doc.body||doc.documentElement).appendChild(d); }catch(e){} }
 function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; let pl='', ac=''; const __air=[];
   const vb=only?[0,VY,W,VH]:(window.__vb0||[40,150,1960,1350]);   // owner 11-10: the class board (instructor and projector) zooms to the play area; wing screens keep the full map
-  let s=`<div class="mstack ${only?'vb1':'vb0'}"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${window.__mockQuiet===true?`<rect x="0" y="${VY}" width="${W}" height="${VH}" fill="${window.__qFill||'#242A31'}" opacity="${window.__qOp||.3}" style="${window.__qBlend?'mix-blend-mode:'+window.__qBlend:''}" pointer-events="none"/>`:''}${(()=>{ const g=MD.ring; return `<circle class="ring" cx="${g.cx}" cy="${g.cy}" r="${g.r}" pointer-events="none"/><text class="ringl" x="${g.cx+g.r*0.86}" y="${g.cy+g.r*0.42}" transform="rotate(-62 ${g.cx+g.r*0.86} ${g.cy+g.r*0.42})" pointer-events="none">DF-26</text>`; })()}${accessHatch()}${`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
+  let s=`<div class="mstack ${only?'vb1':'vb0'}"><svg viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="#fff"/></marker></defs><clipPath id="mc"><rect y="${VY}" width="${W}" height="${VH}"/></clipPath><g clip-path="url(#mc)"><use href="#kfa-static"/>${window.__mockQuiet===true?`<rect x="0" y="${VY}" width="${W}" height="${VH}" fill="${window.__qFill||'#242A31'}" opacity="${window.__qOp||.3}" style="${window.__qBlend?'mix-blend-mode:'+window.__qBlend:''}" pointer-events="none"/>`:''}${(()=>{ const g=MD.ring; return `<circle class="ring" cx="${g.cx}" cy="${g.cy}" r="${g.r}" pointer-events="none"/><text class="ringl" x="${g.cx+g.r*0.86}" y="${g.cy+g.r*0.42}" transform="rotate(-62 ${g.cx+g.r*0.86} ${g.cy+g.r*0.42})" pointer-events="none">DF-26</text>`; })()}${accessHatch()}${MODE==='projector'&&!only?airBox():`<g transform="translate(${(only?1795:1755)},${(only?40:162)})"><rect width="235" height="190" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/><text x="117" y="30" fill="#E8ECEF" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EN ROUTE</text>
      <text x="117" y="62" fill="#C9E1FF" font-size="17" text-anchor="middle">East Coast US</text><text x="117" y="88" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · West Coast</text><text x="117" y="114" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · Hawaii/Alaska</text><text x="117" y="140" fill="#C9E1FF" font-size="17" text-anchor="middle">↓ 1 turn · AOR entry</text><text x="117" y="172" fill="#AEB6BE" font-size="14" text-anchor="middle">Wing 3: JB Pearl Harbor-Hickam</text></g>`}`;
   for(const id of S.targets) if(HX[id]) s+=`<polygon class="tgt" points="${hexPts(HX[id])}"/>`;   /* R11.68 easier to see */
   s+=`<g data-k="hexes${clickable?1:0}" data-fill="hexes${clickable?1:0}"></g>`;   // filled once, then kept (R10.1 speed)
@@ -1771,11 +1789,11 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
     if(q.from&&HX[q.from]){ const f=HX[q.from]; s+=`<line x1="${f.x}" y1="${f.y}" x2="${h.x}" y2="${h.y}" stroke="${t.c}" stroke-width="7" stroke-dasharray="6 10" ${window.__mockArrows===true?'marker-end="url(#ar)"':''}/>`; }
     s+=`<polygon class="base" points="${hexPts(h)}" fill="${t.c}22" stroke="${t.c}" stroke-width="6" stroke-dasharray="4 10"/><text class="blab" x="${h.x}" y="${h.y+24}" style="font-size:21px">REQ</text><text class="blab" x="${h.x}" y="${h.y+50}" style="font-size:21px">${t.n.toUpperCase()}</text>`; }   /* R11.140 */
   (S.fmoves||[]).forEach((m,i)=>{ if(only?m.team!==only:S.show[m.team]===false) return; const A=HX[m.from], B=HX[m.to]; if(!A||!B) return; const t=TM[m.team], k=turnFrac(); if((fmLanded(m)&&!(m.mission&&!m.mission.back))||(m.hideUntil>Date.now()&&!(m.mission&&m.mission.back))) return; if(k===0) window.__stk=true;   /* R11.179 a mission's home leg is drawn (hidden) during the strike so it appears the instant the strike ends */   /* R11.149 a mission waits drawn at its strike point */
-    const MP=m.path||[m.from,m.to], D=fmDist(m), at=pathAt(MP,Math.min(1,fmProg(m)/D),m.team), left=Math.ceil((D-(m.moved||0))/FRANGE);
+    const MP=m.path||[m.from,m.to], D=fmDist(m), at=pathAt(MP,Math.min(1,fmLead(m)/D),m.team), left=Math.ceil((D-(m.moved||0))/FRANGE), aj=at;
     { const rp=fmRest(m,at);   /* R11.141 only the route still ahead of the jets, thin and faint (owner: the full purple routes were too much); animateFlights keeps it trimmed */
       { const tp=fmTrail(m,at,110); s+=`<polyline class="fmt" data-fm="${fmKey(m)}" points="${tp||'0,0'}" fill="none" stroke="${t.c}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${tp?'.3':'0'}" pointer-events="none"/>`; }
       if(rp) s+=`<polyline class="fmr" data-fm="${fmKey(m)}" points="${rp}" fill="none" stroke="${t.c}" stroke-width="3" stroke-linejoin="round" stroke-dasharray="10 9" stroke-opacity=".6" ${window.__mockArrows===true?'marker-end="url(#ar)"':''} pointer-events="none"/>`; }
-    __air.push(`<svg class="acs" data-k="acs${fmKey(m)}" width="1" height="1">${fighterSvg(at.x,at.y,at.ang,t.c,`${FTYPE[m.team]} ×${m.n} · to ${m.to}${left>1?' · '+left+' turns':''}`,FTYPE[m.team],fmKey(m),m.n,(m.hideUntil>Date.now())?0:((m.mission&&!m.mission.back)?1:landK(D-fmProg(m))),!!m.mission)}</svg>`); });   /* R11.168 missions fly in formation */   /* R11.149 an out-bound mission does not 'land' at its strike point */   /* R11.116 air layer */
+    __air.push(`<svg class="acs" data-k="acs${fmKey(m)}" width="1" height="1">${fighterSvg(aj.x,aj.y,aj.ang,t.c,`${FTYPE[m.team]} ×${m.n} · to ${m.to}${left>1?' · '+left+' turns':''}`,FTYPE[m.team],fmKey(m),m.n,(m.hideUntil>Date.now())?0:((m.mission&&!m.mission.back)?1:landK(D-fmShown(m))),!!m.mission)}</svg>`); });   /* R11.168 missions fly in formation */   /* R11.149 an out-bound mission does not 'land' at its strike point */   /* R11.116 air layer */
   for(const so of (S.sorties||[])){ if(so.turn!==S.turn&&!(so.t&&HX[so.from]&&HX[so.target]&&Date.now()-so.t<(flightPlan(so,HX[so.from],HX[so.target]).T+1)*1000)) continue; if(only?so.team!==only:S.show[so.team]===false) continue; const A=HX[so.from]&&afPt(so.team,so.from), B=HX[so.target]; if(!A||!B||so.from===so.target) continue; const t=TM[so.team];
     const d=`M${A.x},${A.y} L${B.x},${B.y} L${A.x},${A.y}`;
     const lean=window.__mockTags===undefined&&boardLean(), mark=`<path d="M${A.x},${A.y} L${B.x},${B.y}" fill="none" stroke="${t.c}" stroke-width="${lean?3:4}" stroke-dasharray="4 10" stroke-opacity="${lean?.55:.8}"/><circle cx="${B.x}" cy="${B.y}" r="54" fill="none" stroke="${t.c}" stroke-width="4" stroke-dasharray="10 8"/><path d="M${B.x-70},${B.y}h40M${B.x+30},${B.y}h40M${B.x},${B.y-70}v40M${B.x},${B.y+30}v40" stroke="${t.c}" stroke-width="4"/>`;
@@ -1990,7 +2008,7 @@ function flightHeld(f){ return f.moved===0&&S.bases[f.team].some(b=>b.hex===f.pa
 function flightStuck(f){ if(flightHeld(f)) return true; const h0=f.moved===0&&holdOf(f.team,f.path[0]), h1=f.moved===0&&holdOf(f.team,f.path[f.path.length-1]);   /* R11.203 OWNER 11-14 'no holding': an aircraft already in the air never stops; an arrival hold only keeps a chalk on the ground */ return !!((h0&&(h0.k==='all'||h0.k==='dep'))||(h1&&(h1.k==='all'||h1.k==='arr'))); }   /* R11.49a same holds as moveFlights */
 function landK(rem){ return rem>=0.45?1:Math.max(0,rem)/0.45; }   /* R11.69b 1 = cruising, 0 = touched down */
 function landScale(k){ return 0.35+0.65*k; }
-function flightLandK(f){ return landK(f.dist-(f.moved+flightExtra(f))); }
+function flightLandK(f){ return landK(f.dist-fShown(f)); }
 function flightLf(f){ const lf0=(f.lf&&f.lfTurn===S.turn&&f.moved===0)?f.lf:0, gap=f.moved===0&&window.__mockTrail!==false?Math.min(0.3,0.04*trailIdx(f)):0; return Math.min(0.95,lf0+gap); }   /* R11.196 tried removing the takeoff spacing: chalks piled up at the field and same-speed types hid each other all flight. Spacing kept; the freeze it was suspected of was the __stk loop (R11.193) */
 function flightExtra(f){ if(!((f.st==='approved'||f.st==='enroute')&&!flightStuck(f))) return 0; const tf=turnFrac(), lf=flightLf(f); return Math.max(0,Math.min(1-lf,tf-lf))*ACFT[f.acft].range; }   /* R11.177 one steady speed from takeoff */   /* R11.67a; R11.114 takeoff sequence */   /* R11.67a */
 function flightGroup(f){ return f.team+'|r'+ACFT[f.acft].range+'|'+f.path.join('>')+'|'+f.moved+'|'+(f.moved===0&&f.lfTurn===S.turn?(f.lf||0).toFixed(3):'')+'|'+(f.st==='requested'?'r':flightHeld(f)?'h':'m'); }   /* R11.146 chalks that took off at different times are drawn apart */
@@ -2007,15 +2025,17 @@ function rampTableHtml(only){ const AC=['ftr','c130','c5','c17'];
 function sepPos(P){ const R=82; for(let it=0;it<3;it++) for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){ const a=P[i], b=P[j], dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d>=R) continue; const wt=Math.min(a.w===undefined?1:a.w,b.w===undefined?1:b.w); if(wt<=0) continue; const an=((a.ta!==undefined?a.ta:(a.ang||0))+90)*Math.PI/180, ux=Math.cos(an), uy=Math.sin(an);   /* R11.56 always sideways to the flight's overall track (constant), fixed sides */ const p=(R-d)/2*0.9*wt; a.x-=ux*p; a.y-=uy*p; b.x+=ux*p; b.y+=uy*p; } return P; }
 function airHeads(only){ const grp={}; for(const f of S.flights){ if(!['requested','approved','enroute'].includes(f.st)) continue; const g=flightGroup(f); (grp[g]=grp[g]||[]).push(f); }
   const parkedF=f=>f.moved===0&&(f.st==='requested'||flightStuck(f)||turnFrac()===0||(S.running&&!S.movesOpen&&flightExtra(f)<=0.001)), H=[];   /* R11.176 a plane waiting for its takeoff slot sits on the ramp, not 'frozen' in the air */
-  for(const f of S.flights){ if(only?f.team!==only:S.show[f.team]===false) continue; if(!['requested','approved','enroute'].includes(f.st)) continue; if(flightLanded(f)) continue; const G0=grp[flightGroup(f)]||[f]; if(G0[0]!==f) continue; if(parkedF(f)) continue; const pos=flightDrawPos(f), pg=Math.min(f.dist,f.moved+flightExtra(f)); pos.w=Math.max(0,Math.min(1,Math.min(pg,f.dist-pg)/0.8)); { const A0=HX[f.path[0]], B0=HX[f.path[f.path.length-1]]; if(A0&&B0) pos.ta=Math.atan2(B0.y-A0.y,B0.x-A0.x)*180/Math.PI; } H.push({f,pos}); }
+  for(const f of S.flights){ if(only?f.team!==only:S.show[f.team]===false) continue; if(!['requested','approved','enroute'].includes(f.st)) continue; if(flightLanded(f)) continue; const G0=grp[flightGroup(f)]||[f]; if(G0[0]!==f) continue; if(parkedF(f)) continue; const pos=flightDrawPos(f), pg=fShown(f); pos.w=Math.max(0,Math.min(1,Math.min(pg,f.dist-pg)/0.8)); { const A0=HX[f.path[0]], B0=HX[f.path[f.path.length-1]]; if(A0&&B0) pos.ta=Math.atan2(B0.y-A0.y,B0.x-A0.x)*180/Math.PI; } H.push({f,pos}); }
   if(window.__mockSep!==false){ const base=H.map(h=>({x:h.pos.x,y:h.pos.y})); sepPos(H.map(h=>h.pos)); const now=performance.now(), O=(window.__sepO=window.__sepO||{});
     H.forEach((h,k)=>{ const tx=h.pos.x-base[k].x, ty=h.pos.y-base[k].y, o=O[h.f.id]||(O[h.f.id]={x:0,y:0,t:now}), a=1-Math.exp(-Math.max(0,now-o.t)/220); o.x+=(tx-o.x)*a; o.y+=(ty-o.y)*a; o.t=now; h.pos.x=base[k].x+o.x; h.pos.y=base[k].y+o.y; }); }   /* R11.67b eased push */
   return H; }
-function routeRest(f,ox,oy){ const P=f.path, pt=i=>(i===0||i===P.length-1)?afPt(f.team,P[i]):HX[P[i]]; const cur=flightDrawPos(f); let left=Math.min(f.moved+flightExtra(f),f.dist), i=1;
+function routeRest(f,ox,oy){ const P=f.path, pt=i=>(i===0||i===P.length-1)?afPt(f.team,P[i]):HX[P[i]]; const cur=flightDrawPos(f); let left=fShown(f), i=1;
   for(;i<P.length;i++){ const d=hexDist(P[i-1],P[i]); if(left<=d||i===P.length-1) break; left-=d; }
   const pts=[[cur.x,cur.y]]; for(let k=i;k<P.length;k++){ const q=pt(k); pts.push([q.x+ox,q.y+oy]); } return pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '); }
 function trailIdx(f){ if(window.__mockTrail===false) return 0; const L=S.flights.filter(x=>x.team===f.team&&x.path[0]===f.path[0]&&x.path[1]===f.path[1]&&x.turn===f.turn&&x.st!=='denied').sort((p,q)=>p.id-q.id), key=x=>ACFT[x.acft].range+'|'+x.path.join('>'); return Math.max(0,[...new Set(L.map(key))].indexOf(key(f))); }   /* R11.197 same-speed route-mates share one slot: they fly and land as one cell */   /* stable for the whole flight: landings never reshuffle the line */
-function flightDrawPos(f){ let pos; { const tr=trailIdx(f), ex=flightExtra(f), p=Math.min(f.moved+ex,f.dist), w=Math.max(0,Math.min(1,(f.dist-p)/1.2)), q=p;   /* R11.114 no hold-back: the takeoff sequence (flightExtra) spaces them */   /* R11.72 waiting planes stay at their field (they were queued behind it, toward Taiwan from Kadena) */
+function fLead(f,g){ if(!(f.st==='approved'||f.st==='enroute')||g<=1e-6||S.debrief||flightStuck(f)) return g; const L=(window.__flL=window.__flL||{}), key='f'+f.id, now=performance.now(), sig=String(f.path[0]); let o=L[key]; if(!o||o.sig!==sig||g<o.g-1e-3){ L[key]={d:g,g,t:now,sig}; return g; } const dt=Math.min(.25,Math.max(0,(now-o.t)/1000)); o.t=now; o.g=g; const R=ACFT[f.acft].range, U=Math.min(f.dist,(f.moved||0)+(1-flightLf(f))*R), room=U-g; if(o.d<g){ const gap=g-o.d; o.d=gap<0.06?g:o.d+Math.min(gap,dt); return o.d; }   /* R11.260 */ if(o.d>U) o.d=Math.max(g,U); if(room>1e-6) o.d=Math.min(U,o.d+R/Math.max(20,CLOCK_MIN(S.turn)*60)*dt*Math.max(0,(U-o.d)/room)); return o.d; }   /* R11.248/R11.256 */
+function fShown(f){ const g=Math.min(f.moved+flightExtra(f),f.dist), o=window.__flL&&window.__flL['f'+f.id]; return o&&o.sig===String(f.path[0])&&(f.st==='approved'||f.st==='enroute')&&performance.now()-o.t<500?Math.min(f.dist,o.d):g; }   /* R11.256 what the class sees */
+function flightDrawPos(f){ let pos; { const tr=trailIdx(f), ex=flightExtra(f), p=fLead(f,Math.min(f.moved+ex,f.dist)), w=Math.max(0,Math.min(1,(f.dist-p)/1.2)), q=p;   /* R11.114 no hold-back: the takeoff sequence (flightExtra) spaces them */   /* R11.72 waiting planes stay at their field (they were queued behind it, toward Taiwan from Kadena) */
     if(window.__mockTrail===false||q>=0) pos=flightPos(f,(window.__mockTrail===false?ex:q-f.moved)); else { const P=f.path, A=afPt(f.team,P[0]), B=HX[P[1]]||A, dx=B.x-A.x, dy=B.y-A.y; pos={x:A.x+dx*q,y:A.y+dy*q,ang:Math.atan2(dy,dx)*180/Math.PI}; } }
   { const ti=TEAMS.findIndex(x=>x.id===f.team)-1.5; pos.x+=ti*12; pos.y+=ti*8; }
   /* R11.92 a held aircraft waits still, nose toward its field (the R11.70c orbit looked like spinning) */
@@ -2023,14 +2043,14 @@ function flightDrawPos(f){ let pos; { const tr=trailIdx(f), ex=flightExtra(f), p
     const sib=[...new Set(S.flights.filter(x=>x.path[0]===f.path[0]&&x.moved===0&&['requested','approved','enroute'].includes(x.st)).sort((p,q)=>p.id-q.id).map(flightGroup))]; const i=Math.max(0,sib.indexOf(flightGroup(f))), lat=(i===0?0:(i%2?1:-1)*Math.ceil(i/2))*84, a=pos.ang*Math.PI/180;   /* R11.43 fixed lanes */
     pos.x+=(Math.cos(a)*95-Math.sin(a)*lat)*k; pos.y+=(Math.sin(a)*95+Math.cos(a)*lat)*k; }
   return pos; }
-function fmTrail(m,at,TL){ const MP=m.path||[m.from,m.to], D=fmDist(m), pr=Math.min(D,fmProg(m)), pt=k=>(k===0||k===MP.length-1)?afPt(m.team,MP[k]):HX[MP[k]]; let cum=0, i=1; for(;i<MP.length;i++){ const d=hexDist(MP[i-1],MP[i]); if(cum+d>pr) break; cum+=d; }
+function fmTrail(m,at,TL){ const MP=m.path||[m.from,m.to], D=fmDist(m), pr=Math.min(D,fmShown(m)), pt=k=>(k===0||k===MP.length-1)?afPt(m.team,MP[k]):HX[MP[k]]; let cum=0, i=1; for(;i<MP.length;i++){ const d=hexDist(MP[i-1],MP[i]); if(cum+d>pr) break; cum+=d; }
   const P=[at]; let left=TL, cur=at; for(let k=Math.min(i-1,MP.length-1);k>=0&&left>0;k--){ const q=pt(k); if(!q) break; const L=Math.hypot(q.x-cur.x,q.y-cur.y); if(L>=left){ P.push({x:cur.x+(q.x-cur.x)*left/L,y:cur.y+(q.y-cur.y)*left/L}); left=0; break; } P.push(q); left-=L; cur=q; }
   return P.length>1?P.map(h=>h.x.toFixed(1)+','+h.y.toFixed(1)).join(' '):''; }   /* R11.156 short trail behind fighter moves */
-function fmRest(m,at){ const MP=m.path||[m.from,m.to], D=fmDist(m), pr=Math.min(D,fmProg(m)); let cum=0, i=1; for(;i<MP.length;i++){ const d=hexDist(MP[i-1],MP[i]); if(cum+d>pr) break; cum+=d; } const P=[at].concat(MP.slice(i).map((id,k)=>(i+k===MP.length-1)?afPt(m.team,id):HX[id]).filter(Boolean)); return P.length>1?P.map(h=>h.x.toFixed(1)+','+h.y.toFixed(1)).join(' '):''; }   /* R11.141 */
+function fmRest(m,at){ const MP=m.path||[m.from,m.to], D=fmDist(m), pr=Math.min(D,fmShown(m)); let cum=0, i=1; for(;i<MP.length;i++){ const d=hexDist(MP[i-1],MP[i]); if(cum+d>pr) break; cum+=d; } const P=[at].concat(MP.slice(i).map((id,k)=>(i+k===MP.length-1)?afPt(m.team,id):HX[id]).filter(Boolean)); return P.length>1?P.map(h=>h.x.toFixed(1)+','+h.y.toFixed(1)).join(' '):''; }   /* R11.141 */
 function afRender(){ const n=Date.now(), gap=n-(window.__afR||0); if(gap>=250){ window.__afR=n; try{ render(); }catch(e){} } else if(!window.__afRT){ window.__afRT=setTimeout(()=>{ window.__afRT=null; window.__afR=Date.now(); try{ render(); }catch(e){} },250-gap); } }   /* R11.194 redraws asked for by the flight loop: at most 4 a second, never a storm */
 function animateFlights(){ if(window.__stk&&turnFrac()>0){ window.__stk=false; afRender(); }   /* R11.194 HARDENING: the loop never returns early any more -- it redraws (rate-limited) and still moves every aircraft this frame */
   { const L=S.flights.filter(flightLanded).map(f=>f.id).join(','); if(L!==window.__landedKey){ window.__landedKey=L; afRender(); } } const docs=[document]; if(!window.__selfOnly){ if(proj&&!proj.closed) docs.push(proj.document); for(const id in WINS) if(WINS[id]&&!WINS[id].closed) docs.push(WINS[id].document); }
-  (S.fmoves||[]).forEach((m,i)=>{ const A=HX[m.from], B=HX[m.to]; if(!A||!B) return; const p=pathAt(m.path||[m.from,m.to],Math.min(1,fmProg(m)/fmDist(m)),m.team), lk=(m.mission&&!m.mission.back)?1:landK(fmDist(m)-fmProg(m)); p.bang=p.ang; if(m.mission&&!S.debrief&&(!S.running||S.movesOpen)&&!(m.hideUntil>Date.now())){ const th=(Date.now()/1000)*2*Math.PI/6+(m.id||0); p.x+=Math.cos(th)*26; p.y+=Math.sin(th)*26; p.ang=th*180/Math.PI+90; }   /* R11.158 badge keeps p.bang */   /* R11.149 holding pattern between turns */ { const rp=fmRest(m,p); for(const d of docs) for(const ln of d.querySelectorAll('.fmr[data-fm="'+fmKey(m)+'"]')) ln.setAttribute('points',rp||'0,0'); const tp=fmTrail(m,p,110); for(const d of docs) for(const ln of d.querySelectorAll('.fmt[data-fm="'+fmKey(m)+'"]')){ ln.setAttribute('points',tp||'0,0'); ln.setAttribute('stroke-opacity',tp&&!(m.hideUntil>Date.now())?'.3':'0'); } }   /* R11.141 */ if(!document.getElementById(fmKey(m))&&!(m.hideUntil>Date.now())&&S.show[m.team]!==false&&Date.now()-(window.__fmR||0)>400){ window.__fmR=Date.now(); setTimeout(()=>{ try{ render(); }catch(e){} },0); }   /* R11.149 a mission leg that just became visible (home leg after the strike) is drawn at once */ for(const d of docs) for(const g of d.querySelectorAll('#'+fmKey(m))){ g.style.transform=`translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px) scale(${landScale(lk).toFixed(3)})`; g.style.opacity=(m.hideUntil>Date.now())?'0':Math.min(1,lk*1.6).toFixed(2); const r=g.querySelector('.fjr'); if(r) r.setAttribute('transform',`rotate(${(p.ang+90).toFixed(1)}) scale(${r.getAttribute('data-sc')}) translate(-100,-100)`); const ff=g.querySelector('.fjf'); if(ff) ff.setAttribute('transform',`rotate(${p.ang.toFixed(1)})`);   /* R11.168 formation turns with the flight */ const bg=g.querySelector('.cbg'); if(bg) bg.setAttribute('transform',badgeXY(p.bang!=null?p.bang:p.ang,+bg.getAttribute('data-r'))); } });
+  (S.fmoves||[]).forEach((m,i)=>{ const A=HX[m.from], B=HX[m.to]; if(!A||!B) return; const dp=fmLead(m), p=pathAt(m.path||[m.from,m.to],Math.min(1,dp/fmDist(m)),m.team), lk=(m.mission&&!m.mission.back)?1:landK(fmDist(m)-dp); p.bang=p.ang; const p0=p;   /* R11.158 badge keeps p.bang */   /* R11.149 holding pattern between turns */ { const rp=fmRest(m,p0); for(const d of docs) for(const ln of d.querySelectorAll('.fmr[data-fm="'+fmKey(m)+'"]')) ln.setAttribute('points',rp||'0,0'); const tp=fmTrail(m,p0,110); for(const d of docs) for(const ln of d.querySelectorAll('.fmt[data-fm="'+fmKey(m)+'"]')){ ln.setAttribute('points',tp||'0,0'); ln.setAttribute('stroke-opacity',tp&&!(m.hideUntil>Date.now())?'.3':'0'); } }   /* R11.141 */ if(!document.getElementById(fmKey(m))&&!(m.hideUntil>Date.now())&&S.show[m.team]!==false&&Date.now()-(window.__fmR||0)>400){ window.__fmR=Date.now(); setTimeout(()=>{ try{ render(); }catch(e){} },0); }   /* R11.149 a mission leg that just became visible (home leg after the strike) is drawn at once */ for(const d of docs) for(const g of d.querySelectorAll('#'+fmKey(m))){ g.style.transform=`translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px) scale(${landScale(lk).toFixed(3)})`; g.style.opacity=(m.hideUntil>Date.now())?'0':Math.min(1,lk*1.6).toFixed(2); const r=g.querySelector('.fjr'); if(r) r.setAttribute('transform',`rotate(${(p.ang+90).toFixed(1)}) scale(${r.getAttribute('data-sc')}) translate(-100,-100)`); const ff=g.querySelector('.fjf'); if(ff) ff.setAttribute('transform',`rotate(${p.ang.toFixed(1)})`);   /* R11.168 formation turns with the flight */ const bg=g.querySelector('.cbg'); if(bg) bg.setAttribute('transform',badgeXY(p.bang!=null?p.bang:p.ang,+bg.getAttribute('data-r'))); } });
   if(window.__mrg&&window.__mrg.length&&Date.now()-(window.__mrgT||0)>1000){ window.__mrgT=Date.now();
     for(const L of (window.__mrg||[])){ const F=L.map(id=>S.flights.find(x=>x.id===id)).filter(Boolean); if(F.length<2) continue; const p0=flightDrawPos(F[0]);
       if(F.some(x=>{ const p=flightDrawPos(x); return Math.hypot(p.x-p0.x,p.y-p0.y)>260; })){ afRender(); break; } } }
@@ -2113,15 +2133,15 @@ function showAbout(){ document.querySelectorAll('#kfa-about').forEach(e=>e.remov
   ov.innerHTML=`<div class="cfp" style="max-width:600px"><div class="cfh">About Kingfish ACE</div><div class="abt"><div class="abt-t">KINGFISH ACE</div><div class="abt-s">Agile combat employment wargame · USAF 21A Maintenance Officer Intermediate Course</div><div class="abt-g"><span>Version</span><b>${APP_VER}</b><span>Built</span><b>${KFA_BUILT}</b><span>Screens</span><b>instructor, projector, 4 wing laptops</b><span>Theater</span><b>182 hexes · 16 Mission hexes · 9 access countries</b><span>Student response</span><b>about 12 ms, click to every screen (measured)</b><span>Rule tests</span><b>109 automated tests, all passing before each release</b></div><div class="abt-h">What changed in this version</div><ul class="hlpl"></ul></div><div class="cfr"><button class="btn p" data-a="ok">Close</button></div></div>`;
   const ul=ov.querySelector('ul'); for(const x of WHATSNEW){ const li=document.createElement('li'); li.textContent=x; ul.appendChild(li); }
   ov.addEventListener('click',e=>{ if(e.target===ov||e.target.getAttribute('data-a')==='ok') ov.remove(); }); document.body.appendChild(ov); }
-const WHATSNEW=['Aircraft never freeze or stall. A built-in watchdog redraws any plane that goes missing within seconds.',
-  'Game menu: Watch demo (about 9 minutes) and Play commercial (about 4 minutes), played live on the real board. Both show the student laptop: load plans, Resources, comms and jamming.',
-  'A spoke that reaches IOC or FOC flashes gold and keeps a gold badge on the map. The wing\u2019s laptop gets a milestone notice, including its first sortie and each Red zone it clears.',
-  'Students see their own score, MP, DP, RP and the class total, counting up as points change.',
-  'Rest the pointer on IOC, FOC, RFI, MOG and other terms to see what they mean.',
-  'Setup tab presets: Full class, Half day and Rehearsal. The debrief can download the results for Excel.'];   /* R11.222 */
+const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the instructor laptop. You approve their requests as usual.',
+  'Spoke requests wait for the instructor. With automatic turns on, any request still waiting at 0:00 is decided automatically.',
+  'The projector shows the day’s airspace: denied and overflight-only countries, and in Conflict the adversary countries.',
+  'Aircraft keep flying while the clock is stopped and glide when the timer changes. No circling and no jumps.',
+  'Students are told why an airlift or a task was refused. A booked request shows approved · opens at end of turn.',
+  'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='14 Nov 2026 23:47';
+const KFA_BUILT='15 Nov 2026 12:44';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2402,7 +2422,7 @@ function wingHtml(team,call,view){ const C=call||'opener.'; const T=TM[team], [s
       <div class="hint" style="margin-top:4px">RFIs answered: ${ans.length} of 10 · delivered so far: ${del.pp} PP, ${del.pax} people${del.n?` (${del.n} flight${del.n>1?'s':''})`:''}</div></div>`; }).join('')||'<div class="hint">No bases yet.</div>';
   bs+='</div>';
   const rq=S.requests.filter(q=>q.team===team).slice(-5).reverse();
-  const req=`<div class="sec"><h3>MY REQUESTS</h3>${rq.length?rq.map(q=>`<div class="kv" data-hex="${q.hex}"><span>${q.from?'move '+q.from+' → '+q.hex:'base at '+q.hex+' as '+(q.role==='cl'?'contingency location':q.role)}</span><span class="hint" style="color:${q.st==='approved'?'#8FC7A3':q.st==='denied'?'#F09A8F':'var(--mute)'}">${q.st}</span></div>`).join(''):'<div class="hint">None yet. Click a hex on the map to request it as a base.</div>'}</div>`;
+  const req=`<div class="sec"><h3>MY REQUESTS</h3>${rq.length?rq.map(q=>`<div class="kv" data-hex="${q.hex}"><span>${q.from?'move '+q.from+' → '+q.hex:'base at '+q.hex+' as '+(q.role==='cl'?'contingency location':q.role)}</span><span class="hint" style="color:${q.st==='approved'||(q.st==='pending'&&q.queued)?'#8FC7A3':q.st==='denied'?'#F09A8F':'var(--mute)'}">${q.st==='pending'&&q.queued?'approved · opens at end of turn':q.st}</span></div>`).join(''):'<div class="hint">None yet. Click a hex on the map to request it as a base.</div>'}</div>`;
   const tabs=call==='cmd.'?`<span class="wtabs"><button class="${view!=='res'?'on':''}" onclick="setWView('map')">Hex map</button><button class="${view==='res'?'on':''}" onclick="setWView('res')">Resources</button><button class="hlp" onclick="showHelp()" title="What is on this screen?" aria-label="Help for this screen">?</button><button class="hlp wzb" onclick="wTextSize(-1)" title="Smaller text in the side panel" aria-label="Smaller text">A−</button><button class="hlp wzb" onclick="wTextSize(1)" title="Larger text in the side panel" aria-label="Larger text">A+</button><button class="hlp wzb" onclick="goFull()" title="Full screen (Esc to leave)" aria-label="Full screen">Full screen</button></span>`:'';
   return `<div class="wing"><div class="topbar"><span class="t" style="color:${T.c}">${T.n.toUpperCase()}</span><span class="hrs">${T.full}</span>${tabs}<span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp"></span>${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?'<span class="sit mw">MOVE WINDOW OPEN</span>':''}<span class="sit" style="font-family:Consolas,monospace;font-size:22px;letter-spacing:2px;color:var(--ink)" id="wtime">${clockText()}</span></div>
    ${(S.comms||{})[team]>=S.turn?'<div class="commsbar">JAMMED · COMMS DOWN THIS TURN (jamming or cyber attack): no messages in or out</div>':''}
@@ -2434,7 +2454,7 @@ function wingRequest(team,role,from){ const hex=S.wsel[team]; if(!hex) return; i
 function wingRfi(team,i){ const hex=S.wsel[team]; if(hex) rollRfiFor(team,hex,i); }
 function wingSet(team,k,v){ const f=wingForm(team); f.msg=''; f[k]=k==='acft'?v:Math.max(k==='n'?1:0,parseInt(v,10)||0); render(); }
 function wingPlot(team){ if(S.plot) return; const f=wingForm(team); S.plot={team,path:f.from?[f.from]:[]}; render(); }
-function wingSubmit(team){ const f=wingForm(team), pl=planOf(team), RT=[...routeOf(team)]; if(RT.length<2) return; const c=checkPlan(pl,RT); if(c.block) return;
+function wingSubmit(team){ const f=wingForm(team), pl=planOf(team), RT=[...routeOf(team)]; if(RT.length<2) return; const c=checkPlan(pl,RT); if(c.block){ if(window.__demo) return; const why=String(c.out.find(x=>/ck-bad/.test(x))||'').replace(/<[^>]+>/g,'').replace(/^\s*NO\s*/,'').trim(); return alert('Airlift not launched. '+(why||'The plan is blocked.')); }
   const from=RT[0], inv=availAt(team,from); for(const id in f.cargo) if((inv[id]||0)<f.cargo[id]) return alert('Not enough '+CHIT[id].name+' at hex '+from+'.');
   const cargo=Object.assign({},f.cargo); addInv(team,from,cargo,-1);
   const fl={id:S.fSeq++,team,acft:f.acft,ci:(f.tail&&f.tail.k===f.acft)?f.tail.i:null,n:f.n,pp:pl.pp,pax:pl.pax,cargo,path:RT,dist:c.dist,moved:0,day:day(),turn:S.turn,st:S.airApprove?'requested':'approved'}; S.flights.push(fl); if(S.running&&!S.movesOpen&&!S.opening){ fl.lf=turnFrac(); fl.lfTurn=S.turn; }; if(S.plot&&S.plot.team===team) S.plot=null; if(f.to) f.lastTo=f.to; f.cargo={}; f.tail=null; f.route=null; f.to=null;
@@ -2570,7 +2590,8 @@ function canStaff(team,hex,T){ const av=availAt(team,hex), need=taskNeed(team,he
   for(const pid of (T.id===15&&baseStruck(team,hex)?[]:T.pre)) if(!taskDone(team,hex,pid)&&!(TASK[pid].each&&taskRunning(team,hex,pid))) return {ok:false,pre:pid};
   return {ok:true}; }
 function taskRunning(team,hex,id){ const st=taskState(team,hex)[id]; return !!(st&&st.a&&(Object.keys(st.a).length||st.on)); }
-function staffTask(team,hex,id){ const T=TASK[id], c=canStaff(team,hex,T); if(!c.ok) return;
+function staffWhy(team,hex,T,c){ const nm=k=>CHIT[k]?CHIT[k].name:k; return `Task ${T.id} ${T.n} at hex ${hex} not staffed: `+(c.pre?`finish task ${c.pre} ${TASK[c.pre]?TASK[c.pre].n:''} first.`:c.miss==='people'?'it needs at least 5 people at the base.':`not enough ${nm(c.miss)} free at the base.`); }   /* R11.249 */
+function staffTask(team,hex,id){ const T=TASK[id], c=canStaff(team,hex,T); if(!c.ok) return alert(staffWhy(team,hex,T,c));
   const av=availAt(team,hex), a=Object.assign({},taskNeed(team,hex,T)); if(T.or){ const o=T.or.find(o=>Object.keys(o).every(k=>(av[k]||0)>=o[k])); Object.assign(a,o); }
   const st=taskState(team,hex)[id]=taskState(team,hex)[id]||{p:0}; st.a=a; st.on=!Object.keys(a).length; st.need=taskTurns(team,hex,T);
   log(`${TM[team].n} ${hex}: staffed task ${id} ${T.n}`); render(); }
@@ -2582,9 +2603,9 @@ function takePlan(team,hex,T){ if(!T||rfiDoneTasks(team,hex).has(T.id)) return n
     if(!ids.length) return null; const id=ids.sort((x,y)=>(IOC_TASKS.includes(x)-IOC_TASKS.includes(y))||(Object.keys(ts[x].a).length-Object.keys(ts[y].a).length))[0];   /* a non-IOC task first, then the smallest */
     for(const c in ts[id].a) av[c]=(av[c]||0)+ts[id].a[c]; from.push(id); }
   if(short()) return null; return {from,chips:Object.keys(need).filter(k=>(availAt(team,hex)[k]||0)<need[k])}; }
-function takeForTask(team,hex,id){ id=+id; const T=TASK[id], pl=takePlan(team,hex,T); if(!pl) return; const ts=taskState(team,hex), was={};
+function takeForTask(team,hex,id){ id=+id; const T=TASK[id], pl=takePlan(team,hex,T); if(!pl) return T?alert(`Task ${T.id} ${T.n} at hex ${hex}: nothing can be moved to it right now.`):undefined; const ts=taskState(team,hex), was={};
   for(const f of pl.from){ was[f]=Object.assign({},ts[f].a); ts[f].a={}; ts[f].on=false; }
-  if(!canStaff(team,hex,T).ok){ for(const f of pl.from){ ts[f].a=was[f]; } render(); return; }
+  { const c2=canStaff(team,hex,T); if(!c2.ok){ for(const f of pl.from){ ts[f].a=was[f]; } render(); return alert(staffWhy(team,hex,T,c2)); } }
   staffTask(team,hex,id); log(`${TM[team].n} ${hex}: moved ${pl.chips.map(k=>CHIT[k]?CHIT[k].name:k).join(', ')} from task ${pl.from.join(', ')} to task ${id} ${T.n} (task ${pl.from.join(', ')} stopped)`); render(); }
 function unstaffTask(team,hex,id){ const st=taskState(team,hex)[id]; if(st){ st.a={}; st.on=false; } render(); }
 function baseStage(team,hex){ const d=id=>taskDone(team,hex,id)||taskRunning(team,hex,id), done=id=>taskDone(team,hex,id);
@@ -2910,6 +2931,9 @@ function wingFighterMove(team,from,to,n){ if(!to||!HX[to]) return alert('No base
   S.fighters[team][from]-=n; if(!S.fighters[team][from]) delete S.fighters[team][from]; S.fmoves.push({team,from,to,n,path:FP,moved:0,dist:FP.length-1,lf:S.running?turnFrac():0,lfTurn:S.turn,id:(S.fmSeq=(S.fmSeq||0)+1)});   /* R11.145 */ const trn=Math.ceil((FP.length-1)/FRANGE);
   log(`${TM[team].n}: ${n} ${FTYPE[team]} repositioning ${from} → ${to} (${FP.length-1} hexes, ${trn===1?'arrives end of turn':trn+' turns'})`); render(); }
 function fmKey(m){ return ('fm-'+m.team+'-'+(m.id?'i'+m.id+'-':'')+m.from+'-'+m.to+'-'+m.n+'-'+(m.dist||0)+(m.mission?(m.mission.back?'-b':'-o'):'')).replace(/[^\w-]/g,''); }   /* R11.145 id keeps identical moves apart */
+function fmLK(m){ return m.id?'i'+m.team+m.id:fmKey(m); }
+function fmLead(m){ const L=(window.__fmL=window.__fmL||{}), key=fmLK(m), now=performance.now(), g=fmProg(m), D=fmDist(m), sig=String((m.path||[m.from])[0])+(m.mission&&m.mission.back?'b':'o'); let o=L[key]; if(!o||o.sig!==sig||g<o.g-1e-3||S.debrief){ L[key]={d:g,g,t:now,sig}; return g; } const dt=Math.min(.25,Math.max(0,(now-o.t)/1000)); o.t=now; o.g=g; const U=Math.min(D,(m.moved||0)+FRANGE*((m.lfTurn===S.turn&&m.lf)?1-m.lf:1)), room=U-g; if(o.d<g){ const gap=g-o.d; o.d=gap<0.06?g:o.d+Math.min(gap,dt); return o.d; }   /* R11.260 glide, never teleport */ if(o.d>U) o.d=Math.max(g,U); if(room>1e-6) o.d=Math.min(U,o.d+FRANGE/Math.max(20,CLOCK_MIN(S.turn)*60)*dt*Math.max(0,(U-o.d)/room)); return o.d; }   /* R11.242/R11.256 drawn progress: keeps flying while the clock is stopped, never past the end-of-turn point, never snaps back */
+function fmShown(m){ const o=window.__fmL&&window.__fmL[fmLK(m)], g=fmProg(m); return o&&o.sig===String((m.path||[m.from])[0])+(m.mission&&m.mission.back?'b':'o')&&performance.now()-o.t<500?o.d:g; }
 function fmDist(m){ return m.dist!=null?m.dist:Math.max(1,(m.path||[m.from,m.to]).length-1); }
 function fmLanded(m){ return !!(S&&S.running&&!S.movesOpen&&turnFrac()>0&&!(m.hideUntil>Date.now())&&fmProg(m)>=fmDist(m)-1e-6); }
 function fmArrive(m){ const own=S.bases[m.team].some(b=>b.hex===m.to), to=own?m.to:HOME[m.team]; if(m.mission) log(`${TM[m.team].n}: long-range mission home at ${to}`); S.fighters[m.team][to]=(S.fighters[m.team][to]||0)+m.n; log(`${TM[m.team].n}: ${m.n} ${FTYPE[m.team]} arrived at ${to}${own?'':' (their spoke is gone; landed at the hub)'}`); }
@@ -3241,7 +3265,7 @@ function decideFlight(id,ok){ const f=S.flights.find(x=>x.id===id); if(!f||f.st=
 function wingCancelFlight(team,id){ const f=S.flights.find(x=>x.id===id); if(!f||f.team!==team||f.moved>0||f.st==='arrived') return alert('That chalk has already left. It cannot be cancelled.'); log(`${TM[team].n} cancelled ${f.n}× ${ACFT[f.acft].n} ${f.path[0]} → ${f.path[f.path.length-1]}`); removeFlight(id); }
 function removeFlight(id){ const f=S.flights.find(x=>x.id===id); if(f&&f.cargo&&f.moved===0&&f.st!=='arrived') addInv(f.team,f.path[0],f.cargo,1); S.flights=S.flights.filter(x=>x.id!==id); render(); }
 function rerouteFlights(committed){ const out=[];   /* R11.187 re-plan from where the plane is DRAWN: keep its path up to the next hex unchanged, so it never moves on screen */
-  for(const f of S.flights){ if(f.st!=='approved'&&f.st!=='enroute') continue; const P=f.path, dest=P[P.length-1], prog=Math.min(f.dist,f.moved+(committed?0:flightExtra(f)));
+  for(const f of S.flights){ if(f.st!=='approved'&&f.st!=='enroute') continue; const P=f.path, dest=P[P.length-1], prog=committed?Math.min(f.dist,f.moved):fShown(f);   /* R11.256 from where the plane is drawn */
     { let cum=0, i=1; for(;i<P.length;i++){ const d=hexDist(P[i-1],P[i]); if(cum+d>prog+1e-9) break; cum+=d; }
       if(i>=P.length) continue; const atHex=prog-cum<1e-6, nxt=P[i], nextOk=!atHex;   /* a plane already on its way into the next hex finishes that leg, then turns (cargo takes no fire there; a snap back looked like a glitch) */
       if(atHex||nextOk){ const cur=atHex?P[i-1]:nxt, pre=P.slice(0,atHex?i:i+1), rest=[cur,...P.slice(atHex?i:i+1)].filter((h,k,arr)=>k===0||h!==arr[k-1]); if(rest.length<2) continue;
@@ -3361,7 +3385,7 @@ function clockStartPause(){ if(!S.running&&!S.opening&&!S.movesOpen&&MODE==='ins
 function clockPulse(){ if(MODE!=='instructor'||!S||!S.running) return; if(!S.endsAt) S.endsAt=Date.now()+S.clock*1000;   // timer follows the real clock, so a throttled window never drifts
   const c=Math.max(0,Math.ceil((S.endsAt-Date.now())/1000)); if(c===S.clock&&c>0) return; S.clock=c; publishTick(); animateFlights(); if(S.clock===0){ timeUp(); } else renderClockOnly(); if(S.clock%15===0) save(); }
 setInterval(clockPulse,1000);
-try{ if(window.Worker&&!window.__clockWk){ let n=0; window.__clockWk=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),250)'],{type:'text/javascript'}))); window.__clockWk.onmessage=()=>{ try{ rollSweep(); popCheck(); clockPulse(); if(++n%4===0) landPulse(); }catch(e){ console.error(e); } }; } }catch(e){}   /* R11.36a hidden-window-proof clock */
+try{ if(window.Worker&&!window.__clockWk){ let n=0; window.__clockWk=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),250)'],{type:'text/javascript'}))); window.__clockWk.onmessage=()=>{ try{ rollSweep(); popCheck(); clockPulse(); if(++n%4===0) landPulse(); if(n%6===0&&window.__botT===true&&MODE==='instructor') botsTick(); }catch(e){ console.error(e); } }; } }catch(e){}   /* R11.36a hidden-window-proof clock */
 function autoGive(){ if(S.autoTurn===false||MODE!=='instructor'||S.giveDay===day()) return; S.giveDay=day(); const ORDER=['fp','vehicle','smallarms','fuel','firetruck','airfieldops','atc','weather','cfr','loader','port','maintenance','ammo','tools','refueling','refueler','opsintel','cp','comm','powergen','generator','tent'];
   for(const tm of TEAMS){ const sp=S.bases[tm.id].filter(b=>b.role==='spoke'&&b.st!=='struck'&&!b.vacateBy); if(!sp.length) continue; const prog=h=>[1,2,3,5,6,9,10,11,12].filter(id=>taskDone(tm.id,h,id)||taskRunning(tm.id,h,id)).length; const b=sp.sort((x,y)=>prog(y.hex)-prog(x.hex))[0];
     const need={}; for(const id of [1,2,3,5,6,9,10,11,12]){ if(taskDone(tm.id,b.hex,id)||taskRunning(tm.id,b.hex,id)||rfiDoneTasks(tm.id,b.hex).has(id)) continue; const n=taskNeed(tm.id,b.hex,TASK[id]); for(const k in n) need[k]=(need[k]||0)+n[k]; }
@@ -3374,7 +3398,7 @@ function autoTurnStart(){ try{ if(S.opening||S.movesOpen||S.debrief||MODE!=='ins
   try{ if(newDay) autoGive(); }catch(e){ console.error(e); }
   S.clock=CLOCK_MIN(S.turn)*60; window.__popPause=true; window.__upLast=Date.now(); save(); render(); }catch(e){ console.error(e); } }   /* R11.91; R11.117 daily items */
 function autoApprove(q){ if(!q||q.st!=='pending'||S.autoTurn===false||MODE!=='instructor') return; const ra=window.alert; let said=null; window.alert=x=>{ said=String(x); }; try{ decide(q.id,true); }catch(e){ console.error(e); } finally{ window.alert=ra; }
-  if(q.st==='pending'&&!q.queued){ const why=said||'not allowed'; decide(q.id,false); log(`AUTO: ${TM[q.team].n} request for ${q.hex} denied · ${why}`); if(window.cloudAlert) cloudAlert(q.team,`Your request for hex ${q.hex} was denied: ${why}`); } }
+  if(q.st==='pending'&&!q.queued){ if(said&&/still waiting to be rolled/.test(said)) return;   /* R11.252 */ const why=said||'not allowed'; decide(q.id,false); log(`AUTO: ${TM[q.team].n} request for ${q.hex} denied · ${why}`); if(window.cloudAlert) cloudAlert(q.team,`Your request for hex ${q.hex} was denied: ${why}`); } }
 function autoEndOfTurn(){ if(S.autoTurn===false||MODE!=='instructor') return;
   for(const a of atkPending()){ try{ if(a.red===null) attackRed(a.id); }catch(e){ console.error(e); } }   /* Red's die; each wing rolls its own defense (R11.94) */
   for(const q of S.requests.filter(q=>q.st==='pending'&&!q.queued)) autoApprove(q); }   /* R11.93 */
@@ -3392,7 +3416,7 @@ function clockAdd(n){ S.clock=Math.max(0,S.clock+n); if(S.running) S.endsAt=Date
 function clockHide(){ S.hidden=!S.hidden; log(S.hidden?'Timer hidden from class':'Timer shown'); render(); }
 function clockReset(){ S.clock=(S.opening?(S.planMin||PLAN_MIN):CLOCK_MIN(S.turn))*60; S.running=false; render(); }
 function nextTurn(){ try{ creditDue(true); }catch(e){} try{ if(!S.movesOpen&&!S.opening){ S.hist=(S.hist||[]).filter(h=>h.t!==S.turn); S.hist.push({t:S.turn,s:Object.fromEntries(TEAMS.map(x=>[x.id,netScore(S.pts[x.id])]))}); } }catch(e){}   /* R11.119 score history */ const snap=JSON.stringify({...S,undo:null});
-  if(!S.movesOpen){ S.undo=snap; if(S.orders.sit==='conflict'&&S.conflictDone!==S.turn&&!S.opening){ try{ window.__yesNow=true; runConflict(); }catch(e){ console.error(e); } finally{ window.__yesNow=false; } } S.movesOpen=true; S.running=false; for(const q of S.requests.filter(q=>q.st==='pending'&&q.queued)){ try{ decide(q.id,true); }catch(e){ console.error(e); } }   /* R11.91 booked approvals */ moveFlights(); moveFighters(); checkAssess(); progressTasks(); applyHN(TEAMS[0].id); TEAMS.forEach(x=>applyHN(x.id)); checkIdleDP(); reconcileAll('end of turn check'); if(!S.opening) drawCards(); S.sorties=S.sorties.filter(s=>s.turn===S.turn); log(`End of turn ${S.turn}: move window open`); banner(`END OF TURN ${S.turn} · MOVE WINDOW OPEN · submit base requests to the instructor`,false); if(!S.opening){ render(); return; } }
+  if(!S.movesOpen){ S.undo=snap; if(S.orders.sit==='conflict'&&S.conflictDone!==S.turn&&!S.opening){ try{ window.__yesNow=true; runConflict(); }catch(e){ console.error(e); } finally{ window.__yesNow=false; } } S.movesOpen=true; S.running=false; for(const q of S.requests.filter(q=>q.st==='pending'&&q.queued)){ const ra=window.alert; let said=null; window.alert=x=>{ said=String(x); }; try{ decide(q.id,true); }catch(e){ console.error(e); } finally{ window.alert=ra; } if(q.st==='pending'&&said&&!/still waiting to be rolled/.test(said)){ q.queued=false; const why=said.replace(/\s*Deny this (request|move)[^.]*\.?\s*$/,'').trim(); if(S.autoTurn!==false){ decide(q.id,false); log(`AUTO: ${TM[q.team].n} request for ${q.hex} denied at the end of the turn · ${why}`); if(window.cloudAlert) cloudAlert(q.team,`Your request for hex ${q.hex} was denied: ${why}`); } else notice(`${TM[q.team].n}’s approved request for hex ${q.hex} could not open: ${why} Approve or deny it again.`); } }   /* R11.91 booked approvals; R11.244 never left stuck */ moveFlights(); moveFighters(); checkAssess(); progressTasks(); applyHN(TEAMS[0].id); TEAMS.forEach(x=>applyHN(x.id)); checkIdleDP(); reconcileAll('end of turn check'); if(!S.opening) drawCards(); S.sorties=S.sorties.filter(s=>s.turn===S.turn); log(`End of turn ${S.turn}: move window open`); banner(`END OF TURN ${S.turn} · MOVE WINDOW OPEN · submit base requests to the instructor`,false); if(!S.opening){ render(); return; } }
   const left=S.requests.filter(q=>q.st==='pending').length; if(left&&!confirmThen(`${left} request${left>1?'s are':' is'} still waiting. Start the next turn anyway? They stay in the queue.`,()=>nextTurn(),'Start next turn')) return;
   S.undo=snap; if(S.autoTurn===false){ if(atkPending().length) attackRollAll(); } else { for(const a of atkPending()){ if(a.red===null) a.red=d(20); if(a.blue===null&&a.turn<S.turn) a.blue=d(10); atkResolve(a); } }   // R8.2a never stall the game; R11.94 auto: the wing rolls its own defense during the next shift (live), rolled for it only if it is still waiting a turn later
   if(S.opening){ S.opening=false; S.movesOpen=false; S.running=false; S.endsAt=null; S.clock=CLOCK_MIN(1)*60; log('Planning phase ended · Turn 1 begins'); banner('PLANNING COMPLETE · TURN 1 BEGINS · DAY SHIFT 0600–1400'+((S.sitStart||3)<=1?' · roll Situation':' · setting the theater'),false); render(); return; }
@@ -3446,7 +3470,17 @@ function accessOf(country){ if(!country||!ACCESS[country]||!S.access) return 'gr
 // R8.3c Owner 11-10: closed countries are hatched on every map: faint red lines = denied (no bases, no overflight),
 //       faint amber lines = overflight only (no bases). Redrawn only when base access changes.
 let __hatchKey='', __hatchHtml='';
-function accessHatch(){ const A=Object.assign({},S.access||{}); if(!(S.orders&&S.orders.sit==='conflict')) for(const c of ADVERSARY) A[c]='denied'; const key=JSON.stringify(A); if(key===__hatchKey) return __hatchHtml; __hatchKey=key;
+function airspaceNow(){ const A=Object.assign({},S.access||{}); if(!(S.orders&&S.orders.sit==='conflict')) for(const c of ADVERSARY) A[c]='denied'; return A; }
+function airBox(){ const A=airspaceNow(), den=[], ovf=[], cf=S.orders&&S.orders.sit==='conflict'; for(const c in A){ if(A[c]==='denied') den.push(c); else if(A[c]==='overflight') ovf.push(c); }   /* R11.237 owner 11-15: the projector shows the airspace that is affected in place of EN ROUTE */
+  den.sort((a,b)=>(ADVERSARY.has(b)?1:0)-(ADVERSARY.has(a)?1:0));
+  const wrap=arr=>{ const L=[]; let cur=''; for(const n of arr){ const t2=cur?cur+', '+n:n; if(t2.length>23&&cur){ L.push(cur+','); cur=n; } else cur=t2; } if(cur) L.push(cur); return L; };
+  const W2=260; let y=32, b=`<text x="${W2/2}" y="${y}" fill="#E8ECEF" font-size="18" font-weight="700" letter-spacing="3" text-anchor="middle">AIRSPACE</text>`; y+=22; b+=`<text x="${W2/2}" y="${y}" fill="#AEB6BE" font-size="14" text-anchor="middle">Day ${day()} · ${cf?'Conflict':'Crisis'}</text>`;
+  const grp=(arr,col,hd,sub,sw)=>{ if(!arr.length) return; y+=27; b+=`<rect x="14" y="${y-13}" width="14" height="14" fill="${sw}" fill-opacity=".35" stroke="${sw}" stroke-width="2"/><text x="36" y="${y}" fill="${col}" font-size="15" font-weight="700" letter-spacing="1">${hd}</text>`; y+=17; b+=`<text x="36" y="${y}" fill="#AEB6BE" font-size="13">${sub}</text>`; for(const l of wrap(arr)){ y+=22; b+=`<text x="14" y="${y}" fill="#E8ECEF" font-size="17">${l}</text>`; } };
+  if(cf) grp([...ADVERSARY],'#E8A0A0','ADVERSARY','fighters may enter · no bases','#7A1E14');
+  grp(den,'#F09A8F','DENIED','no bases, no overflight','#C8463A'); grp(ovf,'#E8C27A','OVERFLIGHT ONLY','no bases','#D9A23A');
+  y+=28; b+=`<text x="${W2/2}" y="${y}" fill="#AEB6BE" font-size="14" text-anchor="middle">All other countries open</text>`; y+=16;
+  return `<g transform="translate(${2000-10-W2},162)" pointer-events="none"><rect width="${W2}" height="${y}" fill="#151A1F" fill-opacity=".92" stroke="#2A323B"/>${b}</g>`; }
+function accessHatch(){ const A=airspaceNow(); const key=JSON.stringify(A); if(key===__hatchKey) return __hatchHtml; __hatchKey=key;
   let s=''; for(const l of MD.land){ const a=A[l.n]; if(a==='denied') s+=`<path d="${l.d}" fill="url(#hD)" stroke="#C8463A" stroke-opacity=".85" stroke-width="3"/>`; else if(a==='overflight') s+=`<path d="${l.d}" fill="url(#hO)" stroke="#D9A23A" stroke-opacity=".75" stroke-width="3"/>`; }
   return __hatchHtml=s?`<defs><pattern id="hD" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="22" height="22" fill="#C8463A" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="22" stroke="#C8463A" stroke-opacity=".75" stroke-width="4"/></pattern><pattern id="hO" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="22" height="22" fill="#D9A23A" fill-opacity=".16"/><line x1="0" y1="0" x2="0" y2="22" stroke="#D9A23A" stroke-opacity=".7" stroke-width="3.5"/></pattern></defs><g pointer-events="none">${s}</g>`:''; }
 function accessText(){ const A=S.access||{}, g={granted:[],overflight:[],denied:[]}; for(const c in ACCESS) if(A[c]) g[A[c]].push(c); if(!Object.keys(A).length) return '—'; const p=[]; if(g.denied.length) p.push('Denied: '+g.denied.join(', ')); if(g.overflight.length) p.push('Overflight only: '+g.overflight.join(', ')); p.push(p.length?'all others open':'all countries open'); return p.join(' · '); }
@@ -3514,7 +3548,7 @@ function runSteps(){ const pend=S.requests.filter(q=>q.st==='pending').length, l
   return L; }
 /* R11.226 instructor notes, kept per turn */
 let __noteT=0; function noteInput(v){ S.notes=S.notes||{}; const k=S.opening?0:S.turn; if(v.trim()) S.notes[k]=v; else delete S.notes[k]; clearTimeout(__noteT); __noteT=setTimeout(()=>{ try{ save(); }catch(e){} },700); }
-function noteFill(){ const ta=document.getElementById('i-notes'); if(!ta||document.activeElement===ta) return; const k=S.opening?0:S.turn, v=(S.notes||{})[k]||''; if(ta.value!==v) ta.value=v; const h=document.getElementById('i-notes-h'), n=Object.keys(S.notes||{}).length, s=n?`Notes saved for ${n} turn${n>1?'s':''}. They show on your debrief and in the Excel file.`:''; if(h&&h.textContent!==s) h.textContent=s; }
+function noteFill(){ const ta=document.getElementById('i-notes'); if(!ta||document.activeElement===ta) return; const k=S.opening?0:S.turn, v=(S.notes||{})[k]||''; if(ta.value!==v) ta.value=v; const h=document.getElementById('i-notes-h'), n=Object.keys(S.notes||{}).length, s=n?`Notes saved for ${n} turn${n>1?'s':''}. They show on your debrief.`:''; if(h&&h.textContent!==s) h.textContent=s; }
 function notesHtml(){ const N=S.notes||{}, ks=Object.keys(N).map(Number).sort((a,b)=>a-b); if(!ks.length||MODE!=='instructor') return ''; const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
   return `<div class="dbn"><div class="dbn-h">YOUR NOTES <span>only on this screen</span></div>${ks.map(k=>`<div><b>${k?'Turn '+k:'Planning'}</b> ${esc(N[k])}</div>`).join('')}</div>`; }
 /* R11.227 at this pace the game ends about HH:MM (shift timers + about a minute per turn for dice, cards and moves) */
@@ -3526,7 +3560,7 @@ function logView(){ const box=document.getElementById('loglist'), qi=document.ge
   const L=all.slice().reverse().filter(l=>!q||l.toLowerCase().includes(q)), sh=L.slice(0,300), re=q?new RegExp(escH(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'):null;
   box.innerHTML=sh.length?sh.map(l=>`<div>${re?escH(l).replace(re,m=>`<mark>${m}</mark>`):escH(l)}</div>`).join(''):'<div class="hint">Nothing matches.</div>'; const n=document.getElementById('logn'); if(n) n.textContent=q?`${L.length} of ${all.length} lines match${L.length>300?' (newest 300 shown)':''}`:`${all.length} lines, newest first${all.length>300?' (newest 300 shown)':''}`; }
 function logTick(){ const d=document.querySelector('details.glog'); if(d&&d.open){ const qi=document.getElementById('logq'); if(window.__logN!==(S.log||[]).length+'|'+(qi?qi.value.trim().toLowerCase():'')) logView(); } }
-/* R11.230 class roster (optional): names per wing, shown on the debrief and in the Excel file */
+/* R11.230 class roster (optional): names per wing, shown on the debrief */
 let __rosT=0; function rosterInput(team,v){ S.roster=S.roster||{}; if(v.trim()) S.roster[team]=v.slice(0,200); else delete S.roster[team]; clearTimeout(__rosT); __rosT=setTimeout(()=>{ try{ save(); }catch(e){} },700); }
 function rosterFill(){ for(const x of TEAMS){ const el=document.getElementById('ro-'+x.id); if(!el||document.activeElement===el) continue; const v=(S.roster||{})[x.id]||''; if(el.value!==v) el.value=v; } }
 function renderRun(){ noteFill(); logTick(); rosterFill(); { const b=document.getElementById('b-access'); if(b){ const s=S.accessDay===day()?`Roll base access again (rolled for Day ${day()})`:'Roll base access (all countries)'; if(b.textContent!==s) b.textContent=s; } } const el=document.getElementById('i-run'); if(!el) return; const L=runSteps(); const nx=L.findIndex(s=>!s.done);
@@ -3569,6 +3603,7 @@ function gmDo(k){ document.getElementById('gm').style.display='none';
   else if(k==='about') showAbout();
   else if(k==='prefs') showPrefs();
   else if(k==='restart') newGame();
+  else if(k==='bots'){ botsSet(!S.botsOn); }
   else if(k==='demo'){ if(window.__demo) demoStop(); else demoStart('demo'); }
   else if(k==='commercial'){ if(window.__demo) demoStop(); else demoStart('commercial'); }
   else if(k==='prev'){ let g=null; try{ g=JSON.parse(localStorage.getItem('kfa-game-prev')); }catch(e){} if(!g||!validSave(g)) return alert('No earlier game is stored on this laptop.'); if(!confirmThen('Bring back the last game? The current game is swapped out and kept as the backup.',()=>gmDo('prev'),'Restore')) return; try{ localStorage.setItem('kfa-game-prev',JSON.stringify({...S,running:false,endsAt:null})); }catch(e){} S=g; upgradeState(); save(); render(); } }
@@ -3666,6 +3701,22 @@ function demoPickSpokes(){ const hub=HOME.alpha, taken=new Set(); TEAMS.forEach(
 function demoRequest(c,waitS){ if(!c) return false; S.wsel.alpha=c.hex; (S.wselAf=S.wselAf||{}).alpha=c.id; const n0=S.requests.length; window.__yesNow=true; try{ wingRequest('alpha','spoke'); }finally{ window.__yesNow=false; } const q=S.requests.slice(n0).find(x=>x.team==='alpha'&&x.st==='pending'); const ok=()=>{ window.__yesNow=true; try{ decide(q.id,true); }finally{ window.__yesNow=false; } }; if(q){ if(waitS){ render(); setTimeout(()=>{ if(window.__demo&&q.st==='pending'){ ok(); render(); } },waitS*1000); } else ok(); } S.wsel.alpha=null; return S.bases.alpha.some(b=>b.hex===c.hex); }
 /* R11.234 STUDENT-SCREEN SCENES (owner 11-14: the commercial must show load plans, the Resources page, comms and requests, and comm jamming).
    The overlay is the real Wing 1 screen in an iframe; scenes press its buttons through cmd.*, exactly as a student's clicks do. */
+/* R11.245 BOTS TAKE OVER (owner 11-15: "an auto toggle I can flip on and have the bots take over"). Game menu switch on the
+   instructor laptop: four hidden student screens on THIS laptop run the built-in wing bot (wingbot3) and play all four wings
+   through the normal student buttons, over the same-laptop channel (no extra cloud traffic). Their requests come to the
+   instructor like any wing's. Off, the Debrief, or a demo closes the frames. The switch is saved with the game. */
+const BOT_LITE="(()=>{ const noop=()=>{}; window.render=noop; window.renderNoSave=noop; window.animateFlights=noop; window.renderClockOnly=noop; window.showDebrief=noop; window.sfx=noop; try{ const a=document.getElementById('app'); if(a) a.innerHTML=''; document.querySelectorAll('svg,#kfa-notice,.rlx,#kfa-db').forEach(e=>e.remove()); }catch(e){} return 1; })()";
+const BOT_CYCLE="(()=>{ try{ if(S.debrief) return 0; wbPickSpokes(); wbAcft(); wbRfis(); wbStaff(); if(window.wbShare) wbShare(); wbAirlift(); wbResupply(); if(!S.opening&&!S.movesOpen) wbFighters(); wbDefend(); }catch(e){ console.error(e); } return 1; })()";   /* R11.250 one bot cycle, run by the parent */
+function botsLabel(){ const b=document.getElementById('gm-bots'), s=document.getElementById('gm-bots-s'), c=document.getElementById('i-bots'), on=!!(S&&S.botsOn); if(b) b.textContent=on?'Bots: ON \u00b7 turn off':'Bots take over'; if(s) s.textContent=on?'Bots are playing all four wings. Turn off to hand the wings back to the students.':'Bots play all four wings from this laptop. You approve their requests as usual.'; if(c) c.hidden=!on; }
+function botsSet(on){ if(MODE!=='instructor') return; if(on&&location.protocol==='file:') return alert('Bots run when the game is opened from the website, not from a saved file.'); window.__botErr=0; S.botsOn=!!on; save(); log(on?'Bots took over the wings':'Bots stopped: the wings are back with the students'); notice(on?'Bots are playing all four wings. Approve their requests as usual.':'Bots stopped. The wings are back with the students.',on?'Bots on':'Bots off'); botsSync(); render(); }
+function botsSync(){ try{ botsLabel(); }catch(e){} if(MODE!=='instructor') return; const want=!!(S&&S.botsOn&&!S.debrief&&!window.__demo&&!window.__standby); let box=document.getElementById('kfa-bots');
+  if(!want){ if(box) box.remove(); if(window.__botT){ if(window.__botT!==true) clearInterval(window.__botT); window.__botT=null; } return; }
+  if(!box){ box=document.createElement('div'); box.id='kfa-bots'; box.setAttribute('aria-hidden','true'); box.style.cssText='position:fixed;left:-5000px;top:0;width:1536px;height:864px;overflow:hidden;opacity:0;pointer-events:none';
+    for(let n=1;n<=4;n++){ const f=document.createElement('iframe'); f.title='Bot wing '+n; f.width='1536'; f.height='864'; f.tabIndex=-1; f.src=location.pathname+location.search+'#wing'+n; box.appendChild(f); } document.body.appendChild(box); }
+  if(!window.__botT) window.__botT=window.__clockWk?true:setInterval(botsTick,1500); }   /* R11.250 Worker clock when there is one */
+function botsTick(){ if(!S||!S.botsOn||S.debrief||window.__demo||MODE!=='instructor'){ botsSync(); return; } const box=document.getElementById('kfa-bots'); if(!box){ botsSync(); return; } const src=(document.getElementById('kfa-bot')||{}).textContent||'';
+  [...box.querySelectorAll('iframe')].forEach((f,i)=>{ try{ const w=f.contentWindow; if(!w||!w.document) return; if(!w.__wb3){ if(!w.document.querySelector('.wside')) return; w.eval(src); w.eval(BOT_LITE); w.__botAt=Date.now()+i*2000; } if(Date.now()>=(w.__botAt||0)){ w.__botAt=Date.now()+8000; w.eval("lastHb=Date.now(); window.__waitN=0; if(window.__alerts&&window.__alerts.length>300) window.__alerts.splice(0,200);"); w.eval(BOT_CYCLE); } }
+    catch(e){ if(!window.__botErr){ window.__botErr=1; (window.__errLog=window.__errLog||[]).push({t:Date.now(),src:'bots',msg:String(e&&e.message||e).slice(0,160)}); } } }); }
 function demoFW(){ const f=document.querySelector('#kfa-dwing iframe'); try{ const w=f&&f.contentWindow; return w&&w.document&&w.document.querySelector('.wside')?w:null; }catch(e){ return null; } }
 function demoWE(code){ const w=demoFW(); if(!w) return false; try{ w.eval(code); return true; }catch(e){ (window.__errLog=window.__errLog||[]).push({t:Date.now(),src:'demo',msg:'wing scene: '+e.message}); return false; } }
 function demoScene(steps,dur){ const d=window.__demo; if(!d) return; const sc=demoStep()===0?d.scP:d.scT, id=(d.sceneId=(d.sceneId||0)+1); demoWing(true); demoWE("document.documentElement.style.setProperty('--wz','1.15')"); const w=document.getElementById('kfa-dwing'); if(w){ w.classList.remove('dwin'); void w.offsetWidth; w.classList.add('dwin'); }
@@ -3789,21 +3840,10 @@ function scoreChart(){ const H=(S.hist||[]).slice().sort((a,b)=>a.t-b.t); const 
 function debriefHtml(){ const rows=TEAMS.map(tm=>{ const p=S.pts[tm.id], sc=netScore(p), sp=S.bases[tm.id].filter(b=>b.role==='spoke'), st=(S.stats||{})[tm.id]||{sorties:0,lost:0,struck:0};
     return {tm,p,sc,ioc:sp.filter(b=>{ const s=baseStage(tm.id,b.hex); return s==='ioc'||s==='foc'; }).length,foc:sp.filter(b=>baseStage(tm.id,b.hex)==='foc').length,st}; }).sort((a,b)=>b.sc-a.sc);
   return `<div class="dbp"><div class="cbk">DEBRIEF</div><h2>Final results</h2><div class="sub">Day ${day()} · turn ${S.turn} of ${S.turns} · score = Mission Points minus 1 per 5 Demoralization Points · to win: the class together reaches ${S.winPts||250} points (now ${classTotal()})</div>${scoreChart()}
-   <table class="dbt"><thead><tr><th>Wing</th><th>Score</th><th>MP</th><th>DP</th><th>Spokes IOC</th><th>Spokes FOC</th><th>Sorties</th><th>Lost</th><th>Struck</th><th>Win</th></tr></thead><tbody>
-   ${rows.map((r,i)=>`<tr class="${i===0?'win':''}"><td><span class="rk">${rows.filter(x=>x.sc>r.sc).length+1}</span><span style="color:${r.tm.c}">■</span> ${r.tm.n}<span class="hint" style="display:block;font-size:12px">${r.tm.full}</span>${(S.roster||{})[r.tm.id]?`<span class="hint" style="display:block;font-size:12px;color:#C9D1D8">${escH(S.roster[r.tm.id])}</span>`:''}</td><td><b>${r.sc}</b></td><td>${r.p.mp}</td><td>${r.p.dp}</td><td>${r.ioc}</td><td>${r.foc}</td><td>${r.st.sorties}</td><td>${r.st.lost}</td><td>${r.st.struck}</td><td class="dbw">${Math.round(r.sc/Math.max(1,S.winPts||250)*100)}% of target</td></tr>`).join('')}<tr class="tot"><td>Class total</td><td><b>${rows.reduce((a,r)=>a+r.sc,0)}</b></td><td>${rows.reduce((a,r)=>a+r.p.mp,0)}</td><td>${rows.reduce((a,r)=>a+r.p.dp,0)}</td><td>${rows.reduce((a,r)=>a+r.ioc,0)}</td><td>${rows.reduce((a,r)=>a+r.foc,0)}</td><td>${rows.reduce((a,r)=>a+r.st.sorties,0)}</td><td>${rows.reduce((a,r)=>a+r.st.lost,0)}</td><td>${rows.reduce((a,r)=>a+r.st.struck,0)}</td><td></td></tr></tbody></table>
+   <table class="dbt"><thead><tr><th>Wing</th><th>Score</th><th>MP</th><th>DP</th><th>Spokes IOC</th><th>Spokes FOC</th><th>Sorties</th><th>Lost</th><th>Struck</th></tr></thead><tbody>
+   ${rows.map((r,i)=>`<tr class="${i===0?'win':''}"><td><span class="rk">${rows.filter(x=>x.sc>r.sc).length+1}</span><span style="color:${r.tm.c}">■</span> ${r.tm.n}<span class="hint" style="display:block;font-size:12px">${r.tm.full}</span>${(S.roster||{})[r.tm.id]?`<span class="hint" style="display:block;font-size:12px;color:#C9D1D8">${escH(S.roster[r.tm.id])}</span>`:''}</td><td><b>${r.sc}</b></td><td>${r.p.mp}</td><td>${r.p.dp}</td><td>${r.ioc}</td><td>${r.foc}</td><td>${r.st.sorties}</td><td>${r.st.lost}</td><td>${r.st.struck}</td></tr>`).join('')}<tr class="tot"><td>Class total</td><td><b>${rows.reduce((a,r)=>a+r.sc,0)}</b></td><td>${rows.reduce((a,r)=>a+r.p.mp,0)}</td><td>${rows.reduce((a,r)=>a+r.p.dp,0)}</td><td>${rows.reduce((a,r)=>a+r.ioc,0)}</td><td>${rows.reduce((a,r)=>a+r.foc,0)}</td><td>${rows.reduce((a,r)=>a+r.st.sorties,0)}</td><td>${rows.reduce((a,r)=>a+r.st.lost,0)}</td><td>${rows.reduce((a,r)=>a+r.st.struck,0)}</td></tr></tbody></table>
    <div style="margin:14px 0 0;font-size:16px">${classWon()?`<b style="color:#8FC7A3">CLASS WIN</b> · the class reached ${classTotal()} points together (target ${S.winPts||250}).`:`<b style="color:#E3B25C">Win not reached</b> · class total ${classTotal()} of ${S.winPts||250} points.`}</div><div class="hint" style="margin-top:12px">Talk through: where each wing dispersed, what it airlifted first, which RFIs paid off, and what Red cost them. Export the AAR log from the Save tab for the full record.</div>${notesHtml()}
-   ${MODE==='instructor'?'<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="resultsCsv()">Download results (Excel)</button><button class="btn" onclick="S.debrief=false;render()">Close debrief</button></div>':''}</div>`; }
-/* R11.215 results for the gradebook: one CSV (opens in Excel) with the debrief table and the score after every turn */
-function resultsCsv(){ try{ const q=v=>{ const s=String(v==null?'':v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }, L=[];
-  const rows=TEAMS.map(tm=>{ const p=S.pts[tm.id], sp=S.bases[tm.id].filter(b=>b.role==='spoke'), st=(S.stats||{})[tm.id]||{sorties:0,lost:0,struck:0}; return {tm,p,sc:netScore(p),ioc:sp.filter(b=>{ const s=baseStage(tm.id,b.hex); return s==='ioc'||s==='foc'; }).length,foc:sp.filter(b=>baseStage(tm.id,b.hex)==='foc').length,st}; });
-  L.push(['Kingfish ACE results','Game '+ROOM,new Date().toLocaleString('en-US'),'Version '+APP_VER].map(q).join(','));
-  L.push(['Day '+day(),'Turn '+S.turn+' of '+S.turns,'Points to win (class) '+(S.winPts||250),classWon()?'CLASS WIN':'Win not reached'].map(q).join(',')); L.push('');
-  L.push(['Wing','Home','Students','Score','Mission Points','Demoralization Points','Resource Points','Spokes at IOC','Spokes at FOC','Sorties','Aircraft lost','Times struck','% of target'].map(q).join(','));
-  for(const r of rows) L.push([r.tm.n,r.tm.full,(S.roster||{})[r.tm.id]||'',r.sc,r.p.mp,r.p.dp,r.p.rp||0,r.ioc,r.foc,r.st.sorties,r.st.lost,r.st.struck,Math.round(r.sc/Math.max(1,S.winPts||250)*100)+'%'].map(q).join(','));
-  const sum=k=>rows.reduce((a,r)=>a+(k(r)||0),0); L.push(['Class total','','',sum(r=>r.sc),sum(r=>r.p.mp),sum(r=>r.p.dp),sum(r=>r.p.rp),sum(r=>r.ioc),sum(r=>r.foc),sum(r=>r.st.sorties),sum(r=>r.st.lost),sum(r=>r.st.struck),''].map(q).join(','));
-  const H=(S.hist||[]).slice().sort((a,b)=>a.t-b.t); if(H.length){ L.push(''); L.push(['Score after turn',...TEAMS.map(x=>x.n),'Class'].map(q).join(',')); for(const h of H) L.push([h.t,...TEAMS.map(x=>(h.s||{})[x.id]||0),TEAMS.reduce((a,x)=>a+((h.s||{})[x.id]||0),0)].map(q).join(',')); }
-  { const N=S.notes||{}, ks=Object.keys(N).map(Number).sort((a,b)=>a-b); if(ks.length){ L.push(''); L.push(['Instructor notes'].map(q).join(',')); for(const k of ks) L.push([k?'Turn '+k:'Planning',N[k]].map(q).join(',')); } }
-  download(`Kingfish ACE results ${(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date())} ${ROOM}.csv`,'\ufeff'+L.join('\r\n'),'text/csv;charset=utf-8'); notice('Results saved to your Downloads folder. They open in Excel.','Downloaded'); }catch(e){ alert('Could not build the results file: '+e.message); } }
+   ${MODE==='instructor'?'<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" onclick="S.debrief=false;render()">Close debrief</button></div>':''}</div>`; }
 function showDebrief(){ let o=document.getElementById('kfa-db'); const flying=(S&&S.dfShots||[]).some(x=>Date.now()-x.t<5000); if(flying&&S.debrief){ if(o) o.remove(); clearTimeout(window.__dbT); window.__dbT=setTimeout(()=>{ try{ render(); }catch(e){} },1000); return; } if(S&&S.debrief&&(MODE==='instructor'||MODE==='projector'||MODE==='wing')){ if(!o){ o=document.createElement('div'); o.id='kfa-db'; o.className='dbx'; document.body.appendChild(o); } o.innerHTML=debriefHtml(); } else if(o) o.remove(); }
 setInterval(()=>{ try{ const ss=document.getElementById('save-status'); if(ss&&MODE==='instructor') ss.innerHTML=saveStatus(); showDebrief(); fillSetup(); if(MODE==='instructor'){ const n=(S.requests||[]).filter(q=>q.st==='pending').length+(S.resReq||[]).filter(r=>r.st==='pending').length; const b=[...document.querySelectorAll('#ptabs button')].find(x=>x.textContent.startsWith('Turn')); if(b) b.innerHTML='Turn'+(n?`<em>${n}</em>`:''); if(!n) document.querySelectorAll('#kfa-notice .rqn').forEach(c=>c.remove()); } }catch(e){} },1000);
 let SETEDIT=false; addEventListener('input',e=>{ if(e.target&&/^set-/.test(e.target.id||'')) SETEDIT=true; },true);
@@ -3913,5 +3953,187 @@ if(MODE==='login'){
 setInterval(()=>{ if(S.flash&&Date.now()-S.flash.t>6000&&Date.now()-S.flash.t<7200) render(); },1000);
 </script>
 <script>document.documentElement.setAttribute('data-mode',typeof MODE!=='undefined'?MODE:'');requestAnimationFrame(()=>requestAnimationFrame(()=>{ const s=document.getElementById('kfa-splash'); if(s){ s.classList.add('out'); setTimeout(()=>s.remove(),260); } }));</script>
+<script type="text/plain" id="kfa-bot">// Kingfish ACE wing commander bot v3 (11-13 rewrite). Injected into each WING window; acts only through cmd.* (the wing's
+// own buttons). Every cycle it re-reads the board, keeps ONE plan, and logs each decision with its reason (window.__cmdr.log).
+// The plan, the way an experienced captain runs a wing:
+//   1. Three spokes in DIFFERENT countries, always-open countries first, never beside another wing's hub, never in a Mission area.
+//   2. MAIN spoke = the most advanced spoke that can park 4 fighters. Finish its IOC chain, then fighter ops (10, 12, 11).
+//      Scarce chips (fewer than the main spokes need) go to MAIN only. SECOND spoke next. THIRD stays a warm backup.
+//   3. Food and water travel ahead of people: no spoke is manned without 2 days of food and water.
+//   4. A spoke under a vacate order is written off at once: nothing more flies in, fighters leave, a replacement is requested.
+//   5. Fighters: everything but 4 moves to launch-ready spokes; every turn one 4-ship per Mission hex in reach, from spokes only.
+//   6. Resource Points buy food and water first (starvation costs the most), then fuel, then conflict munitions.
+(()=>{ if(window.__wb3) return 'already'; window.__wb3=1;
+const T=WING_ID; window.__alerts=[]; window.alert=m=>{ window.__alerts.push(String(m)); }; window.notice=m=>{ window.__alerts.push(String(m)); };
+const C=window.__cmdr={log:[],main:null,second:null};
+const say=(m)=>{ C.log.push(`T${S.turn} ${m}`); if(C.log.length>400) C.log=C.log.slice(-400); };
+const HUB=()=>HOME[T];
+const quiet=fn=>(...a)=>{ const r=window.render; let dirty=false; window.render=()=>{ dirty=true; }; try{ return fn(...a); } finally{ window.render=r; if(dirty) try{ r(); }catch(e){} } };   /* 11-13: one redraw per burst, not one per click (no stutter on the bot's own screen) */
+const nb=h=>HEXES.filter(x=>hexDist(x.id,h)===1).map(x=>x.id);
+function path(a,b){ if(typeof autoPath==='function') return autoPath(a,b);   /* v3.2: the game's own router (avoids Red zones too); the old one only avoided closed countries, so every airlift through a Red ring was refused (wing 2 never left Guam) */
+  const prev={[a]:null}, Q=[a]; while(Q.length){ const h=Q.shift(); if(h===b) break; for(const n of nb(h)){ if(n in prev) continue; if(n!==b&&skyClosed(hexCountry(n))) continue; prev[n]=h; Q.push(n); } } if(!(b in prev)) return null; const P=[]; for(let h=b;h!==null;h=prev[h]) P.unshift(h); return P; }
+const isHub=b=>b.role==='mob'||b.role==='hub';
+const mreach=h=>{ let m=99; for(const x of MISSION_AREAS){ const d=hexDist(h,x); if(d<m) m=d; } return m; };   /* v3.1 (owner 11-14 'smarter bots'): hexes to the nearest Mission hex */
+const spokes=()=>S.bases[T].filter(b=>b.role==='spoke');
+const live=()=>spokes().filter(b=>b.st!=='struck'&&!b.vacateBy);
+const coOf=b=>airfieldCountry(b.hex,b.af);
+const risk=co=>{ const a=ACCESS[co]; return a?(a[0]-1)/10:0; };   /* chance a day's roll closes the country */
+const LADDER=MISSION_AREAS;
+const IOC=withPre(IOC_TASKS);                 // 1,2,3,5,6,9 in dependency order
+const FOPS=[10,12,11];                        // fighter ops after IOC
+const BACK=withPre([1,2,3]);                  // warm backup
+const EXTRA=[8,13,7,14,4,16];                 // after fighter ops (8 hardening is people-only; 13 earns RP; 7 missile defense)
+function inbound(hex){ const o={}; for(const f of S.flights) if(f.team===T&&f.st!=='arrived'&&f.st!=='denied'&&f.path[f.path.length-1]===hex) for(const k in (f.cargo||{})) o[k]=(o[k]||0)+f.cargo[k]; return o; }
+function needFor(hex,tasks){ const need={}; for(const id of tasks){ if(taskDone(T,hex,id)||taskRunning(T,hex,id)||rfiDoneTasks(T,hex).has(id)) continue; const n=taskNeed(T,hex,TASK[id]); for(const k in n) need[k]=(need[k]||0)+n[k]; if(TASK[id].or&&!TASK[id].or.some(o=>Object.keys(o).every(k=>(availAt(T,hex)[k]||0)>=o[k]))) need.satcom=(need.satcom||0)+1; } return need; }
+function short(hex,tasks,pass){ const need=needFor(hex,tasks), have=Object.assign({},availAt(T,hex)), ib=inbound(hex); for(const k in ib) have[k]=(have[k]||0)+ib[k]; for(const k in (pass||{})) have[k]=(have[k]||0)+pass[k]; const o={}; for(const k in need){ const m=need[k]-(have[k]||0); if(m>0) o[k]=m; } return o; }
+const ppl=c=>Object.entries(c).reduce((a,[k,n])=>a+((CHIT[k]&&CHIT[k].pax)||0)*n,0);
+const ppCount=c=>cargoTotals(c).pp+cargoTotals(c).pax/6;
+function done(hex,tasks){ return tasks.filter(id=>taskDone(T,hex,id)||taskRunning(T,hex,id)||rfiDoneTasks(T,hex).has(id)).length; }
+
+// ---------- 1. spokes ----------
+window.wbPickSpokes=()=>{ if(S.accessDay!==day()) return 'waiting for base access';
+  const have=live().length+S.requests.filter(q=>q.team===T&&q.st==='pending').length; if(have>=3) return 'have '+have;
+  const taken=new Set(); TEAMS.forEach(t=>S.bases[t.id].forEach(b=>taken.add(b.hex+':'+(b.af||'')))); S.requests.filter(q=>q.st==='pending').forEach(q=>taken.add(q.hex+':'+(q.af||'')));
+  const otherHub=h=>TEAMS.some(x=>x.id!==T&&hexDist(h,HOME[x.id])<=1);
+  const mine=()=>live().map(coOf).concat(S.requests.filter(q=>q.team===T&&q.st==='pending').map(q=>airfieldCountry(q.hex,q.af)));
+  if(window.__triesDay!==day()){ window.__tries={}; window.__triesDay=day(); } const tries=window.__tries;   /* refusals are forgotten each day: access changes */
+  const C0=MD.chips.filter(c=>(c.c==='g'||c.c==='y')&&!taken.has(c.hex+':'+c.id)&&!LADDER.has(c.hex)&&!otherHub(c.hex)&&!S.bases[T].some(b=>b.hex===c.hex)&&hexDist(c.hex,HUB())>=1&&hexDist(c.hex,HUB())<=9).filter(c=>{ const co=airfieldCountry(c.hex,c.id); return co&&!ADVERSARY.has(co)&&accessOf(co)==='granted'&&(tries[c.hex+':'+c.id]||0)<2; });
+  const out=[], used=mine();
+  for(let g=0;g<3&&have+out.length<3;g++){ const cost=c=>{ const co=airfieldCountry(c.hex,c.id), r=mreach(c.hex); return hexDist(c.hex,HUB())*1.0+risk(co)*25+(c.c==='y'?1.5:0)+used.filter(x=>x===co&&ACCESS[co]).length*12+(r<=SRANGE?-4:r<=SRANGE+2?-1:3); };   /* v3.1 spokes that can reach Mission hexes */
+    const fresh=C0.filter(c=>!out.includes(c.hex)), oneEach=fresh.filter(c=>{ const co=airfieldCountry(c.hex,c.id); return !ACCESS[co]||!used.includes(co); });
+    const c=(oneEach.length?oneEach:fresh).sort((a,b)=>cost(a)-cost(b))[0]; if(!c) break;   /* hard rule: one spoke per country that can close, while any other field exists */
+    tries[c.hex+':'+c.id]=(tries[c.hex+':'+c.id]||0)+1; S.wsel[T]=c.hex; (S.wselAf=S.wselAf||{})[T]=c.id; cmd.wingRequest(T,'spoke'); out.push(c.hex); used.push(airfieldCountry(c.hex,c.id)); say(`request spoke ${c.id} (${airfieldCountry(c.hex,c.id)}, ${hexDist(c.hex,HUB())} hexes, close risk ${Math.round(risk(airfieldCountry(c.hex,c.id))*100)}%)`); }
+  return out.length?'requested '+out.join(','):'no field available'; };
+
+// ---------- 2. RFIs and aircraft ----------
+window.wbRfis=()=>{ const out=[]; for(const b of spokes()){ if(Object.keys(rfiAns(T,b.hex)).length) continue; const L=lockedSet(T,b.hex); if(!L){ for(const i of [1,5,4,0,6]) cmd.rfiToggle(T,b.hex,i); } cmd.rfiRollPicked(T,b.hex); out.push(b.hex); } if(out.length) say('RFIs rolled at '+out.join(',')+' (bed-down, host security, ramp, CFR, ATC: they cover IOC tasks and fighter parking)'); return 'RFIs '+(out.join(',')||'none'); };
+window.wbAcft=()=>{ if(S.acft[T]&&S.acft[T].day===day()) return 'rolled'; cmd.rollAcftFor(T,''); return 'rolled aircraft'; };
+
+// ---------- 3. the plan: MAIN and SECOND ----------
+function plan(){ const L=live(); if(!L.length){ C.main=C.second=null; return; }
+  const score=b=>done(b.hex,IOC)*3+done(b.hex,FOPS)*2+(fighterMog(T,b.hex)>=4?4:0)-risk(coOf(b))*6-hexDist(b.hex,HUB())*0.3+(mreach(b.hex)<=SRANGE?5:mreach(b.hex)<=SRANGE+2?2:0);   /* v3.1 */
+  if(!L.some(b=>b.hex===C.main)){ const old=C.main; C.main=L.slice().sort((a,b)=>score(b)-score(a))[0].hex; say(`MAIN spoke is ${C.main}${old?' (was '+old+', lost)':''}`); }
+  else { const m=L.find(b=>b.hex===C.main), best=L.slice().sort((a,b)=>score(b)-score(a))[0]; if(best.hex!==C.main&&score(best)>score(m)+6&&done(m.hex,IOC)<4){ say(`MAIN moves ${C.main} -> ${best.hex} (further along)`); C.main=best.hex; } }
+  const rest=L.filter(b=>b.hex!==C.main).sort((a,b)=>score(b)-score(a)); const s=rest[0]?rest[0].hex:null; if(s!==C.second){ C.second=s; if(s) say(`SECOND spoke is ${s}`); } }
+function tasksFor(hex){ if(hex===C.main) return IOC.concat(FOPS); if(hex===C.second) return (C.main&&!sortieReady(T,C.main))?IOC.concat(FOPS):IOC; return BACK; }   /* v3.1 a second launch spoke once MAIN is ready */
+function scarce(){ const order=[C.main,C.second].filter(Boolean), tot={};
+  for(const b of S.bases[T]){ const a=availAt(T,b.hex); for(const k in a) tot[k]=(tot[k]||0)+a[k]; } for(const f of S.flights) if(f.team===T&&f.st!=='arrived'&&f.st!=='denied') for(const k in (f.cargo||{})) tot[k]=(tot[k]||0)+f.cargo[k];
+  const need={}, owner={}; for(const h of order){ const n=needFor(h,tasksFor(h)); for(const k in n){ need[k]=(need[k]||0)+n[k]; if(!(k in owner)){ const s=short(h,tasksFor(h)); if(s[k]) owner[k]=h; } } }
+  const o={}; for(const k in need) if((tot[k]||0)<need[k]&&owner[k]) o[k]=owner[k]; return o; }
+
+// ---------- 4. staffing ----------
+function reserved(){ const r={}; for(const h of [C.main,C.second].filter(Boolean)){ const s=short(h,tasksFor(h)); for(const k in s) r[k]=(r[k]||0)+s[k]; } return r; }   /* chips the main spokes still lack: the hub must not tie them up */
+window.wbStaff=()=>{ plan(); const out=[]; const R=reserved(), hub=HUB();
+  // free hub tasks holding chips the main spokes lack (the hub is a home base; its tasks score nothing)
+  { const ts=taskState(T,hub); for(const k in R){ let need=R[k]-(availAt(T,hub)[k]||0); for(const id of [13,16,14,6,7,9,10,5,4,12,11]){ if(need<=0) break; const st=ts[id]; if(st&&st.a&&(st.a[k]||0)>0&&taskRunning(T,hub,id)){ cmd.unstaffTask(T,hub,id); need-=st.a[k]; out.push(`hub task ${id} freed (${k} for the spokes)`); } } } }
+  const order=S.bases[T].filter(b=>!b.vacateBy).sort((a,b)=>(a.hex===C.main?0:a.hex===C.second?1:isHub(a)?3:2)-(b.hex===C.main?0:b.hex===C.second?1:isHub(b)?3:2));
+  for(const b of order){ const list=isHub(b)?[13,16,14,8]:(b.st==='struck'?[15]:tasksFor(b.hex).concat(EXTRA));
+    for(const id of list){ if(taskRunning(T,b.hex,id)) continue; if(taskDone(T,b.hex,id)&&TASK[id].once) continue; if(rfiDoneTasks(T,b.hex).has(id)) continue;
+      if(id===16&&(invAt(T,b.hex).food||0)<4) continue;   /* logistics support ties up food: only with a surplus */
+      if(id===7&&!(S.orders.sit==='conflict'&&inRing(b.hex))) continue;
+      if(isHub(b)&&Object.keys(TASK[id].need||{}).some(k=>R[k])) continue;
+      const c=canStaff(T,b.hex,TASK[id]); if(c.ok){ cmd.staffTask(T,b.hex,id); out.push(`${b.hex}:${id}`); continue; }
+      if(!isHub(b)&&(b.hex===C.main||b.hex===C.second)&&typeof takePlan==='function'){ const tp=takePlan(T,b.hex,TASK[id]); if(tp&&tp.from.every(f=>!IOC.includes(f)||b.hex!==C.main)){ cmd.takeForTask(T,b.hex,id); out.push(`${b.hex}:${id} (took from ${tp.from.join(',')})`); } } } }
+  if(out.length) say('staffed '+out.join(', ')); return 'staffed '+(out.join(',')||'none'); };
+
+// ---------- 5. airlift ----------
+window.wbAirlift=()=>{ plan(); const ac=S.acft[T]; if(!ac||ac.day!==day()) return 'no aircraft rolled'; const L=live(); if(!L.length) return 'no live spokes';
+  const pass={}, used={}, out=[], SC=scarce(), hub=HUB();
+  const addPass=(h,c)=>{ pass[h]=pass[h]||{}; for(const k in c) pass[h][k]=(pass[h][k]||0)+c[k]; };
+  const wantFor=b=>{ const h=b.hex, p=pass[h]||{}; const W={};
+    const manned=peopleAt(T,h)+ppl(inbound(h))+ppl(p)>0; const inv=invAt(T,h), ib=inbound(h);
+    const sup=k=>(inv[k]||0)+(ib[k]||0)+(p[k]||0);
+    let pri=0;
+    const kit=short(h,tasksFor(h),p); for(const k in SC) if(SC[k]!==h) delete kit[k];
+    const kitPpl=ppl(kit)>0;
+    if(manned||kitPpl) for(const k of ['food','water']) if(sup(k)<2) W[k]=2-sup(k);   /* food and water ahead of people */
+    if((manned||kitPpl)&&sup('fuel')<1) W.fuel=1;
+    if(Object.keys(W).length&&peopleAt(T,h)>0) pri+=1000;   /* a manned spoke without food comes first */
+    for(const k in kit) W[k]=(W[k]||0)+kit[k];
+    pri+=(h===C.main?500:h===C.second?250:50)+ppCount(kit);
+    if(!Object.keys(kit).length&&manned){ for(const [k,n] of [['food',3],['water',3],['fuel',3]]) if(sup(k)<n) W[k]=Math.max(W[k]||0,n-sup(k)); }
+    { const fr=!sortieReady(T,h)&&((S.fighters[T]||{})[h]||0)>0, soon=S.orders.sit==='conflict'||S.turn>=(S.conflictFrom||7)-1;   /* 11-14: fighter-ready spokes get bombs + missiles in (and just before) Conflict, whatever else they lack -- fighters sat out Conflict with none */
+      if(fr&&soon){ const want=Math.min(8,((S.fighters[T]||{})[h]||0)), supA=k=>(availAt(T,h)[k]||0)+(ib[k]||0)+(p[k]||0); let add=false; for(const k of ['bomb','aamissile']) if(supA(k)<want){ W[k]=Math.max(W[k]||0,want-supA(k)); add=true; } if(add) pri+=900; } }   /* free munitions only (the combat-turn task holds 2 bombs) */
+    return {h,W,pri}; };
+  for(const k of ['c17','c130','c5']){ const n=ac[k]||0; for(let i=0;i<n;i++){ if(acftUsed(k,T)>=n) break; if(S.flights.some(f=>f.team===T&&f.acft===k&&f.ci===i&&f.st!=='denied'&&f.st!=='arrived')) continue;
+      const at=chalkLoc(T,k,i);
+      if(at!==hub&&C.main&&at!==C.main&&!holdOf(T,at)&&!holdOf(T,C.main)){   /* consolidate: an aircraft at another spoke carries what MAIN lacks */
+        const need=short(C.main,tasksFor(C.main),pass[C.main]); const av=availAt(T,at), keepFood=peopleAt(T,at)>0; const take={};
+        for(const kk in need){ if(keepFood&&['food','water','fuel'].includes(kk)) continue; const n=Math.min(need[kk],(av[kk]||0)-(used[at+':'+kk]||0)); if(n>0) take[kk]=n; }
+        const P2=Object.keys(take).length?path(at,C.main):null;
+        if(P2&&P2.length>=2){ cmd.wingTail(T,k,i); const f=wingForm(T); if(f.from===at){ for(const kk in take) for(let q=0;q<take[kk];q++){ const b4=f.cargo[kk]||0; cmd.wingCargo(T,kk,1); if((f.cargo[kk]||0)===b4) break; }
+            if(Object.keys(f.cargo).length){ cmd.wingPlot(T); for(const h of P2.slice(1)) cmd.wingHex(T,h); const chk=checkPlan(planOf(T),S.plot?S.plot.path:[]); if(!chk.block){ const cg=Object.assign({},f.cargo); for(const kk in cg) used[at+':'+kk]=(used[at+':'+kk]||0)+cg[kk]; addPass(C.main,cg); cmd.wingSubmit(T); out.push(`${ACFT[k].n}#${i+1} ${at}->${C.main} consolidate ${Object.entries(cg).map(([x,n])=>n+' '+x).join(',')}`); continue; } cmd.cancelPlot(T); } }
+          if(wingForm(T).tail) cmd.wingTail(T,k,i); } }
+      if(at!==hub){ const P=path(at,hub); if(P&&P.length>=2&&!holdOf(T,at)){ cmd.wingTail(T,k,i); cmd.wingPlot(T); for(const h of P.slice(1)) cmd.wingHex(T,h); const chk=checkPlan(planOf(T),S.plot?S.plot.path:[]); if(chk.block){ cmd.cancelPlot(T); cmd.wingTail(T,k,i); } else { cmd.wingSubmit(T); out.push(`${ACFT[k].n}#${i+1} ${at}->hub empty`); } } continue; }
+      const cand=L.filter(b=>!holdOf(T,b.hex)).map(wantFor).filter(x=>Object.keys(x.W).length).sort((a,b)=>b.pri-a.pri);
+      C.why=C.why||[]; if(!cand.length) C.why.push(`${k}#${i+1}: no spoke wants anything`);
+      let sent=false; for(const c of cand){ const P=path(at,c.h); if(!P||P.length<2){ C.why.push(`${k}#${i+1}->${c.h}: no path`); continue; }
+        cmd.wingTail(T,k,i); const f=wingForm(T); if(f.from!==at){ C.why.push(`${k}#${i+1}: loads at ${f.from} not ${at}`); cmd.wingTail(T,k,i); continue; }
+        const order=['food','water','fuel'].filter(k2=>c.W[k2]).concat(Object.keys(c.W).filter(k2=>!['food','water','fuel'].includes(k2)));
+        for(const id of order){ for(let q=0;q<c.W[id];q++){ const before=f.cargo[id]||0; if((availAt(T,at)[id]||0)-(used[at+':'+id]||0)<=before) break; cmd.wingCargo(T,id,1); if((f.cargo[id]||0)===before) break; } }
+        if(!Object.keys(f.cargo).length){ C.why.push(`${k}#${i+1}->${c.h}: none of ${Object.keys(c.W).join('/')} at ${at}`); cmd.wingTail(T,k,i); continue; }
+        if(ppl(f.cargo)>0&&!((f.cargo.food||0)+(invAt(T,c.h).food||0)+(inbound(c.h).food||0)+((pass[c.h]||{}).food||0))){ /* no food to send with these people: hold them */ cmd.wingTail(T,k,i); continue; }
+        cmd.wingPlot(T); for(const h of P.slice(1)) cmd.wingHex(T,h); const chk=checkPlan(planOf(T),S.plot?S.plot.path:[]);
+        if(chk.block){ C.why.push(`${k}#${i+1}->${c.h}: blocked: `+String(chk.out.find(x=>/NO/.test(x))||'').replace(/<[^>]+>/g,'').slice(0,80)); cmd.cancelPlot(T); cmd.wingTail(T,k,i); continue; }
+        const cg=Object.assign({},f.cargo); for(const id in cg) used[at+':'+id]=(used[at+':'+id]||0)+cg[id]; addPass(c.h,cg); cmd.wingSubmit(T);
+        const tt=cargoTotals(cg); out.push(`${ACFT[k].n}#${i+1}->${c.h} ${tt.pp}PP/${tt.pax}ppl`); sent=true; break; }
+      if(!sent) break; } }
+  if(out.length) say('airlift '+out.join(' | ')); const w=(C.why||[]).slice(-4); C.lastWhy=(C.why||[]).slice(); C.why=[]; return out.join(' | ')||('nothing to fly'+(w.length?' ('+w.join('; ')+')':'')); };
+
+// ---------- 6. fighters ----------
+window.wbFighters=()=>{ plan(); const out=[]; const F=Object.assign({},S.fighters[T]||{}), hub=HUB();
+  const mm=(C.mm&&C.mm.at>Date.now()-15000)?C.mm:(C.mm={at:Date.now(),from:{}}); for(const h in mm.from) F[h]=Math.max(0,(F[h]||0)-mm.from[h]);   /* moves I just ordered that the board does not show yet */
+  for(const b of spokes().filter(x=>x.vacateBy&&x.st!=='struck'&&(F[x.hex]||0)>0)){ const dest=[...live().filter(x=>!sortieReady(T,x.hex)).map(x=>x.hex),hub].map(h=>({h,P:autoPath(b.hex,h)})).find(x=>x.P&&x.P.length-1<=FRANGE); if(dest){ cmd.wingFighterMove(T,b.hex,dest.h,F[b.hex]); out.push(`evacuate ${F[b.hex]} ${b.hex}->${dest.h}`); F[b.hex]=0; } }
+  const ready=live().filter(b=>!sortieReady(T,b.hex));
+  for(const b of ready){ const inb=S.fmoves.filter(m=>m.team===T&&m.to===b.hex).reduce((a,m)=>a+m.n,0), have=(F[b.hex]||0)+inb, room=Math.min(12-have,fighterMog(T,b.hex)-have); if(room<1) continue;
+    const src=Object.keys(F).filter(h=>h!==b.hex&&F[h]-(h===hub?4:(ready.some(x=>x.hex===h)?4:0))>=1&&!spokes().some(x=>x.hex===h&&x.st==='struck')).map(h=>({h,P:autoPath(h,b.hex)})).filter(x=>x.P).sort((x,y)=>x.P.length-y.P.length)[0];
+    if(!src) continue; const n=Math.min(room,F[src.h]-(src.h===hub?4:(ready.some(x=>x.hex===src.h)?4:0))); if(n<1) continue; cmd.wingFighterMove(T,src.h,b.hex,n); F[src.h]-=n; mm.from[src.h]=(mm.from[src.h]||0)+n; mm.at=Date.now(); out.push(`move ${n} ${src.h}->${b.hex}`); }
+  { const M=live().find(b=>b.hex===C.main)||live()[0];   /* 11-14 owner: disperse fighters early -- to the main spoke as soon as it can park them, not only once it is fighter-ready */
+    if(M&&!ready.some(x=>x.hex===M.hex)&&M.st!=='struck'&&!M.vacateBy&&S.running&&!S.movesOpen){ const inb=S.fmoves.filter(m=>m.team===T&&m.to===M.hex).reduce((a,m)=>a+m.n,0), have=(F[M.hex]||0)+inb, room=Math.min(8-have,fighterMog(T,M.hex)-have), P=autoPath(hub,M.hex);
+      if(room>=2&&(F[hub]||0)-4>=2&&P&&P.length-1<=FRANGE*3){ const n=Math.min(room,(F[hub]||0)-4); cmd.wingFighterMove(T,hub,M.hex,n); F[hub]-=n; mm.from[hub]=(mm.from[hub]||0)+n; mm.at=Date.now(); out.push(`disperse ${n} ${hub}->${M.hex}`); } } }
+  if((S.orders.sit==='crisis'||S.orders.sit==='conflict')&&S.running&&!S.movesOpen&&!S.opening){   /* 11-14: launching while the timer is paused (conflict dice) was refused and then remembered as flown */
+    const mem=(C.sm&&C.sm.turn===S.turn)?C.sm:(C.sm={turn:S.turn,hit:new Set(),flown:{}});   /* own memory: the board lags behind my clicks */
+    const hitByMe=new Set([...(S.sorties||[]).filter(so=>so.team===T&&so.turn===S.turn).map(so=>so.target),...mem.hit]);
+    for(const b of ready){ let left=(F[b.hex]||0)-Math.max(sortiedThisTurn(T,b.hex),mem.flown[b.hex]||0); let mun=S.orders.sit==='conflict'?Math.min(availAt(T,b.hex).bomb||0,availAt(T,b.hex).aamissile||0):99;
+      const reach=x=>{ if(skyClosed(hexCountry(x))) return false; const P=autoPath(b.hex,x); return P&&P.length-1<=SRANGE; };
+      const targets=(S.targets||[]).filter(x=>reach(x)&&!hitByMe.has(x)).sort((x,y)=>(REDZ[(S.redz||{})[x]]?1:0)-(REDZ[(S.redz||{})[y]]?1:0)||(sortieGuard(b.hex,x)?1:0)-(sortieGuard(b.hex,y)?1:0)||hexDist(b.hex,x)-hexDist(b.hex,y));
+      const fl=S.orders.sit==='conflict'?4:2;   /* R11.147 5 MP per sortie: crisis two-ships cover more Mission hexes; conflict four-ships fight the Red guard */
+      for(const tg of targets){ const n=Math.min(fl,left,mun); if(n<2) break; cmd.wingSortie(T,b.hex,tg,n); hitByMe.add(tg); mem.hit.add(tg); mem.flown[b.hex]=(mem.flown[b.hex]||0)+n; left-=n; mun-=n; out.push(`sortie ${n} ${b.hex}->${tg}`); }
+      if(!targets.length){ const busy=new Set((S.fmoves||[]).filter(m=>m.team===T&&m.mission&&!m.mission.back).map(m=>m.to)); const far=(S.targets||[]).filter(x=>!hitByMe.has(x)&&!busy.has(x)&&!skyClosed(hexCountry(x))).map(x=>({x,P:autoPath(b.hex,x)})).filter(o=>o.P&&o.P.length-1<=SRANGE*3).sort((p,q)=>p.P.length-q.P.length)[0];   /* 11-14: no Mission hex in range -> long-range missions, one per Mission hex (was one per base: wings idled) */
+        const n=Math.min(fl,left,mun); if(far&&n>=2){ cmd.wingSortie(T,b.hex,far.x,n); hitByMe.add(far.x); mem.hit.add(far.x); mem.flown[b.hex]=(mem.flown[b.hex]||0)+n; left-=n; mun-=n; out.push(`long-range ${n} ${b.hex}->${far.x}`); } } } }
+  if(out.length) say('fighters '+out.join(' | ')); return out.join(' | ')||'no fighter action'; };
+
+// ---------- 6b. sharing over Comms ----------
+window.wbShare=()=>{ plan(); const out=[], hub=HUB(), dd=day();
+  if(jammed(T)) return 'jammed';
+  C.asked=(C.asked&&C.asked.day===dd)?C.asked:{day:dd,k:{}};
+  if(C.main){ const s=short(C.main,tasksFor(C.main)), hv=availAt(T,hub), ib=inbound(C.main); let n=0;
+    for(const k in s){ if(n>=2) break; if((hv[k]||0)>0||(ib[k]||0)>0||C.asked.k[k]) continue; C.asked.k[k]=1; cmd.wingAskSupport(T,'all',k,s[k],C.main); out.push(`asked for ${s[k]} ${k}`); say(`asked all wings for ${s[k]} ${CHIT[k]?CHIT[k].name:k} at ${C.main} (my hub has none)`); n++; } }
+  C.ans=C.ans||{}; const R=reserved(), ac=S.acft[T];
+  const reqs=(S.chat||[]).filter(m=>m.req&&m.req.team!==T&&(m.to==='all'||m.to===T)&&m.turn>=S.turn-3&&!C.ans[m.id]);
+  for(const m of reqs){ const r=m.req; const answered=(S.chat||[]).some(x=>x.t>m.t&&x.to===r.team&&/^Sending /.test(x.text)&&x.text.includes(CHIT[r.item]?CHIT[r.item].name:r.item)); if(answered){ C.ans[m.id]=1; continue; }
+    const spare=(availAt(T,hub)[r.item]||0)-(R[r.item]||0); if(spare<1) continue;
+    if(!ac||ac.day!==dd) break;
+    let sent=false;
+    for(const k of ['c130','c17','c5']){ if(sent) break; const n=ac[k]||0; for(let i=0;i<n&&!sent;i++){ if(acftUsed(k,T)>=n) break; if(chalkLoc(T,k,i)!==hub) continue; if(S.flights.some(f=>f.team===T&&f.acft===k&&f.ci===i&&f.st!=='denied'&&f.st!=='arrived')) continue;
+        const P=path(hub,r.hex); if(!P||P.length<2) break; cmd.wingTail(T,k,i); const f=wingForm(T); if(f.from!==hub){ cmd.wingTail(T,k,i); continue; }
+        for(let q=0;q<Math.min(r.n,spare);q++){ const b4=f.cargo[r.item]||0; cmd.wingCargo(T,r.item,1); if((f.cargo[r.item]||0)===b4) break; }
+        if(!Object.keys(f.cargo).length){ cmd.wingTail(T,k,i); break; }
+        cmd.wingPlot(T); for(const h of P.slice(1)) cmd.wingHex(T,h); const chk=checkPlan(planOf(T),S.plot?S.plot.path:[]); if(chk.block){ cmd.cancelPlot(T); cmd.wingTail(T,k,i); break; }
+        const n2=f.cargo[r.item]; cmd.wingSubmit(T); C.ans[m.id]=1; sent=true; const nm=CHIT[r.item]?CHIT[r.item].name:r.item;
+        cmd.wingChat(T,r.team,`Sending ${n2} ${nm} to your base at hex ${r.hex} on ${ACFT[k].n} Chalk ${i+1}.`); out.push(`sent ${n2} ${r.item} to ${TM[r.team].n} ${r.hex}`); say(`answered ${TM[r.team].n}'s request: ${n2} ${nm} flying to ${r.hex}`); } }
+    if(!sent) C.ans[m.id]=C.ans[m.id]||0; }
+  return out.join(' | ')||'nothing to share'; };
+
+// ---------- 7. Resource Points, defense ----------
+window.wbResupply=()=>{ let rp=(S.pts[T]||{}).rp||0; const out=[], hub=HUB();
+  const manned=live().filter(b=>peopleAt(T,b.hex)>0).length+1, inv=invAt(T,hub);
+  for(let g=0;g<6&&rp>=5;g++){ let k=null; if((inv.food||0)<manned*2) k='food'; else if((inv.water||0)<manned*2) k='water'; else if((inv.fuel||0)<manned) k='fuel'; else if(S.orders.sit==='conflict'&&(inv.bomb||0)<6) k='bomb'; else if(S.orders.sit==='conflict'&&(inv.aamissile||0)<6) k='aamissile'; if(!k) break; cmd.claimRP(T,k); rp-=5; inv[k]=(inv[k]||0)+1; out.push(k); }
+  if(out.length) say('bought '+out.join(',')+' with Resource Points'); return 'RP: '+(out.join(',')||'nothing'); };
+window.wbDefend=()=>{ const L=atkPending(T).filter(a=>a.blue===null); for(const a of L) cmd.attackDefend(T,a.id); if(L.length) say('rolled missile defense at '+L.map(a=>a.hex).join(',')); return L.length?'defense '+L.map(a=>a.hex).join(','):''; };
+window.wbState=()=>{ plan(); const p=S.pts[T]; return `${TM[T].n} ${netScore(p)} main ${C.main} second ${C.second} | `+C.log.slice(-6).join(' / '); };
+for(const n of ['wbStaff','wbAirlift','wbFighters','wbPickSpokes','wbRfis','wbResupply','wbShare']) window[n]=quiet(window[n]);
+return 'commander bot v3.2 ready for '+T; })()
+</script>
 </body>
 </html>
