@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kingfish ACE · NIPR Live Sync Test</title>
+<style>
+:root{--bg:#0F1317;--panel:#161B21;--line:#2A333D;--ink:#E8ECEF;--mute:#9AA5AF;--ok:#5FC28A;--bad:#FF8A7A;--wait:#E3B25C}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px "Segoe UI",Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:28px 22px 60px}
+h1{font-size:26px;letter-spacing:4px;margin:0}h1 small{display:block;font-size:13px;letter-spacing:2px;color:var(--mute);margin-top:6px;font-weight:400}
+h2{font-size:12px;letter-spacing:3px;color:var(--mute);margin:28px 0 10px;text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);padding:16px 18px}p{color:#C9D1D8;line-height:1.5;margin:6px 0}
+table{width:100%;border-collapse:collapse}td{padding:9px 10px;border-top:1px solid #222A32;font-size:14.5px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.wait{color:var(--wait);font-weight:700}
+button{font:inherit;font-size:15px;padding:9px 16px;background:#1F4E79;color:#fff;border:1px solid #2B5E8C;border-radius:2px;cursor:pointer}button.sec{background:#222A32;border-color:#3A444F}
+input{font:inherit;font-size:16px;padding:8px 10px;background:#0F1317;color:var(--ink);border:1px solid #3A444F}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+#log{margin-top:10px;font-family:Consolas,monospace;font-size:13.5px;background:#0B0E11;border:1px solid var(--line);padding:10px;min-height:90px;max-height:240px;overflow:auto;white-space:pre-wrap}
+.big{font-size:20px;font-weight:600}#summary{white-space:pre-wrap;font-family:Consolas,monospace;font-size:13px;background:#0B0E11;border:1px solid var(--line);padding:10px;margin-top:10px}
+</style></head><body><div class="wrap">
+<h1>KINGFISH ACE<small>NIPR LIVE SYNC TEST · Firebase · no personal data is sent</small></h1>
+
+<h2>Step 1 · Database address</h2>
+<div class="card"><p>This should already be filled in. If it is empty, paste the Realtime Database address from the Firebase console (it ends in <b>firebaseio.com</b> or <b>firebasedatabase.app</b>).</p>
+<div class="row"><input id="db" style="width:100%" placeholder="https://your-project-default-rtdb.firebaseio.com"></div>
+<div class="row"><button onclick="checks()">Run the checks</button></div>
+<table id="chk"></table></div>
+
+<h2>Step 2 · Live test between two laptops</h2>
+<div class="card"><p>Open this same file on a <b>second NIPR laptop</b>. Type the <b>same room code</b> on both, press <b>Join</b> on both, then press <b>Send a test click</b> on either. If it shows up on the other laptop, the game can run live on NIPR.</p>
+<div class="row"><span>Room code</span><input id="room" maxlength="6" style="width:110px"><span>This laptop</span><input id="who" value="Laptop A" maxlength="16" style="width:130px"><button onclick="join()">Join</button><button class="sec" onclick="sendClick()">Send a test click</button></div>
+<div class="row"><span class="big" id="live">Not joined</span></div><div id="log"></div></div>
+
+<h2>Step 3 · Send me the results</h2>
+<div class="card"><div class="row"><button onclick="copyRes()">Copy results</button><span id="copied" class="ok"></span></div><div id="summary"></div></div>
+</div>
+<script>
+const DB_DEFAULT='https://kingfish-ace-default-rtdb.firebaseio.com';   // filled in once the Firebase project exists
+const R={}; let room=null, es=null, poller=null, seen=new Set(), got=0, delays=[], mode='';
+const base=()=>document.getElementById('db').value.trim().replace(/\/+$/,'');
+function row(k,label){ const tb=document.getElementById('chk'); let tr=document.getElementById('c-'+k); if(!tr){ tr=document.createElement('tr'); tr.id='c-'+k; tr.innerHTML=`<td>${label}</td><td class="wait">checking…</td>`; tb.appendChild(tr); } return tr.lastChild; }
+function set(k,label,ok,txt){ const c=row(k,label); c.className=ok?'ok':'bad'; c.textContent=txt; R[label]=txt; summary(); }
+function timed(p,ms){ return Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('timed out')),ms))]); }
+async function checks(){ const b=base(); if(!b){ alert('Paste the database address first.'); return; } document.getElementById('chk').innerHTML='';
+  // 1 read
+  try{ const t0=performance.now(); const r=await timed(fetch(b+'/kfa-test/ping.json',{cache:'no-store'}),15000); const ms=Math.round(performance.now()-t0); const txt=await r.text();
+    if(r.ok) set('read','Read from the database',true,`WORKS · ${ms} ms`); else set('read','Read from the database',false,`HTTP ${r.status} · ${txt.slice(0,80)}`); }catch(e){ set('read','Read from the database',false,'BLOCKED · '+e.message); }
+  // 2 write
+  try{ const t0=performance.now(); const r=await timed(fetch(b+'/kfa-test/ping.json',{method:'PUT',body:JSON.stringify({t:Date.now()})}),15000); const ms=Math.round(performance.now()-t0);
+    set('write','Write to the database',r.ok,r.ok?`WORKS · ${ms} ms`:`HTTP ${r.status} (check the database is in test mode)`); }catch(e){ set('write','Write to the database',false,'BLOCKED · '+e.message); }
+  // 3 second round trip (connection already open: closer to in-game speed)
+  try{ const t0=performance.now(); const r=await timed(fetch(b+'/kfa-test/ping.json',{cache:'no-store'}),15000); await r.text(); set('rt','Round trip once connected',r.ok,`${Math.round(performance.now()-t0)} ms`); }catch(e){ set('rt','Round trip once connected',false,'failed'); }
+  // 4 instant updates (EventSource stream)
+  await new Promise(ok=>{ let done=false; try{ const s=new EventSource(b+'/kfa-test/ping.json'); const t=setTimeout(()=>{ if(!done){ done=true; s.close(); set('sse','Instant updates (stream)',false,'BLOCKED · the game will check every second instead'); ok(); } },12000);
+    s.addEventListener('put',()=>{ if(!done){ done=true; clearTimeout(t); s.close(); set('sse','Instant updates (stream)',true,'WORKS'); ok(); } }); s.onerror=()=>{}; }catch(e){ set('sse','Instant updates (stream)',false,'not allowed'); ok(); } });
+  // 5 WebSockets to Firebase itself
+  await new Promise(ok=>{ let done=false; try{ const host=b.replace(/^https:\/\//,''); const ns=host.split('.')[0]; const ws=new WebSocket('wss://'+host+'/.ws?v=5&ns='+ns); const t=setTimeout(()=>{ if(!done){ done=true; try{ws.close();}catch(e){} set('ws','WebSockets to Firebase',false,'BLOCKED (not needed: Firebase falls back)'); ok(); } },10000);
+    ws.onopen=()=>{ if(!done){ done=true; clearTimeout(t); ws.close(); set('ws','WebSockets to Firebase',true,'ALLOWED'); ok(); } }; ws.onerror=()=>{ if(!done){ done=true; clearTimeout(t); set('ws','WebSockets to Firebase',false,'BLOCKED (not needed: Firebase falls back)'); ok(); } }; }catch(e){ set('ws','WebSockets to Firebase',false,'not allowed'); ok(); } }); }
+function log(t){ const l=document.getElementById('log'); l.textContent=`${new Date().toLocaleTimeString()}  ${t}\n`+l.textContent; }
+function handle(id,d){ if(!d||seen.has(id)) return; seen.add(id); const me=d.who===document.getElementById('who').value; const delay=d.t?Date.now()-d.t:null;
+  if(!me){ got++; if(delay!==null&&delay>=0&&delay<120000) delays.push(delay); }
+  log(`${me?'my own click came back':'RECEIVED from '+d.who}${delay!==null?' · '+delay+' ms after it was sent':''}`);
+  const avg=delays.length?Math.round(delays.reduce((a,b)=>a+b,0)/delays.length):null;
+  document.getElementById('live').innerHTML=got?`<span class="ok">WORKS · clicks arrive from the other laptop${avg!==null?' in about '+avg+' ms':''} (${mode})</span>`:'<span class="wait">Joined · waiting for a click from the other laptop</span>'; summary(); }
+function join(){ const b=base(); if(!b){ alert('Paste the database address first.'); return; } room=(document.getElementById('room').value||'').trim(); if(!/^[0-9A-Za-z]{3,6}$/.test(room)){ alert('Type a room code of 3 to 6 letters or numbers, the same on both laptops.'); return; }
+  if(es) es.close(); clearInterval(poller); seen=new Set(); const since=Date.now()-5000; const path=b+'/kfa-test/rooms/'+room;
+  const take=obj=>{ if(!obj) return; for(const [id,d] of Object.entries(obj)) if(d&&d.t>=since) handle(id,d); };
+  mode='stream'; try{ es=new EventSource(path+'.json'); es.addEventListener('put',e=>{ try{ const m=JSON.parse(e.data); if(m.path==='/') take(m.data); else handle(m.path.slice(1),m.data); }catch(x){} }); es.addEventListener('patch',e=>{ try{ take(JSON.parse(e.data).data); }catch(x){} }); es.onerror=()=>{ mode='checking every 2 s'; }; }catch(e){ mode='checking every 2 s'; }
+  poller=setInterval(async()=>{ try{ const r=await fetch(path+'.json?orderBy="t"&startAt='+since,{cache:'no-store'}); if(r.ok) take(await r.json()); }catch(e){} },2000);
+  document.getElementById('live').innerHTML='<span class="wait">Joined room '+room+' · waiting for a click from the other laptop</span>'; log('joined room '+room); summary(); }
+async function sendClick(){ if(!room){ alert('Press Join first.'); return; } try{ const r=await fetch(base()+'/kfa-test/rooms/'+room+'.json',{method:'POST',body:JSON.stringify({who:document.getElementById('who').value,t:Date.now()})}); log(r.ok?'sent a test click':'SEND FAILED · HTTP '+r.status); }catch(e){ log('SEND FAILED: the network blocked it'); } }
+function summary(){ const lines=['Kingfish ACE NIPR live sync test (Firebase) · '+new Date().toLocaleString(),'Database: '+(base()||'(none)')];
+  for(const [k,v] of Object.entries(R)) lines.push(k.padEnd(30)+' '+v);
+  const avg=delays.length?Math.round(delays.reduce((a,b)=>a+b,0)/delays.length):null;
+  lines.push('Live two-laptop test'.padEnd(30)+' '+(room?(got?`WORKS, ${got} click(s) received${avg!==null?', avg '+avg+' ms':''} (${mode})`:'joined, nothing received yet'):'not run'));
+  document.getElementById('summary').textContent=lines.join('\n'); }
+function copyRes(){ const t=document.getElementById('summary').textContent; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>document.getElementById('copied').textContent='Copied.').catch(()=>{ const r=document.createRange(); r.selectNode(document.getElementById('summary')); getSelection().removeAllRanges(); getSelection().addRange(r); document.getElementById('copied').textContent='Selected. Press Ctrl+C.'; }); }
+document.getElementById('db').value=DB_DEFAULT; document.getElementById('room').value=String(1000+Math.floor(Math.random()*9000)); summary(); if(DB_DEFAULT) checks();
+</script></body></html>
