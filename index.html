@@ -57,8 +57,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .band{margin-top:80px;background:#EEF1F4;color:#26313B}.band .wrap{display:flex;align-items:center;gap:28px;padding-top:26px;padding-bottom:26px}.band img{height:52px;width:auto;flex-shrink:0}.band p{margin:0;font-size:15px;line-height:1.5;color:#3C4853;max-width:640px}
 footer{margin-top:0!important}
 @media(max-width:820px){.bar .org b{font-size:10.5px;letter-spacing:1.5px}.bar .org span{font-size:11px}.bar .mx{height:24px}.band .wrap{flex-direction:column;align-items:flex-start;gap:14px}}
-.shots img{cursor:zoom-in}#lb{display:none;position:fixed;inset:0;z-index:60;background:rgba(5,8,11,.92);align-items:center;justify-content:center;padding:28px;cursor:zoom-out}#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid #2A3540}#lb .x{position:absolute;top:16px;right:22px;color:#C9D1D8;font-size:15px;font-weight:600;letter-spacing:.5px}
-.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.shots.two{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px}.shots figure{margin:0;background:var(--panel);border:1px solid var(--line)}.shots img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-bottom:1px solid var(--line)}.shots figcaption{padding:16px 18px 18px}.shots b{display:block;font-size:17px;font-weight:600;margin-bottom:4px}.shots span{color:var(--mute);font-size:14.5px;line-height:1.45}
+.shots img{cursor:zoom-in}#lb{display:none;position:fixed;inset:0;z-index:60;background:rgba(5,8,11,.97);align-items:center;justify-content:center;padding:56px 84px 24px;box-sizing:border-box;touch-action:pan-y}#lb.on{display:flex}#lb figure{margin:0;display:flex;flex-direction:column;align-items:center;max-width:100%;max-height:100%;min-width:0}#lb img{display:block;max-width:100%;max-height:calc(100vh - 190px);box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid #2A3540;user-select:none;-webkit-user-drag:none}#lb figcaption{max-width:900px;margin-top:14px;text-align:center;color:#AEB8C2;font-size:15px;line-height:1.45}#lb figcaption b{display:block;color:#E8ECEF;font-size:17px;margin-bottom:2px}#lb .lbc{display:block;margin-top:8px;color:#7F8B96;font-size:13px;letter-spacing:.5px}#lb .x{position:absolute;top:14px;right:18px;background:none;border:0;color:#C9D1D8;font:600 15px inherit;letter-spacing:.5px;cursor:pointer;padding:8px}#lb .nav{position:absolute;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(30,38,46,.7);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#E8ECEF;font-size:30px;line-height:52px;text-align:center;cursor:pointer;padding:0;transition:background .15s,transform .15s}#lb .nav:hover{background:rgba(60,76,92,.85)}#lb .nav:active{transform:translateY(-50%) scale(.92)}#lb .prev{left:16px}#lb .next{right:16px}@media (max-width:700px){#lb{padding:52px 10px 16px}#lb .nav{top:auto;bottom:14px;transform:none;width:48px;height:48px;line-height:44px;font-size:26px}#lb .nav:active{transform:scale(.92)}#lb img{max-height:calc(100vh - 230px)}#lb figcaption{font-size:14px;padding:0 54px}}
+.shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.shots.two{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px}.shots.one{grid-template-columns:minmax(0,1fr);margin-top:18px}.shots figure{margin:0;background:var(--panel);border:1px solid var(--line)}.shots img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-bottom:1px solid var(--line)}.shots figcaption{padding:16px 18px 18px}.shots b{display:block;font-size:17px;font-weight:600;margin-bottom:4px}.shots span{color:var(--mute);font-size:14.5px;line-height:1.45}
 @media(max-width:900px){.shots{grid-template-columns:1fr}}
 .dvg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.dv video{width:100%;aspect-ratio:16/9;background:#000;display:block}.dv a span{font-weight:400;opacity:.6}.dv a{display:block;margin-top:8px;font-size:15px;color:inherit;text-decoration:none;font-weight:600}.dv a:hover{text-decoration:underline}.dvn{margin:0 0 16px;opacity:.75;font-size:15px}
 @media (max-width:700px){.dvg{grid-template-columns:1fr}}
@@ -95,6 +95,9 @@ footer{margin-top:0!important}
  <div class="shots two">
   <figure><img src="shot-fight.jpg?v=1163" alt="Conflict: a four-ship of F-22s squares off with a Red S-400 site; each fighter and the site roll dice before both fire" loading="lazy"><figcaption><b>Air defense fight</b><span>In conflict, fighters engage Red's S-400 sites one at a time. Each jet and the site roll (D18 against the site's die) and both fire. Win, and the site is destroyed.</span></figcaption></figure>
   <figure><img src="shot-df26.jpg?v=1163" alt="DF-26 ballistic missile arcing from southern China onto a wing's spoke" loading="lazy"><figcaption><b>Missile attack</b><span>Each conflict turn Red fires a DF-26 at one random airfield per wing inside its range ring. The wing rolls to defend; a struck spoke launches nothing until Base recovery is done.</span></figcaption></figure>
+ </div>
+ <div class="shots one">
+  <figure><img src="shot-phone.jpg?v=1115f" alt="Wing screen on three phones: Bases with the airfield finder, a C-17 chalk being loaded, and a spoke's resources" loading="lazy"><figcaption><b>On a phone</b><span>Students can also play from a phone. Bases, airlift, fighters, comms and resources sit in tabs along the bottom; the hex map stays on the projector. Laptops are preferred.</span></figcaption></figure>
  </div>
 </section>
 
@@ -133,9 +136,9 @@ footer{margin-top:0!important}
 </main>
 
 <div class="band"><div class="wrap"><img src="moic.png?v=3" alt="MOIC"><p>Kingfish ACE is built for the 21A Maintenance Officer Intermediate Course. It follows the Kingfish ACE tabletop rulebook.</p></div></div>
-<footer><div class="wrap"><span>Kingfish ACE · 21A Maintenance Officer Intermediate Course</span><span class="credit">Created by Lt Col Troy Pierce · Coder and project manager: Capt Justin Kuroski</span><span>Game version <b id="gv" style="font-weight:600;color:var(--mute)">1.17.298</b></span></div></footer>
+<footer><div class="wrap"><span>Kingfish ACE · 21A Maintenance Officer Intermediate Course</span><span class="credit">Created by Lt Col Troy Pierce · Coder and project manager: Capt Justin Kuroski</span><span>Game version <b id="gv" style="font-weight:600;color:var(--mute)">1.17.299</b></span></div></footer>
 
-<div id="lb" onclick="this.classList.remove('on')"><span class="x">Close ✕</span><img alt=""></div>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Screenshot viewer"><button class="x" type="button" aria-label="Close">Close ✕</button><button class="nav prev" type="button" aria-label="Previous picture">&#8249;</button><figure><img alt=""><figcaption><b></b><span></span><i class="lbc"></i></figcaption></figure><button class="nav next" type="button" aria-label="Next picture">&#8250;</button></div>
 <div id="gate"><form onsubmit="tryGate();return false;">
  <div class="k">KINGFISH ACE</div><h3>Course password</h3>
  <input id="gpw" type="password" autocomplete="off" aria-label="Course password">
@@ -146,8 +149,18 @@ footer{margin-top:0!important}
 // The password is never stored here: the game lives in a folder named from the password's SHA-256, so only the right password finds it.
 function openGate(){ const g=document.getElementById('gate'); g.style.display='flex'; document.getElementById('gerr').textContent=''; const i=document.getElementById('gpw'); i.value=''; setTimeout(()=>i.focus(),50); }
 function closeGate(){ document.getElementById('gate').style.display='none'; }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeGate(); document.getElementById('lb').classList.remove('on'); } });
-document.querySelectorAll('.shots img').forEach(i=>i.addEventListener('click',()=>{ const lb=document.getElementById('lb'); lb.querySelector('img').src=i.src; lb.querySelector('img').alt=i.alt; lb.classList.add('on'); }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeGate(); });
+// Picture viewer: one picture at a time; arrows on screen, the arrow keys, or a swipe move through every screenshot on the page.
+(function(){ const lb=document.getElementById('lb'), im=lb.querySelector('img'), cb=lb.querySelector('figcaption b'), cs=lb.querySelector('figcaption span'), cc=lb.querySelector('.lbc');
+  const pics=[...document.querySelectorAll('.shots figure')].map(f=>({src:f.querySelector('img').getAttribute('src'), alt:f.querySelector('img').alt, t:(f.querySelector('figcaption b')||{}).textContent||'', d:(f.querySelector('figcaption span')||{}).textContent||''}));
+  let k=0; const show=n=>{ k=(n+pics.length)%pics.length; const p=pics[k]; im.src=p.src; im.alt=p.alt; cb.textContent=p.t; cs.textContent=p.d; cc.textContent=(k+1)+' of '+pics.length; [1,-1].forEach(s=>{ const q=new Image(); q.src=pics[(k+s+pics.length)%pics.length].src; }); };
+  const open=n=>{ show(n); lb.classList.add('on'); lb.querySelector('.next').focus({preventScroll:true}); }, close=()=>lb.classList.remove('on');
+  document.querySelectorAll('.shots figure img').forEach((i,n)=>{ i.style.cursor='zoom-in'; i.addEventListener('click',()=>open(n)); });
+  lb.querySelector('.prev').addEventListener('click',e=>{ e.stopPropagation(); show(k-1); }); lb.querySelector('.next').addEventListener('click',e=>{ e.stopPropagation(); show(k+1); });
+  lb.querySelector('.x').addEventListener('click',close); lb.addEventListener('click',e=>{ if(e.target===lb||e.target.tagName==='FIGURE') close(); });
+  document.addEventListener('keydown',e=>{ if(!lb.classList.contains('on')) return; if(e.key==='ArrowRight'){ e.preventDefault(); show(k+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); show(k-1); } else if(e.key==='Escape') close(); });
+  let x0=null, y0=0; lb.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse') return; x0=e.clientX; y0=e.clientY; }); lb.addEventListener('pointerup',e=>{ if(x0===null) return; const dx=e.clientX-x0, dy=e.clientY-y0; x0=null; if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3) show(k+(dx<0?1:-1)); });
+  window.__lb={open,show,close,get k(){return k;},n:pics.length}; })();
 async function tryGate(){ const pw=document.getElementById('gpw').value.trim(); if(!pw) return;
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw)); const hex=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
   const url='g-'+hex.slice(0,16)+'.html'; try{ const r=await fetch(url,{method:'HEAD',cache:'no-store'}); if(r.ok){ location.href=url; return; } }catch(e){}
