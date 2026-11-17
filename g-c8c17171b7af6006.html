@@ -1283,7 +1283,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.319';   // shown on every screen; bump on each release
+const APP_VER='1.17.320';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2263,7 +2263,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='16 Nov 2026 21:14';
+const KFA_BUILT='16 Nov 2026 21:19';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2686,7 +2686,7 @@ function renderPanel(){
   { const el=document.getElementById('i-pts'); if(el){ const tot=TEAMS.reduce((a,x)=>{ const p=S.pts[x.id]; a.s+=netScore(p); a.m+=p.mp; a.d+=p.dp; return a; },{s:0,m:0,d:0}), o=S.orders||{};
     el.innerHTML='<table><tr class="h"><td>POINTS</td><td class="n">SCORE</td><td class="n">MP</td><td class="n">DP</td></tr>'+TEAMS.map(x=>{ const p=S.pts[x.id]; return `<tr><td><span style="color:${x.c}">■</span> ${x.n}</td><td class="n"><em${ptGlow('is'+x.id,netScore(p))}>${netScore(p)}</em></td><td class="n" style="color:var(--mute)"><em${ptGlow('im'+x.id,p.mp)}>${p.mp}</em></td><td class="n" style="color:${p.dp?'#FF9C8C':'var(--mute)'}">${p.dp}</td></tr>`; }).join('')+`<tr class="t"><td>Class</td><td class="n" style="color:#F2D28A"><em${ptGlow('ist',tot.s)}>${tot.s}</em></td><td class="n"><em${ptGlow('imt',tot.m)}>${tot.m}</em></td><td class="n">${tot.d}</td></tr></table>`+`<div class="icsit"><span>Situation</span><b>${sitRolled()?o.intent:'—'}</b><span>Mission hexes</span><b>${sitRolled()&&o.targets?o.targets:'—'}</b><span>Base access</span><b>${String(o.access||'').split(' · ')[0]||'—'}</b></div>`; } }
   document.getElementById('i-turn').textContent=`Turn ${S.turn} of ${S.turns} · Day ${day()} · ${shift()[0].toLowerCase()} · timer ${CLOCK_MIN(S.turn)} min`;
-  document.getElementById('b-start').textContent=S.opening?(S.running?'Pause planning timer':'Start planning timer'):(S.running?'Pause shift timer':'Start shift timer'); document.getElementById('b-start').style.display=(S.movesOpen&&!S.running)?'none':'';   /* R11.339 #60 */   /* R11.318 */
+  document.getElementById('b-start').textContent=S.opening?(S.running?'Pause planning timer':'Start planning timer'):(S.running?'Pause shift timer':'Start shift timer'); document.getElementById('b-start').style.display=(S.movesOpen&&!S.opening&&!S.running)?'none':'';   /* R11.339 #60 + R11.360 #91 planning also has movesOpen set: never hide the planning timer button */   /* R11.318 */
   document.getElementById('b-hide').textContent=S.hidden?'Show timer':'Hide timer';
   const box=document.getElementById('i-hex'), act=document.getElementById('i-hexactions');
   if(!S.sel){ box.textContent='No hex selected. Click any hex on the board.'; act.style.display='none'; }
