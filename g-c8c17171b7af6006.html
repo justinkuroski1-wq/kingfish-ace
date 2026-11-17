@@ -1290,7 +1290,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.344';   // shown on every screen; bump on each release
+const APP_VER='1.17.345';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1641,7 +1641,9 @@ function onWingMsg(e){ const m=e.data||{}; if(window.__standby) return;
     S.wsel=S.wsel||{}; S.wform=S.wform||{}; S.rfiPick=S.rfiPick||{};
     S.plot=m.ui.plot||null; S.wsel[team]=m.ui.wsel; (S.wselAf=S.wselAf||{})[team]=m.ui.wselAf||null; if(m.ui.wform) S.wform[team]=m.ui.wform; if(m.ui.rfiPick) S.rfiPick[team]=m.ui.rfiPick;
     window.alert=x=>{ said=String(x); };
-    try{ window[m.cmd](...m.args); }catch(x){ console.error(x); } finally{ window.alert=realAlert||notice; S.plot=mine; }
+    const gmJ=(window.__gmU||[]).length&&!window.__gmReplay?JSON.parse(JSON.stringify(m)):null, mr0=Math.random, rr=[]; if(gmJ) Math.random=()=>{ const v=mr0(); rr.push(v); return v; };   /* R11.410 #143 */
+    try{ window[m.cmd](...m.args); }catch(x){ console.error(x); } finally{ Math.random=mr0; window.alert=realAlert||notice; S.plot=mine; }
+    if(gmJ&&!said) for(const u of (window.__gmU||[])){ (u.w=u.w||[]).push({m:gmJ,r:rr}); if(u.w.length>3000) u.w.shift(); }
     try{ reconcileAll('items no longer there'); }catch(x){ console.error(x); }   /* R11.139 */
     save(); clearTimeout(window.__rdT); window.__rdT=setTimeout(render,30); if(said&&!m.bot){ if(BC) BC.postMessage({alertFor:team,text:said}); if(window.cloudAlert) cloudAlert(team,said); }   /* R11.251 a bot's refusals stay off the cloud and off students' screens */
     if(!said&&(m.cmd==='wingRequest'||m.cmd==='wingResReq')) reviewNotice(team,m.cmd,m.args);
@@ -2279,7 +2281,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 05:57';
+const KFA_BUILT='17 Nov 2026 07:22';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -3648,7 +3650,14 @@ function injectGo(kind){ if(kind==='Event card'||kind==='Risk card'){ const o=ow
   if(o&&/Jamming|Cyber/.test(kind)){ (S.comms=S.comms||{})[o.team]=S.turn; (S.commsWhy=S.commsWhy||{})[o.team]=/Cyber/.test(kind)?'cyber attack':'jamming'; log(`${TM[o.team].n} comms cut for the rest of turn ${S.turn} (${kind})`); }
   banner(`${kind.toUpperCase()} · hex ${S.sel}${who}`,/strike|cyber|jamming|comms/i.test(kind)); render(); }
 function gmSnap(label){ const U=(window.__gmU=window.__gmU||[]); U.push({label,s:JSON.stringify({...S,undo:null})}); if(U.length>15) U.shift(); if(MODE==='instructor'&&!window.__yesNow&&!window.__demo){ const n=U.length; setTimeout(()=>{ if((window.__gmU||[]).length===n) notice(label.charAt(0).toUpperCase()+label.slice(1)+': done.','Done',{label:'Undo',ms:6000,fn:()=>{ if((window.__gmU||[]).length===n) gmUndo(); }}); },60); } }   /* R11.212 instructor actions offer Undo for 6 s */
-function gmUndo(){ const U=window.__gmU||[]; const x=U.pop(); if(!x) return alert('Nothing to undo.'); const keep={running:S.running,endsAt:S.endsAt,clock:S.clock}; S=JSON.parse(x.s); Object.assign(S,keep); upgradeState(); log(`GAME MASTER undo: ${x.label}`); banner(`UNDONE · ${x.label}`,false); save(); render(); }
+function gmReplay(j){ const m=j.m, team=m.team, mine=S.plot, ra=window.alert, mr=Math.random, R=(j.r||[]).slice();   /* R11.410 #143 run one recorded wing action again, same dice */
+  S.wsel=S.wsel||{}; S.wform=S.wform||{}; S.rfiPick=S.rfiPick||{}; const ui=m.ui||{}; S.plot=ui.plot||null; S.wsel[team]=ui.wsel; (S.wselAf=S.wselAf||{})[team]=ui.wselAf||null; if(ui.wform) S.wform[team]=ui.wform; if(ui.rfiPick) S.rfiPick[team]=ui.rfiPick;
+  window.alert=()=>{}; Math.random=()=>R.length?R.shift():mr();
+  try{ humanWing(m); window[m.cmd](...m.args); }catch(e){ console.error(e); } finally{ Math.random=mr; window.alert=ra; S.plot=mine; }
+  try{ reconcileAll('items no longer there'); }catch(e){ console.error(e); } }
+function gmUndo(){ const U=window.__gmU||[]; const x=U.pop(); if(!x) return alert('Nothing to undo.'); const keep={running:S.running,endsAt:S.endsAt,clock:S.clock}, keepLog=(S.log||[]).slice(), keepRolls=S.rolls; S=JSON.parse(x.s); Object.assign(S,keep); upgradeState();
+  let nW=0; window.__gmReplay=true; try{ for(const j of (x.w||[])){ gmReplay(j); nW++; } } finally{ window.__gmReplay=false; }   /* R11.410 #143 wing actions made since are kept */
+  S.log=keepLog; if(nW&&keepRolls) S.rolls=keepRolls;   /* R11.411 */ log(`GAME MASTER undo: ${x.label}${nW?` (kept ${nW} wing action${nW===1?'':'s'} made since)`:''}`); banner(`UNDONE · ${x.label}`,false); save(); render(); }
 function gmMove(){ gmSnap('move base'); const team=document.getElementById('r-team').value, from=document.getElementById('r-from').value; if(!S.sel) return; if(!from) return alert('Pick which base the wing is moving.'); if(from===S.sel) return;
   S.requests.push({id:S.reqSeq++,team,hex:S.sel,af:(MD.chips.find(c=>c.hex===S.sel)||{}).id||null,from,role:'spoke',turn:S.turn,st:'pending'}); const q=S.requests[S.requests.length-1], mo=S.movesOpen; S.movesOpen=true; window.__yesNow=true; window.__gmForce=true; try{ decide(q.id,true); }finally{ window.__yesNow=false; window.__gmForce=false; S.movesOpen=mo; }
   log(`GAME MASTER moved ${TM[team].n} base ${from} → ${S.sel}`); render(); }
