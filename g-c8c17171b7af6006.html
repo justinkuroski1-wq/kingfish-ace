@@ -288,6 +288,8 @@ button.cd{padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;-webkit-a
 .inv{width:100%;border-collapse:collapse;font-size:13px}
 .inv td{padding:5px 8px;border-top:1px solid #1F262D}
 .inv td.ic{width:34px;padding:4px 6px}
+.inv tr.mvrow{cursor:pointer}.inv tr.mvrow:hover td{background:rgba(255,255,255,.04)}.inv tr.mvon td{background:rgba(76,141,214,.30)!important}.inv tr.mvon td:first-child{box-shadow:inset 3px 0 0 #4C8DD6}   /* R11.426 */
+@media (max-width:760px){ .mvgo.mvfix{position:fixed;left:8px;right:8px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:60;background:#151A1F;border:1px solid #4C8DD6;border-radius:10px;padding:8px 10px;box-shadow:0 8px 22px rgba(0,0,0,.55);margin:0} .mvgo.mvfix .hint{width:100%} .rmain:has(.mvgo.mvfix){padding-bottom:190px} }   /* R11.426 + R11.427 */.mvstep{display:inline-flex;gap:4px;align-items:center;white-space:nowrap}.mvstep .btn{padding:0 8px;min-height:24px}   /* R11.425 */
 .inv td.ic i{display:flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;border:2px solid #E9D9A6}
 .inv td.n{font-family:Consolas,monospace;text-align:right;width:44px;font-size:15px;font-weight:600}
 .inv td.f{color:var(--mute);text-align:right;width:90px;font-size:12px}
@@ -469,6 +471,7 @@ body{font-size:15px}
 .rdt em{font-size:30px}.rdt span{font-size:14px}
 .rtabs button{font-size:16px;padding:11px 20px}.rtabs button em{font-size:13px}
 .rgh{font-size:12px;margin:22px 0 12px}.rgh span{font-size:13px}
+.mvchips{display:flex;flex-wrap:wrap;gap:6px}.mvc{display:inline-flex;gap:3px;align-items:center}.mvc em{font-style:normal;opacity:.75;margin-left:4px}.mvgo{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.mvgo select{min-width:0;max-width:100%;flex:1 1 220px}   /* R11.424 */
 .kpi{padding:16px 18px}.kpi span{font-size:12px}.kpi b{font-size:34px}.kpi i{font-size:14px}
 .rst{font-size:15px}.rst th{font-size:12px;padding:10px 14px}.rst th.q{font-size:12px}
 .rst td{padding:9px 14px}.rst .q{font-size:17px;width:110px}.rst .st{font-size:15px;width:120px}
@@ -1291,7 +1294,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.346';   // shown on every screen; bump on each release
+const APP_VER='1.17.347';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2283,7 +2286,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 08:54';
+const KFA_BUILT='17 Nov 2026 09:05';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2453,10 +2456,40 @@ function taskList(team,hex){ const st=baseStage(team,hex), byR=rfiDoneTasks(team
   return `<div class="rgh" style="margin-top:0">Airfield tasks <span style="letter-spacing:0;text-transform:none;font-weight:400">· ${st==='foc'?'FOC reached':st==='ioc'?'IOC reached · FOC needs 11 tasks':'IOC needs tasks 1, 2, 3, 5, 9 (and 6, which 9 needs first)'} · click a task for details</span></div>
     <div class="tkey"><span><i class="cd hn"></i>Host nation support</span><span><i class="cd us"></i>Flown in</span><span><i class="cd need"></i>Still needed</span></div>
     <div class="tlist">${grp('Establish')}${grp('Defend')}${grp('Operate')}${grp('Maintain')}</div>`; }
+/* R11.424 owner 11-17: select items on the Resources screen and send them to any base (own or another wing's) */
+function mvState(team,hex){ const m=window.__mv; if(!m||m.team!==team||m.hex!==hex) window.__mv={team,hex,sel:{},to:''}; return window.__mv; }
+function mvToggle(team,hex,id){ const m=mvState(team,hex), la=loadAvail(team,hex)[id]||0; if(m.sel[id]) delete m.sel[id]; else if(la>0) m.sel[id]=la; render(); }
+function mvStep(team,hex,id,dn){ const m=mvState(team,hex), la=loadAvail(team,hex)[id]||0, v=Math.max(0,Math.min(la,(m.sel[id]||0)+dn)); if(v) m.sel[id]=v; else delete m.sel[id]; render(); }
+function mvTo(team,hex,v){ mvState(team,hex).to=v||''; render(); }
+function mvDests(team,hex){ const L=[]; for(const t of TEAMS) for(const b of S.bases[t.id]){ if(b.hex===hex||b.st==='struck'||L.some(x=>x.hex===b.hex&&x.team===t.id)) continue; L.push({hex:b.hex,team:t.id,own:t.id===team,lab:t.id===team?`${longId(team,b).replace(/^Wing \d+ • /,'')} · hex ${b.hex}`:`${longId(t.id,b)} · hex ${b.hex}`}); } return L.sort((a,b)=>(b.own-a.own)||a.team.localeCompare(b.team)); }
+function moveBox(team,hex,bar){ if(MODE!=='wing') return ''; const la=loadAvail(team,hex), ids=CHIT_IDS.filter(id=>(la[id]||0)>0&&CHIT[id]), m=mvState(team,hex), b=S.bases[team].find(x=>x.hex===hex);
+  for(const id in m.sel){ if(!(la[id]>0)) delete m.sel[id]; else if(m.sel[id]>la[id]) m.sel[id]=la[id]; }
+  const head=`<div class="rgh"${bar?' style="margin-top:0"':''}>Move items <span style="letter-spacing:0;text-transform:none;font-weight:400">· ${bar?'tap rows in the list below to select them, tap again to unselect':'tap items to select them, tap again to unselect'}, then pick where they go</span></div>`;
+  if(!ids.length) return head+`<div class="hint">Nothing free to fly out of this base right now (items working on a task stay; host-nation support stays at its airfield).</div>`;
+  const n=Object.values(m.sel).reduce((a,v)=>a+v,0), tt=cargoTotals(m.sel), D=mvDests(team,hex);
+  const why=b&&b.st==='struck'?`Hex ${hex} is struck: nothing can leave it until Base recovery is done.`:!n?'Tap the items to move first.':!m.to?'Pick where to send them.':'';
+  return head+`<div class="mvchips"${bar?' style="display:none"':''}>${ids.map(id=>{ const on=(m.sel[id]||0)>0; return `<span class="mvc"><button class="btn sm${on?' p':''}" onclick="mvToggle('${team}','${hex}','${id}')">${on?'✓ ':''}${CHIT[id].name} <em>${on?m.sel[id]+' of '+la[id]:la[id]+' free'}</em></button>${on&&la[id]>1?`<button class="btn sm" aria-label="One fewer" onclick="mvStep('${team}','${hex}','${id}',-1)">−</button><button class="btn sm" aria-label="One more" onclick="mvStep('${team}','${hex}','${id}',1)">+</button>`:''}</span>`; }).join('')}</div>
+  <div class="mvgo${n?' mvfix':''}"><span class="hint">${n?`Selected: ${tt.pp} PP · ${ppl(tt.pax)}`:'Nothing selected'}</span><select class="field" onchange="mvTo('${team}','${hex}',this.value)"><option value="">Send to…</option>${D.map(d=>`<option value="${d.hex}" ${m.to===d.hex?'selected':''}>${d.own?'':'↗ '}${d.lab}</option>`).join('')}</select>${whyBtn(why,`<button class="btn p" ${why?'disabled':''} onclick="mvGo('${team}','${hex}')">Load an aircraft →</button>`)}</div>
+  ${m.to&&!D.find(d=>d.hex===m.to&&d.own)&&D.find(d=>d.hex===m.to)?`<div class="hint" style="margin-top:4px">A delivery to another wing is handed to that wing when the aircraft lands.</div>`:''}`; }
+function mvGo(team,hex){ const m=mvState(team,hex), sel=Object.assign({},m.sel), to=m.to; if(!Object.keys(sel).length||!to) return;
+  const b=S.bases[team].find(x=>x.hex===hex); if(b&&b.st==='struck') return alert(`Hex ${hex} is struck: nothing can leave it until Base recovery is done.`);
+  const ac=S.acft[team]; if(!ac||ac.day!==day()) return alert('Roll your aircraft for today first (Airlift tab).');
+  const freeI=k=>[...Array(ac[k]||0).keys()].find(i=>chalkLoc(team,k,i)===hex&&!S.flights.some(f=>f.team===team&&f.acft===k&&f.ci===i&&f.st!=='denied'&&f.st!=='arrived'));
+  const left0=k=>(ac[k]||0)-acftUsed(k,team)>0; let pick=null;
+  for(const k of ['c130','c17','c5']){ if(!left0(k)) continue; const i=freeI(k); if(i!==undefined&&fitsLoad(k,1,sel)){ pick={k,i}; break; } }
+  if(!pick) for(const k of ['c5','c17','c130']){ if(!left0(k)) continue; const i=freeI(k); if(i!==undefined){ pick={k,i}; break; } }
+  if(!pick) return alert(`No free aircraft is parked at hex ${hex} right now. Fly an empty aircraft there first, or move items from a base that has one (your hub).`);
+  const f=wingForm(team); if(!(f.tail&&f.tail.k===pick.k&&f.tail.i===pick.i)) wingTail(team,pick.k,pick.i); wingFrom(team,hex); f.cargo={};
+  for(const id in sel){ for(let q=0;q<sel[id];q++){ const b4=f.cargo[id]||0; wingCargo(team,id,1); if((f.cargo[id]||0)===b4) break; } }
+  const left=Object.entries(sel).map(([id,n])=>[id,n-(f.cargo[id]||0)]).filter(([,n])=>n>0);
+  wingRoute(team,to); window.__mv=null;
+  if(left.length) f.msg=`One ${ACFT[pick.k].n} could not take it all. Still at hex ${hex}: ${left.map(([id,n])=>n+' × '+CHIT[id].name).join(', ')}. Launch this one, then select the rest again.`;
+  if(typeof onPhone==='function'&&onPhone()&&typeof phTab==='function') phTab('air'); else { window.WSTAB='air'; setWView('map'); } }
 function chipTable(team,hex,iv,hn,ids){ if(!ids.length) return '<div class="hint" style="padding:30px 4px">Nothing at this base yet. Fly people and equipment in from the Hex map.</div>';
-  const av=availAt(team,hex); const by={}; ids.forEach(id=>(by[CHIT[id].team]=by[CHIT[id].team]||[]).push(id));
+  const av=availAt(team,hex), la=MODE==='wing'?loadAvail(team,hex):{}, mv=MODE==='wing'?mvState(team,hex):{sel:{}}; const by={}; ids.forEach(id=>(by[CHIT[id].team]=by[CHIT[id].team]||[]).push(id));   /* R11.425 */
   return `<div class="hint" style="margin:-4px 0 4px">Every chip at this base. <b style="color:var(--ink)">Free</b> chips can staff a task; the rest are working on one.</div><div class="invgrid">${Object.keys(by).map(g=>`<div><h4 class="invh">${CHIT_GROUP[g]}</h4><table class="inv"><tbody>${by[g].map(id=>{ const c=CHIT[id], free=Math.max(0,av[id]||0);
-    return `<tr><td class="ic"><i style="background:${CHIT_COLOR[c.team]}">${chipIcon(id,19)}</i></td><td>${c.name}${hn[id]?` <span style="color:#8FC7A3;font-size:12px">· ${hn[id]} host nation</span>`:''}</td><td class="w">${c.pp?c.pp+' PP':c.pax?c.pax+' ppl':''}</td><td class="f">${free===iv[id]?'all free':free+' free'}</td><td class="n">${iv[id]}</td></tr>`; }).join('')}</tbody></table></div>`).join('')}</div>`; }
+    const can=(la[id]||0)>0, on=(mv.sel[id]||0)>0;   /* R11.425 tap a row to select it for Move items */
+    return `<tr class="${on?'mvon':''}${can?' mvrow':''}" ${can?`onclick="mvToggle('${team}','${hex}','${id}')" title="Tap to ${on?'unselect':'select for Move items'}"`:''}><td class="ic"><i style="background:${CHIT_COLOR[c.team]}">${chipIcon(id,19)}</i></td><td>${on?'✓ ':''}${c.name}${hn[id]?` <span style="color:#8FC7A3;font-size:12px">· ${hn[id]} host nation</span>`:''}</td><td class="w">${c.pp?c.pp+' PP':c.pax?c.pax+' ppl':''}</td><td class="f">${on?`<span class="mvstep">${la[id]>1?`<button class="btn sm" aria-label="One fewer" onclick="event.stopPropagation();mvStep('${team}','${hex}','${id}',-1)">−</button>`:''}<b>${mv.sel[id]} of ${la[id]}</b>${la[id]>1?`<button class="btn sm" aria-label="One more" onclick="event.stopPropagation();mvStep('${team}','${hex}','${id}',1)">+</button>`:''}</span>`:(free===iv[id]?'all free':free+' free')}</td><td class="n">${iv[id]}</td></tr>`; }).join('')}</tbody></table></div>`).join('')}</div>`; }
 function resourcesHtml(team){
   const locs=[...new Set([...S.bases[team].map(b=>b.hex),...Object.keys(S.inv[team]||{})])].filter(h=>S.bases[team].some(b=>b.hex===h)||cargoTotals(invAt(team,h)).pax||cargoTotals(invAt(team,h)).pp);
   if(!window.WRES||!locs.includes(window.WRES)) window.WRES=locs[0];
@@ -2479,7 +2512,8 @@ function resourcesHtml(team){
       return `<div class="rfic ${v?'':'na'}"><div class="rfih"><span>${q}</span>${v?`<b style="background:${RFIC[v-1]}">${v}</b>`:'<i>not asked</i>'}</div>${v?`<div class="rfit">${a[v-1]}</div>${gtxt?`<div class="rfig">${gtxt}</div>`:''}`:''}</div>`; }).join('')+'</div>'; }
   }
   if(RTAB==='tasks'&&spoke) main+=taskList(team,sel);
-  if(RTAB==='chips') main+=chipTable(team,sel,iv,hn,ids);
+  if(RTAB==='chips') main+=moveBox(team,sel,true)+chipTable(team,sel,iv,hn,ids);   /* R11.425 the bar sits above the hub's list */
+  if(RTAB==='over') main+=moveBox(team,sel);   /* R11.424 */
   const air=S.flights.filter(f=>f.team===team&&f.cargo&&(f.st==='approved'||f.st==='enroute'));
   if(air.length) main+=`<div class="rgh">In the air</div>${air.map(f=>`<div class="hint" style="padding:3px 0">${f.n}× ${ACFT[f.acft].n} ${f.path[0]} → ${f.path[f.path.length-1]}: ${Object.entries(f.cargo).map(([id,n])=>n+' '+CHIT[id].name).join(', ')}</div>`).join('')}`;
   const atkPh=(MODE==='wing'&&atkPending(team).length)?`<div class="phonly" style="margin-bottom:8px">${atkWingHtml(team)}</div>`:'';   /* R11.404 #137 the phone hides the side panel on Resources */
