@@ -478,6 +478,7 @@ body{font-size:15px}
 @media (max-width:560px){ .trow .iocm{font-size:9px!important;letter-spacing:.4px!important;padding:0 3px!important;margin-left:3px!important;vertical-align:1px} .trow .iocm.pre{font-size:8.5px!important} }   /* R11.349 owner: the FOR IOC box must not get in the way (360 px phones: it ran out of the name space) */
 @media (max-width:340px){ #app.wingapp .trow{grid-template-rows:auto auto auto} #app.wingapp .trow .tb{grid-column:2/5;grid-row:3;justify-self:end;margin-top:4px} }   /* R11.349 very narrow phones: the task button gets its own line so the name and tag keep their room */
 @media (max-width:560px){ #app.wingapp .trow .tc{grid-row:1;align-self:center} #app.wingapp .trow .tb{grid-column:3/5;grid-row:2;justify-self:end;align-self:start;margin-top:3px} #app.wingapp .trow .tn{overflow-wrap:break-word!important;word-break:normal!important} }   /* R11.353 phone: a row with many icons + a button squeezed the name to 'Airfi / eld / ops'; the button now sits under the icons */
+@media (max-width:760px){ #app.wingapp .mapbox:has(> .resv2),#app.wingapp .wing.wres .mapbox{container-type:normal!important;aspect-ratio:auto!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important} #app.wingapp .resv2{padding-bottom:12px} }   /* R11.371 #102 the last task row was stuck under the tab bar */
 .tid{font-size:13px;min-width:24px;padding:1px 5px}
 .tgrp .taskg{font-size:12px}
 .tkey{font-size:14px}.tkey .cd{width:20px;height:20px}
@@ -1283,7 +1284,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.324';   // shown on every screen; bump on each release
+const APP_VER='1.17.325';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2263,7 +2264,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='16 Nov 2026 22:31';
+const KFA_BUILT='16 Nov 2026 22:44';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
