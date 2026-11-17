@@ -1290,7 +1290,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.340';   // shown on every screen; bump on each release
+const APP_VER='1.17.341';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2278,7 +2278,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 04:24';
+const KFA_BUILT='17 Nov 2026 04:36';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2477,7 +2477,8 @@ function resourcesHtml(team){
   if(RTAB==='chips') main+=chipTable(team,sel,iv,hn,ids);
   const air=S.flights.filter(f=>f.team===team&&f.cargo&&(f.st==='approved'||f.st==='enroute'));
   if(air.length) main+=`<div class="rgh">In the air</div>${air.map(f=>`<div class="hint" style="padding:3px 0">${f.n}× ${ACFT[f.acft].n} ${f.path[0]} → ${f.path[f.path.length-1]}: ${Object.entries(f.cargo).map(([id,n])=>n+' '+CHIT[id].name).join(', ')}</div>`).join('')}`;
-  return `<div class="resv2"><div class="rside">${side}</div><div class="rmain">${main}</div></div>`; }
+  const atkPh=(MODE==='wing'&&atkPending(team).length)?`<div class="phonly" style="margin-bottom:8px">${atkWingHtml(team)}</div>`:'';   /* R11.404 #137 the phone hides the side panel on Resources */
+  return `<div class="resv2"><div class="rside">${side}</div><div class="rmain">${atkPh}${main}</div></div>`; }
 window.WSTAB=window.WSTAB||null; window.TEXP=window.TEXP||null;   /* R11.186 task-row details: TEXP was never declared, so clicking a task row threw and nothing opened (found by the Resources test) */
 function resReqList(team){ return ''; const rr=(S.resReq||[]).filter(r=>r.team===team).slice(-8).reverse(); if(!rr.length) return '';
   return `<div class="sec"><h3>MY RESOURCE REQUESTS</h3>${rr.map(r=>`<div class="kv"><span>${r.n} ${CHIT[r.chit]?CHIT[r.chit].name:r.chit} to hex ${r.hex}</span><span class="hint" style="color:${r.st==='approved'?'#8FC7A3':r.st==='denied'?'#F09A8F':'var(--mute)'}">${r.st==='pending'?'waiting':r.st}</span></div>`).join('')}</div>`; }
