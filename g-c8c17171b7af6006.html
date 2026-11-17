@@ -1275,7 +1275,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.313';   // shown on every screen; bump on each release
+const APP_VER='1.17.314';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2254,7 +2254,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='16 Nov 2026 19:51';
+const KFA_BUILT='16 Nov 2026 19:56';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2355,7 +2355,7 @@ function resOverview(team,hex,iv){ const rows=iocSources(team,hex), ok=rows.filt
     <div class="kpi"><span>Stage</span><b>${st?st.toUpperCase():'Not yet IOC'}</b><i>${st==='foc'?'Full operating capability':st==='ioc'?'Next: FOC (11 tasks)':ok+' of 5 IOC tasks covered'+(rows.filter(r=>!IOC_TASKS.includes(r.T.id)&&r.state==='need').map(r=>` · task ${r.T.id} (needed first) is short`).join(''))+((n=>n?` · ${n} ready to staff`:'')(rows.filter(r=>r.state==='ready'&&canStaff(team,hex,r.T).ok).length))}</i><div class="mbar">${rows.filter(r=>IOC_TASKS.includes(r.T.id)).map(r=>`<i class="${r.state!=='need'?'on':''}"></i>`).join('')}</div></div>
     <div class="kpi"><span>Tasks</span><b>${run} <small style="font-size:15px;color:var(--mute)">of 16</small></b><i>running or complete</i></div>
     <div class="kpi" id="kpi-short">%%SHORT%%</div></div>`;
-  // Resource status for the NEXT stage (IOC, then FOC). One row per resource: required, host nation, airlifted, on hand, shortfall.
+  // Resource status for the NEXT stage (IOC, then FOC). One row per resource: required, host nation, flown in, on hand, shortfall.   /* R11.347 */
   const goal=st?'FOC':'IOC', grows=st?iocSources(team,hex,FOC_TASKS):rows, byR=rfiDoneTasks(team,hex);
   const hnv=((S.hnInv||{})[team]||{})[hex]||{}, req={}; let pplReq=0;
   grows.forEach(r=>{ if(byR.has(r.T.id)) return; r.items.forEach(x=>{ if(x.chit&&!(x.note&&/RFI/.test(x.note))) req[x.chit]=(req[x.chit]||0)+1; else if(x.name.startsWith('People')) pplReq=5; }); });
@@ -2374,7 +2374,7 @@ function resOverview(team,hex,iv){ const rows=iocSources(team,hex), ok=rows.filt
   { const flat=[]; for(const b of blocks){ const parts=b.split(/(?=<tr)/).filter(Boolean), g=(parts[0].match(/colspan="6">([^<]*)</)||[])[1]||''; parts.forEach((h,i)=>flat.push({h,g,head:i===0})); }   /* R11.199 balance by ROWS: a long group continues in the right column (was whole groups only: left ran ~23 rows vs 12 and scrolled on a 1366x768 laptop) */
     let cut=Math.ceil(flat.length/2); if(cut>0&&flat[cut-1].head) cut--; const rest=flat.slice(cut); if(rest.length&&!rest[0].head) rest.unshift({h:`<tr class="grp"><td colspan="6">${rest[0].g} (cont.)</td></tr>`,head:true});
     colA=flat.slice(0,cut).map(x=>x.h).join(''); colB=rest.map(x=>x.h).join(''); }
-  const thead='<thead><tr><th>Resource</th><th class="q">Need</th><th class="q">Host nation</th><th class="q">Air<wbr>lifted</th><th class="q">On hand</th><th class="st">Status</th></tr></thead>';
+  const thead='<thead><tr><th>Resource</th><th class="q">Need</th><th class="q">Host nation</th><th class="q">Flown in</th><th class="q">On hand</th><th class="st">Status</th></tr></thead>';
   h+=`<div class="rgh" style="margin-top:0">Resource status for ${goal} <span style="letter-spacing:0;text-transform:none;font-weight:400">· ${goal==='IOC'?'tasks 1, 2, 3, 5, 9 and 6 (needed before 9) · reaching IOC earns +5 Mission Points':'11 tasks for full operating capability'}</span></div>
    ${wholeHn.length?`<div class="hnwhole"><b>Host nation support (RFI):</b> ${wholeHn.map(T=>`task ${T.id} ${T.n}`).join(' · ')} provided in full</div>`:''}
    ${blocks.length?`<div class="rst2"><table class="rst">${thead}<tbody>${colA}</tbody></table>${colB?`<table class="rst">${thead}<tbody>${colB}</tbody></table>`:''}</div>`:'<div class="hint" style="padding:14px 0">Nothing at this base yet.</div>'}`;
@@ -2403,7 +2403,7 @@ function taskList(team,hex){ const st=baseStage(team,hex), byR=rfiDoneTasks(team
     else { const need=taskNeed(team,hex,T), items=Object.entries(need);
       if(T.or){ const o=T.or.find(o=>Object.keys(o).every(k=>(iv[k]||0)>=o[k]))||T.or[0]; Object.entries(o).forEach(e=>items.push(e)); }
       const avT=availAt(team,hex); for(const [k,n] of items){ const have=run?Math.min(n,(asg[k]||0)):Math.min(n,Math.max(0,avT[k]||0)), fromHn=Math.min(have,hnv[k]||0);
-        for(let q=0;q<n;q++){ const src=q<fromHn?'hn':q<have?'us':'need'; chips+=`<i class="cd ${src}" title="${CHIT[k].name}: ${src==='hn'?'host nation':src==='us'?'airlifted':'still needed'}" style="">${chipIcon(k,17,src==='need'?'#7D8790':null)}</i>`; } }
+        for(let q=0;q<n;q++){ const src=q<fromHn?'hn':q<have?'us':'need'; chips+=`<i class="cd ${src}" title="${CHIT[k].name}: ${src==='hn'?'host nation':src==='us'?'flown in':'still needed'}" style="">${chipIcon(k,17,src==='need'?'#7D8790':null)}</i>`; } }
       if(T.turns==='people'){ const ok=peopleAt(team,hex)>=5; chips+=`<i class="cd ${ok?'us':'need'}" title="People on site: ${peopleAt(team,hex)}" style="">${chipIcon('assessment',17,ok?null:'#7D8790')}</i>`; } }
     const open=ex===hex+':'+T.id;
     let det='';
@@ -2415,7 +2415,7 @@ function taskList(team,hex){ const st=baseStage(team,hex), byR=rfiDoneTasks(team
     return `<div class="trow ${open?'open':''}" onclick="TEXP=TEXP==='${hex}:${T.id}'?null:'${hex}:${T.id}';render()"><span class="tid">${T.id}</span><span class="tn">${T.n}${IOC_TASKS.includes(T.id)&&!st?' <b class="iocm">IOC</b>':(!st&&withPre(IOC_TASKS).includes(T.id)?` <b class="iocm" style="opacity:.8" title="An IOC task needs this one done first">FOR IOC</b>`:'')}   <!-- R11.344 --></span><span class="tc">${chips}</span><span class="ts ${cls}" title="${gap.length?'Still needed here:&#10;'+gap.join('&#10;'):txt}">${txt}</span><span class="tb">${btn}</span></div>${det}`; };
   const grp=g=>`<div class="tgrp"><div class="taskg">${g}</div>${TASKS.filter(x=>x.g===g).map(row).join('')}</div>`;
   return `<div class="rgh" style="margin-top:0">Airfield tasks <span style="letter-spacing:0;text-transform:none;font-weight:400">· ${st==='foc'?'FOC reached':st==='ioc'?'IOC reached · FOC needs 11 tasks':'IOC needs tasks 1, 2, 3, 5, 9 (and 6, which 9 needs first)'} · click a task for details</span></div>
-    <div class="tkey"><span><i class="cd hn"></i>Host nation support</span><span><i class="cd us"></i>Airlifted</span><span><i class="cd need"></i>Still needed</span></div>
+    <div class="tkey"><span><i class="cd hn"></i>Host nation support</span><span><i class="cd us"></i>Flown in</span><span><i class="cd need"></i>Still needed</span></div>
     <div class="tlist">${grp('Establish')}${grp('Defend')}${grp('Operate')}${grp('Maintain')}</div>`; }
 function chipTable(team,hex,iv,hn,ids){ if(!ids.length) return '<div class="hint" style="padding:30px 4px">Nothing at this base yet. Fly people and equipment in from the Hex map.</div>';
   const av=availAt(team,hex); const by={}; ids.forEach(id=>(by[CHIT[id].team]=by[CHIT[id].team]||[]).push(id));
@@ -3892,14 +3892,14 @@ const HELP={
  air:['Airlift','Click one aircraft to open its load plan. Load at shows where that chalk is parked. Add people and cargo with + and −.','Under Fly to, pick the destination. The route plots itself around closed airspace. Press Launch. Details shows the route and every check; if Launch is grey, the reason shows under it.','Changed your mind before it leaves? Click the waiting chalk, or Change in the list below it, to bring it back with its load and route.','A close trip takes 1 turn, a far one 2 or 3. Cargo lands at the end of the turn it arrives.'],
  fx:['Fighters','Reposition: pick any of your bases and a number. Tankers let fighters reach any field of yours; they fly 4 hexes a turn, so a far base takes 2 or 3 turns.','Launch: click the target hex on the map, then press Launch. The spoke must be running its combat turn and refueling tasks.','A long-range mission or a reposition can be called back: Abort (or Turn back) in Fighters in the air flies them home from where they are. A short sortie is over in seconds.','One sortie per turn from a spoke into a Mission hex scores 5 MP. In Conflict, the sortie fights the Red zone ring first.'],
  cm:['Comms','Pick who gets it under To, type the message and press Send.','Request resources from another wing: pick the wing, the item, how many and which base.','Comms open once one of your bases finishes task 3, Command & control. Until then, nothing goes in or out.','JAMMED means nothing goes in or out for that turn.'],
- res_over:['Resources','Pick a base from the dropdown. Each line shows Need, Host nation (from RFI answers), Airlifted, On hand and Status (Met, or how many short).','Cargo shows under Airlifted at the end of the turn the aircraft lands.','A chip works one task at a time. Use Take from task on the Airfield tasks tab to move it.'],
+ res_over:['Resources','Pick a base from the dropdown. Each line shows Need, Host nation (from RFI answers), Flown in, On hand and Status (Met, or how many short).','Cargo shows under Flown in at the end of the turn the aircraft lands.','A chip works one task at a time. Use Take from task on the Airfield tasks tab to move it.'],
  res_tasks:['Airfield tasks','16 tasks in four groups. Ready: press Assign people. Running: Remove people frees them, and progress is kept.','Missing names the chip you still need. Take from task N moves a busy chip; that task stops.','IOC needs tasks 1, 2, 3, 5 and 9. Reaching IOC scores 5 MP for that spoke.'],
  res_chips:['Chips','Everything on the ground at this base.','Fly chips out to your spokes from the Airlift tab.']};
 const HELP_PH={   /* R11.289b phones have no hex map: the projector shows it */
  plan_open:['Planning','Choose 3 spokes: pick a green or yellow airfield under Find an airfield (or type its hex number), then press Choose as spoke. The instructor approves each one.','Then roll your aircraft and ask RFIs at each spoke (tap the spoke under Your bases, pick the questions, then roll).','Load chalks on the Airlift tab so they are ready when the timer starts.','The hex map is on the CAOC board. Switch screens with the tabs along the bottom.'],
  plan:['Bases','Your bases: tap one to see it and roll its RFIs.','Find an airfield: type a hex number or pick from the list, then press Choose as spoke.','The ramp table shows the aircraft on the ground at each base. The Resources tab at the bottom shows what each base has.'],
  fx:['Fighters','Reposition: pick any of your bases and a number. Tankers let fighters reach any field of yours; they fly 4 hexes a turn, so a far base takes 2 or 3 turns.','Launch: pick the target under Pick a target hex, then press Launch. The spoke must be running its combat turn and refueling tasks.','A long-range mission or a reposition can be called back: Abort (or Turn back) in Fighters in the air flies them home from where they are. A short sortie is over in seconds.','One sortie per turn from a spoke into a Mission hex scores 5 MP. In Conflict, the sortie fights the Red zone ring first.'],
- res_over:['Resources','Pick a base from the dropdown. Each line shows Need, On hand and Status (Met, or how many short).','Turn the phone sideways to also see Host nation (from RFI answers) and Airlifted.','A chip works one task at a time. Use Take from task on the Airfield tasks tab to move it.']};
+ res_over:['Resources','Pick a base from the dropdown. Each line shows Need, On hand and Status (Met, or how many short).','Turn the phone sideways to also see Host nation (from RFI answers) and Flown in.','A chip works one task at a time. Use Take from task on the Airfield tasks tab to move it.']};
 function showHelp(){ const k=window.WVIEW==='res'?'res_'+(window.RTAB||'over'):(window.WSTAB==='plan'&&S.opening?'plan_open':window.WSTAB||'plan'), h=(onPhone()&&HELP_PH[k])||HELP[k]||HELP.plan;
   document.querySelectorAll('#kfa-help').forEach(e=>e.remove()); const ov=document.createElement('div'); ov.className='cfx'; ov.id='kfa-help';
   ov.innerHTML=`<div class="cfp" style="max-width:520px"><div class="cfh"></div><ul class="hlpl"></ul><div class="cfr"><button class="btn p" data-a="ok">Got it</button></div></div>`;
@@ -4021,7 +4021,7 @@ const DEMO_EV=[
  [1,6,()=>{ const A=window.__demo.A; if(!A) return true; demoBuild(A,[1,2,3,5,6,9,10,11,12]); render(); demoCaption(`The advance party stands up airfield operations at hex ${A}`); return true; }],
  [1,12,()=>{ const A=window.__demo.A, n=fightersAt('alpha',HOME.alpha); if(A&&n>1){ window.__yesNow=true; try{ wingFighterMove('alpha',HOME.alpha,A,Math.min(8,n)); }finally{ window.__yesNow=false; } demoCaption(`Eight F-15s reposition from Kadena to hex ${A}`); } return true; }],
  [1,22,()=>{ const B=window.__demo.B; if(B){ addInv('alpha',B,{opsintel:1,cp:1,comm:1,tent:2,powergen:1,generator:1,fp:2,vehicle:1,smallarms:1,food:2,water:2},1); for(const id of [1,2,3]){ const c=canStaff('alpha',B,TASK[id]); if(c.ok) staffTask('alpha',B,id); } render(); demoCaption(`Bed-down begins at hex ${B}. Every task needs the right people and equipment on the ground.`); } return true; }],
- [1,26,()=>{ const A=window.__demo.A; if(!A||!demoFW()) return true; demoScene([[0.1,sc=>{ demoWE(`WRES='${A}';setWView('res')`); demoCaption('The Resources page: what IOC needs, what the host nation provided, what was airlifted and what is still short.',5600*sc); }],
+ [1,26,()=>{ const A=window.__demo.A; if(!A||!demoFW()) return true; demoScene([[0.1,sc=>{ demoWE(`WRES='${A}';setWView('res')`); demoCaption('The Resources page: what IOC needs, what the host nation provided, what was flown in and what is still short.',5600*sc); }],
      [0.7,()=>demoWE("const tb=[...document.querySelectorAll('.rtabs button')].find(b=>/^Resources/.test(b.textContent.trim())); if(tb) tb.click();")]],6.0); return true; }],
  [1,32,()=>{ const A=window.__demo.A; if(A) demoFly('c130',1,A,{food:2,water:2,fuel:1}); return true; }],
  [2,1,()=>{ const A=window.__demo.A; if(A){ demoBuild(A,[1,2,3,5,6,9,10,11,12]); render(); } demoCaption(`Spoke ${A||''} reached IOC: +5 Mission Points. Fighters are ready to launch.`,4500); return true; }],
