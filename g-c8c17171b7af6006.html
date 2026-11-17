@@ -1290,7 +1290,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.342';   // shown on every screen; bump on each release
+const APP_VER='1.17.343';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2278,7 +2278,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 05:02';
+const KFA_BUILT='17 Nov 2026 05:37';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -3525,7 +3525,7 @@ function checkPlan(f,path,skipId){ const A=ACFT[f.acft], out=[]; let block=false
   if(f.pp||f.pax){ if(fits) out.push(`<span class="ck-ok">OK</span> Load ${f.pp} PP + ${f.pax} pax fits ${f.n} × ${A.n}.`); else { out.push(`<span class="ck-bad">NO</span> Too much for ${f.n} × ${A.n}: each carries ${A.loads.map(([a,b])=>a&&b?a+' PP + '+b+' pax':a?a+' PP':b+' pax').join(', or ')}.`); block=true; } }
   else out.push('<span class="ck-warn">CHECK</span> No cargo or passengers entered.');
   const have=acftToday(f.acft,f.team); if(have!==null){ const used=acftUsed(f.acft,f.team,skipId);
-    if(used+f.n>have){ out.push(`<span class="ck-bad">NO</span> Only ${Math.max(0,have-used)} ${A.n} left today (${have} rolled, ${used} already flying).`); block=true; } else out.push(have-used-f.n===0?`<span class="ck-ok">OK</span> This is your last ${A.n} today.`:`<span class="ck-ok">OK</span> ${have-used-f.n} more ${A.n} available today after this one.`); }   /* R11.307 */
+    if(used+f.n>have){ out.push(`<span class="ck-bad">NO</span> ${have-used<=0?`No ${A.n} left today (${have} rolled, ${used} already flying): pick another aircraft.`:`Only ${have-used} ${A.n} left today (${have} rolled, ${used} already flying).`}`); block=true; }   /* R11.408 #141 */ else out.push(have-used-f.n===0?`<span class="ck-ok">OK</span> This is your last ${A.n} today.`:`<span class="ck-ok">OK</span> ${have-used-f.n} more ${A.n} available today after this one.`); }   /* R11.307 */
   else out.push('<span class="ck-warn">CHECK</span> Today\'s aircraft not rolled yet.');
   if(ownTo&&ownTo.st==='struck'&&f.cargo&&((f.cargo.engineering||0)>0||(f.cargo.adrkit||0)>0)) out.push(`<span class="ck-ok">OK</span> Recovery flight: hex ${to} is struck, but a flight carrying the repair team (Engineering / Airfield Repair, repair kit) may land.`);   /* R11.351 #79 */
   else if(ownTo?ownTo.st==='struck':TEAMS.some(x=>S.bases[x.id].some(b=>b.hex===to&&b.st==='struck'))){ out.push(`<span class="ck-bad">NO</span> Hex ${to} is struck: airfield operations are down until it recovers.${ownTo?' Load Engineering / Airfield Repair and an airfield repair kit to fly in a recovery team (task 15 Base recovery).':''}`); block=true; }
