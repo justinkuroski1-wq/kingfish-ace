@@ -1294,7 +1294,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.348';   // shown on every screen; bump on each release
+const APP_VER='1.17.349';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1974,6 +1974,11 @@ function mapSvg(clickable,only){ const vis=only?[TM[only]]:VIS(); __plates=[]; l
       const pos=C.find(p=>!chipHit(p[0],p[1],w,hh))||C[0]||[h.x,h.y-96];
       rampBox.push({x:pos[0],y:pos[1],w,h:hh}); const dash=parts.some(p=>r.req[p.a]);
       rampS+=`<g pointer-events="none"><rect x="${(pos[0]-w/2).toFixed(0)}" y="${(pos[1]-hh/2).toFixed(0)}" width="${w}" height="${hh}" rx="4" fill="#12171C" fill-opacity=".94" stroke="${c}" stroke-width="2.5" ${dash?'stroke-dasharray="7 5"':''}/><text x="${pos[0].toFixed(0)}" y="${(pos[1]+6).toFixed(0)}" text-anchor="middle" font-size="16.5" font-weight="700" fill="#F2F4F6">${parts.map(p=>`${p.nm} <tspan fill="#FFD866">${p.n}</tspan>`).join(' · ')}</text></g>`; }
+    for(const key in stk){ const [team,hx]=key.split(':'), h=HX[hx]; if(!h||!TM[team]) continue; const held=stk[key].filter(f=>f.st!=='requested'&&flightStuck(f)); if(!held.length) continue;   /* R11.429 aircraft held on the ground say so */
+      const c=TM[team].c, cnt={}; held.forEach(f=>cnt[f.acft]=(cnt[f.acft]||0)+(f.n||1)); const until=Math.max(0,...held.map(f=>holdStart(f.team,f.path)||0)), why=held.some(flightHeld)?'field struck':until?`leaves turn ${until}`:'on the ground';
+      const what=Object.entries(cnt).map(([k,n])=>`${ACFT[k].n} ×${n}`).join(' · '), plain=`${what} HELD · ${why}`, w=Math.round(plain.length*9+18), hh=27;
+      const C=[[h.x,h.y+92],[h.x,h.y-92],[h.x,h.y+134],[h.x,h.y-134],[h.x+70+w/2,h.y],[h.x-70-w/2,h.y]].filter(p=>p[0]-w/2>=44&&p[0]+w/2<=1996), pos=C.find(p=>!chipHit(p[0],p[1],w,hh))||C[0]||[h.x,h.y+92];
+      rampBox.push({x:pos[0],y:pos[1],w,h:hh}); rampS+=`<g pointer-events="none"><rect x="${(pos[0]-w/2).toFixed(0)}" y="${(pos[1]-hh/2).toFixed(0)}" width="${w}" height="${hh}" rx="4" fill="#12171C" fill-opacity=".94" stroke="${c}" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${pos[0].toFixed(0)}" y="${(pos[1]+6).toFixed(0)}" text-anchor="middle" font-size="16.5" font-weight="700" fill="#F2F4F6">${what} <tspan fill="#FFB454">HELD</tspan> · ${why}</text></g>`; }
   }
   { const mrg=[], tags=[]; window.__mrg=mrg; const dest=f=>f.path[f.path.length-1];
     const hit=(x,y,w)=>tags.some(q=>Math.abs(q.x-x)<(q.w+w)/2&&Math.abs(q.y-y)<((q.h||30)+30)/2+2);
@@ -2286,7 +2291,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 09:56';
+const KFA_BUILT='17 Nov 2026 10:05';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
