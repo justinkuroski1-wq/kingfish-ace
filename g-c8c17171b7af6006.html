@@ -1286,7 +1286,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.326';   // shown on every screen; bump on each release
+const APP_VER='1.17.327';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>(S&&S.timerMin)||20;     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2266,7 +2266,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='16 Nov 2026 22:56';
+const KFA_BUILT='16 Nov 2026 23:23';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2402,7 +2402,7 @@ function taskList(team,hex){ const st=baseStage(team,hex), byR=rfiDoneTasks(team
     let cls, txt, btn='';
     if(rfi){ cls='ok'; txt='Host nation'; }
     else if(done&&T.once&&!run){ cls='ok'; txt='Complete'; }
-    else if(run){ cls='run'; txt=T.once?`In progress · ${s.p||0} of ${s.need} turn${s.need===1?'':'s'}`:'Running';   /* R11.340 #63 */ btn=`<button class="btn sm ghost" onclick="event.stopPropagation();cmd.unstaffTask('${team}','${hex}',${T.id})">Remove people</button>`; }
+    else if(run){ cls='run'; txt=T.once?`In progress · ${s.p||0} of ${s.need} turn${s.need===1?'':'s'}${(()=>{ if(T.turns!=='people') return ''; const pp=peopleAt(team,hex), nx=pp<11?11:pp<21?21:0; return nx?` · ${nx-pp} more ${nx-pp===1?'person':'people'} here = faster`:''; })()}`:'Running';   /* R11.340 #63 + R11.374 #105 */ btn=`<button class="btn sm ghost" onclick="event.stopPropagation();cmd.unstaffTask('${team}','${hex}',${T.id})">Remove people</button>`; }
     else if(c.ok){ cls='ready'; const cl=iocClash(team,hex,T); txt=cl?`Ready · takes the ${cl} an IOC task needs`:'Ready'; btn=`<button class="btn sm p" ${cl?`title="Uses the ${cl} that an IOC task here still needs"`:''} onclick="event.stopPropagation();cmd.staffTask('${team}','${hex}',${T.id})">Assign people</button>`; }   /* R11.340 #64 */
     else if(c.pre){ cls='wait'; txt=`After task ${c.pre}`; }
     else { const oo=c.miss&&c.miss!=='people'?((S.out||{})[team]||[]).filter(x=>x.hex===hex&&x.c===c.miss&&!x.gone&&x.until>=S.turn):[]; cls='miss'; const ndN=c.miss&&c.miss!=='people'?(taskNeed(team,hex,T)[c.miss]||1):0, onN=c.miss&&c.miss!=='people'?(invAt(team,hex)[c.miss]||0):0;   /* R11.346 #75 */
@@ -2851,7 +2851,7 @@ function contractTasks(){ for(const tm of TEAMS) for(const b of S.bases[tm.id]){
 function progressTasks(){ try{ contractTasks(); }catch(e){ console.error(e); } for(const tm of TEAMS) for(const b of S.bases[tm.id]){ if(b.role!=='mob'&&!b.opSince&&peopleAt(tm.id,b.hex)>0) b.opSince=S.turn; }   /* R11.1e */
   for(const tm of TEAMS) for(const hex in (S.tasks[tm.id]||{})){ const ts=S.tasks[tm.id][hex];
     for(const id in ts){ const st=ts[id], T=TASK[id]; if(!st.a||!(Object.keys(st.a).length||st.on)) continue;
-      if(T.once&&!st.done){ st.p=(st.p||0)+1; if(st.p>=st.need){ st.done=true; st.a={}; st.on=false; log(`${tm.n} ${hex}: task ${id} ${T.n} complete`);
+      if(T.once&&!st.done){ if(T.turns==='people'){ const nt=taskTurns(tm.id,hex,T); if(nt<(st.need||99)) st.need=nt; }   /* R11.374 more people on site speeds a running people-based task */ st.p=(st.p||0)+1; if(st.p>=st.need){ st.done=true; st.a={}; st.on=false; log(`${tm.n} ${hex}: task ${id} ${T.n} complete`);
           if(id==15){ const b=S.bases[tm.id].find(x=>x.hex===hex); if(b&&b.st==='struck'){ b.st=b.prevSt||'ioc'; b.recUntil=null; b.strikes=0; log(`${tm.n} ${hex}: airfield repaired`); } } } }
       else if(T.each){ { const b0=S.bases[tm.id].find(x=>x.hex===hex); if(b0&&b0.st==='struck') continue; }   /* QA R8.2c: a closed base scores nothing */
         { const miss=(T.pre||[]).filter(q=>!taskDone(tm.id,hex,q)); if(miss.length){ log(`${tm.n} ${hex}: task ${id} ${T.n} paused: needs task ${miss.join(', ')} running`); continue; } }   /* R11.1a */
