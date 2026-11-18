@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.391';   // shown on every screen; bump on each release
+const APP_VER='1.17.392';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2306,7 +2306,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 23:45';
+const KFA_BUILT='17 Nov 2026 23:59';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2346,7 +2346,9 @@ const SILBADGE={"c5": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAY
 const SILSZ={c5:62,c17:54,c130:48};
 function silhouette(type,color,used){ const s=SILSZ[type]; return `<i class="kimg ${kid('SILIMG',type)}" style="flex-shrink:0;width:${s}px;height:${s}px" role="img" aria-label="${ACFT[type].n}${used?' (tasked)':''}" title="${ACFT[type].n}${used?' · tasked':' · available'}"></i>`; }
 function baseDelivered(team,hex){ const fl=S.flights.filter(f=>f.team===team&&f.st==='arrived'&&f.path[f.path.length-1]===hex); return {pp:fl.reduce((a,f)=>a+f.pp,0),pax:fl.reduce((a,f)=>a+f.pax,0),n:fl.length}; }
-function wingForm(team){ const f=S.wform[team]||(S.wform[team]={acft:'c17',n:1,pp:0,pax:0}); if(!f.cargo) f.cargo={}; if(f.day!==day()||(f.tail&&!(S.acft[team]&&S.acft[team].day===day()))){ if(f.day!=null||f.tail){ f.tail=null; f.cargo={}; f.route=null; f.to=null; f.msg=''; f.drafts={}; } f.day=day(); }   /* R11.342 #67 new day, or a chalk picked while today's aircraft are not rolled = stale */ if(!f.from||!(S.bases[team].some(b=>b.hex===f.from)||Object.keys(invAt(team,f.from)).length)) f.from=(S.bases[team][0]||{}).hex; return f; }
+function wingForm(team){ const f=S.wform[team]||(S.wform[team]={acft:'c17',n:1,pp:0,pax:0}); if(!f.cargo) f.cargo={}; if(f.day!==day()||(f.tail&&!(S.acft[team]&&S.acft[team].day===day()))){ if(f.day!=null||f.tail){ f.tail=null; f.cargo={}; f.route=null; f.to=null; f.msg=''; f.drafts={}; } f.day=day(); }   /* R11.342 #67 new day, or a chalk picked while today's aircraft are not rolled = stale */ if(!f.from||!(S.bases[team].some(b=>b.hex===f.from)||Object.keys(invAt(team,f.from)).length)) f.from=(S.bases[team][0]||{}).hex;
+  if(f.tail&&ACFT[f.tail.k]&&!ldFree(team,f.from,f.tail.k).includes(f.tail.i)){ f.tail=null; f.cargo={}; f.route=null; f.to=null; }   /* R11.510 chalk launched or grounded from another screen */
+  return f; }
 function loadSpots(team){ const L=S.bases[team].map(b=>({hex:b.hex,label:longId(team,b)})); for(const hx of Object.keys((S.inv||{})[team]||{})) if(!S.bases[team].some(b=>b.hex===hx)&&Object.keys(invAt(team,hx)).length){ const ow=TEAMS.map(x=>({id:x.id,b:S.bases[x.id].find(b=>b.hex===hx)})).find(o=>o.b&&o.id!==team); L.push({hex:hx,label:ow?'Pickup at '+longId(ow.id,ow.b):'Left behind'}); }   /* R11.137 */ return L; }   /* QA: stranded supplies can be flown out */
 function planOf(team){ const f=wingForm(team), tot=cargoTotals(f.cargo); return {team,acft:f.acft,n:f.n,pp:tot.pp,pax:tot.pax,cargo:f.cargo}; }
 function chalkLoc(team,k,i){ const L=(((S.chalkLoc||{})[team]||{})[k]||{})[i]; return (L&&TEAMS.some(x=>S.bases[x.id].some(b=>b.hex===L)))?L:(S.bases[team].find(b=>b.role==='mob'||b.role==='hub')||{}).hex; }
@@ -2652,7 +2654,7 @@ function spokeStrip(team,hex){   /* R11.448 one status line for a spoke */
   const grows=st?iocSources(team,hex,FOC_TASKS):rows; let short=0; grows.forEach(r=>{ if(byR.has(r.T.id)) return; r.items.forEach(x=>{ if(x.chit&&x.src==='need') short++; }); });
   const run=TASKS.filter(T=>taskRunning(team,hex,T.id)||taskDone(team,hex,T.id)).length, mog=rfiAns(team,hex)[4];
   const stg=b&&b.st==='struck'?'STRUCK':st==='foc'?'FOC':st==='ioc'?'IOC':'NOT YET IOC';
-  return `<div class="sstrip"><span class="sstg${st?' ok':''}">${stg}</span>${st?`<span>${run} of 16 tasks running or complete</span>`:`<span class="mbar">${rows.filter(r=>IOC_TASKS.includes(r.T.id)).map(r=>`<i class="${r.state!=='need'?'on':''}"></i>`).join('')}</span><span>${ok} of 5 IOC tasks covered</span>`}${short?`<span class="sshort">${short} short${st?' for FOC':''}</span>`:''}<span class="saf">${(afLine(team,hex)||'').replace(/\.\s*$/,'')}${mog?` · max on ground ${MOG[mog-1]}`:''}</span></div>`; }
+  return `<div class="sstrip"><span class="sstg${st?' ok':''}">${stg}</span>${st?`<span>${run} of 16 tasks running or complete</span>`:`<span class="mbar">${rows.filter(r=>IOC_TASKS.includes(r.T.id)).map(r=>`<i class="${r.state!=='need'?'on':''}"></i>`).join('')}</span><span>${ok} of 5 IOC tasks covered</span>`}${short?`<span class="sshort">${short} resource${short===1?'':'s'} short${st?' for FOC':' for IOC'}</span>`:''}<span class="saf">${(afLine(team,hex)||'').replace(/\.\s*$/,'')}${mog?` · max on ground ${MOG[mog-1]}`:''}</span></div>`; }
 function binSel(hex,id){ const B=window.BINSEL; window.BINSEL=B&&B.hex===hex&&B.id===id?null:{hex,id}; render(); }
 function binDrop(e,team,hex,tid){ e.preventDefault(); e.stopPropagation(); let v=e.dataTransfer&&e.dataTransfer.getData('text/plain'); if(!v||v.indexOf('|')<0) return; const [hx,id,fr]=v.split('|'); if(hx!==hex||!CHIT[id]) return; if(fr&&+fr===+tid) return; binPut(team,hex,tid,id,fr?+fr:0); }
 function binBack(e,team,hex){ e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.bin.bdrop').forEach(x=>x.classList.remove('bdrop')); let v=e.dataTransfer&&e.dataTransfer.getData('text/plain'); if(!v) return; const [hx,id,fr]=v.split('|'); if(hx!==hex||!fr||!CHIT[id]) return; cmd.chipFree(team,hex,+fr,id); }   /* R11.454 drag off a task */
@@ -2687,7 +2689,7 @@ function binHtml(team,hex){   /* R11.448 the free items at a spoke */
     return `<span class="bchip${on?' bon':''}${BS===id?' bsel':''}${left?'':' bout'}" ${MODE==='wing'&&left?`draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${hex}|${id}')"`:''} ${tap?`onclick="${tap}"`:''} title="${CHIT[id].name}${act?(left?': tap or drag onto the plane':''):': tap to see the tasks that use it, or drag onto a task'}">${ico(id)}${CHIT[id].name}${left>1?` ×${left}`:''}${on?`<em>${on} on ${A}</em><button class="bx" aria-label="Take one off" onclick="event.stopPropagation();ldAdd('${team}','${hex}','${id}',-1)">−</button>`:''}</span>`; };
   let h=`<div class="bin" ${MODE==='wing'?`ondragover="event.preventDefault();this.classList.add('bdrop')" ondragleave="this.classList.remove('bdrop')" ondrop="binBack(event,'${team}','${hex}')"`:''}><div class="binh"><span>Resources that can be allocated · ${nm}</span>${MODE==='wing'?`<button class="btn sm p" onclick="fillTasksBtn('${team}','${hex}')">Auto-allocate</button>`:''}</div><div class="binc">`;
   h+=ids.length?ids.map(chip).join(''):'<span class="hint">None right now.</span>';
-  if(hnIds.length) h+=`<span class="bsep"></span><span class="hnl">Host nation · stays here</span>${hnIds.map(id=>`<span class="bchip hnb">${ico(id)}${CHIT[id].name}${(av[id]-(la[id]||0))>1?' ×'+(av[id]-(la[id]||0)):''}</span>`).join('')}`;
+  if(hnIds.length) h+=`<span class="hnrow"><span class="hnl">Host nation · stays here</span>${hnIds.map(id=>`<span class="bchip hnb">${ico(id)}${CHIT[id].name}${(av[id]-(la[id]||0))>1?' ×'+(av[id]-(la[id]||0)):''}</span>`).join('')}</span>`;   /* R11.509 own line */
   return h+'</div></div>'; }
 function ldPillsHtml(team,hex){ if(MODE!=='wing') return ''; const f=wingForm(team), act=!!(f.tail&&f.from===hex), la=loadAvail(team,hex), ids=CHIT_IDS.filter(id=>CHIT[id]&&((la[id]||0)>0||(act&&f.cargo[id]))); if(!ids.length) return '';
   return `<div class="ldpills" style="margin:0 0 12px"><span class="hint">Load from here:</span>${ids.map(id=>{ const on=act?(f.cargo[id]||0):0, left=Math.max(0,(la[id]||0)-on); return `<span class="mvc"><button class="btn sm${on?' p':''}" ${left?'':'disabled'} draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${hex}|${id}')" onclick="ldAdd('${team}','${hex}','${id}',1)">${on?'✓ ':''}${CHIT[id].name} <em>${on?on+' loaded · ':''}${left} available</em></button>${on?`<button class="btn sm" aria-label="Take one off" onclick="ldAdd('${team}','${hex}','${id}',-1)">−</button>`:''}</span>`; }).join('')}</div>`; }
@@ -4941,6 +4943,10 @@ button:focus-visible,.btn:focus-visible{outline:1px solid #8FB6DA!important;outl
   linear-gradient(315deg,transparent 42%,#C9A227 42% 58%,transparent 58%) 100% 100%/11px 11px no-repeat,
   repeating-linear-gradient(0deg,transparent 0 5px,#4C5359 5px 7px,transparent 7px 12px) 78% 0/22% 100% no-repeat;box-shadow:none}
 .p463.prs::after{display:none}
+</style>
+
+<style id="kfa-hnrow">/* R11.509 */
+.hnrow{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid #26303A;padding-top:6px;margin-top:2px}
 </style>
 </body>
 </html>
