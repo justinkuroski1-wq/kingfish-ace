@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.375';   // shown on every screen; bump on each release
+const APP_VER='1.17.376';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2303,7 +2303,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 21:01';
+const KFA_BUILT='17 Nov 2026 21:20';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2603,13 +2603,25 @@ function airInfo(team){   /* R11.441 MY AIRLIFT: an information screen */
   return h+'</div>'; }
 function apAt(team,hex){ const f=wingForm(team); if(f.tail&&f.from!==hex){ f.tail=null; f.cargo={}; f.to=null; f.route=null; f.msg=''; } f.from=hex; render(); }
 function apGoRes(team,hex){ window.WRES=hex; (S.wsel=S.wsel||{})[team]=hex; if(typeof onPhone==='function'&&onPhone()&&typeof phTab==='function') phTab('res'); else setWView('res'); }
+function rampHtml(team,at,f,ac){ const act=!!f.tail, types=['c17','c130','c5'].filter(k=>(ac[k]||0)>0); if(!types.length) return '';
+  const cur=act?f.tail.k:(types.includes(window.RAMPK)?window.RAMPK:(types.find(k=>ldFree(team,at,k).length)||types[0]));
+  const tabs=types.map(k=>{ const n=ldFree(team,at,k).length; return `<button class="btn sm${k===cur?' on':''}" onclick="window.RAMPK='${k}';${act&&f.tail.k!==k?`ldPick('${team}','${at}','${k}')`:'render()'}" ${!n&&k!==cur?'disabled':''}>${ACFT[k].n} <span class="rtn">${n} free</span></button>`; }).join('');
+  const N=Math.min(ac[cur]||0,14), sz={c5:76,c17:64,c130:54}[cur]; let sp='';
+  for(let ci=0;ci<N;ci++){ const fl=S.flights.find(x=>x.team===team&&x.acft===cur&&x.ci===ci&&x.st!=='denied'&&x.st!=='arrived'), loc=chalkLoc(team,cur,ci), grd=!fl&&chalkGrounded(team,cur,ci), me=act&&f.tail.k===cur&&f.tail.i===ci;
+    const wait=fl&&fl.path&&fl.path[0]===at&&flCanChange(fl), here=!fl&&!grd&&loc===at, cargo=me&&Object.values(f.cargo||{}).some(v=>v>0);
+    const st=me?'on':wait?'ld':fl?'fly':grd?'grd':loc!==at?'away':'ok';
+    const lab=me?(cargo?'loading':'picked'):wait?'loaded':fl?'flying':grd?'grounded':loc!==at?'at '+loc:'';
+    const click=here&&!me?`onclick="wingTail('${team}','${cur}',${ci})"`:wait?`onclick="cmd.wingReopen('${team}',${fl.id},${ci})"`:'';
+    const drop=(here||me)?`ondragover="event.preventDefault()" ondrop="${me?'':`wingTail('${team}','${cur}',${ci});`}ldDrop(event,'${team}','${at}','${cur}')"`:'';
+    sp+=`<button class="rspot st-${st}" ${click} ${drop} ${click||me?'':'disabled'} title="${ACFT[cur].n} Chalk ${ci+1}${lab?' · '+lab:''}">${st==='fly'?'':`<i class="kimg ${kid('SILIMG',cur)} rplane" style="width:${sz}px;height:${sz}px"></i>`}<b>${ci+1}</b>${lab?`<em>${lab}</em>`:''}</button>`; }
+  return `<div class="dkonly rampw"><div class="rtabs">${tabs}</div><div class="ramp">${sp||'<span class="hint">none today</span>'}</div></div>`; }   /* R11.497 */
 function airPanel(team){   /* R11.437 + R11.438 left = settings, right = the aircraft */
   const f=wingForm(team), ac=S.acft[team]&&S.acft[team].day===day()?S.acft[team]:null, at=f.from, act=!!f.tail;
   let h=`<div class="sec apnl"><h3>LOAD AN AIRCRAFT <span class="r"><a href="javascript:void 0" onclick="apInfo()">My airlift</a></span></h3>`;   /* R11.441 */
   if(!ac){ return h+(S.opening&&!spokesChosen(team)?`<div class="hint">Choose your spokes first, then roll today's aircraft here.</div>`:`<div class="hint" style="margin-bottom:8px">Today's aircraft are not rolled yet.</div><button class="btn p" onclick="cmd.rollAcftFor('${team}','')">Roll aircraft · C-17 D12 · C-130 D12 · C-5 D4</button>`)+'</div>'; }
   const spots=loadSpots(team).map(o=>({...o,n:['c130','c17','c5'].reduce((a,k)=>a+ldFree(team,o.hex,k).length,0)})).filter(o=>o.n||o.hex===at);
   let L=`<label class="aplab">Load at</label><select class="field" onchange="apAt('${team}',this.value)">${spots.map(o=>`<option value="${o.hex}" ${o.hex===at?'selected':''}>${o.label.replace(/^Wing \d+ • /,'')} · ${o.hex}</option>`).join('')}</select>`;
-  L+=`<label class="aplab">Aircraft</label><div class="aptypes">${['c130','c17','c5'].map(k=>{ const n=ldFree(team,at,k).length, on=act&&f.tail.k===k, cant=act&&f.to?ldCanLand(team,f.to,k):''; return `<button class="aptype${on?' on':''}" ${n||on?'':'disabled'} onclick="ldPick('${team}','${at}','${k}')" ondragover="event.preventDefault()" ondrop="ldDrop(event,'${team}','${at}','${k}')" title="${cant||(n?n+' free here':'none free here')}">${silhouette(k,'',false)}<span><b>${ACFT[k].n}</b><i>${n} free at ${placeName(team,at)}${cant?' · cannot land':''}</i></span></button>${on?(()=>{ const N=Math.min(ac[k]||0,14); let ch=''; for(let ci=0;ci<N;ci++){ const fl=S.flights.find(x=>x.team===team&&x.acft===k&&x.ci===ci&&x.st!=='denied'&&x.st!=='arrived'), loc=chalkLoc(team,k,ci), grd=!fl&&chalkGrounded(team,k,ci), here=!fl&&!grd&&loc===at, me=ci===f.tail.i; ch+=`<button class="chkb${me?' on':''}" ${here&&!me?`onclick="wingTail('${team}','${k}',${ci})"`:''} ${here||me?'':'disabled'} title="Chalk ${ci+1}: ${fl?'flying':grd?'grounded':loc===at?'here':'at '+loc}">${ci+1}<i>${fl?'flying':grd?'grounded':loc===at?placeName(team,at):loc}</i></button>`;   /* R11.465 */ } return `<div class="chk">${ch}</div>`; })():''}`; }).join('')}</div>`;   /* R11.439 chalk picker */
+  L+=`<div class="phonly"><label class="aplab">Aircraft</label><div class="aptypes">${['c130','c17','c5'].map(k=>{ const n=ldFree(team,at,k).length, on=act&&f.tail.k===k, cant=act&&f.to?ldCanLand(team,f.to,k):''; return `<button class="aptype${on?' on':''}" ${n||on?'':'disabled'} onclick="ldPick('${team}','${at}','${k}')" ondragover="event.preventDefault()" ondrop="ldDrop(event,'${team}','${at}','${k}')" title="${cant||(n?n+' free here':'none free here')}">${silhouette(k,'',false)}<span><b>${ACFT[k].n}</b><i>${n} free at ${placeName(team,at)}${cant?' · cannot land':''}</i></span></button>${on?(()=>{ const N=Math.min(ac[k]||0,14); let ch=''; for(let ci=0;ci<N;ci++){ const fl=S.flights.find(x=>x.team===team&&x.acft===k&&x.ci===ci&&x.st!=='denied'&&x.st!=='arrived'), loc=chalkLoc(team,k,ci), grd=!fl&&chalkGrounded(team,k,ci), here=!fl&&!grd&&loc===at, me=ci===f.tail.i; ch+=`<button class="chkb${me?' on':''}" ${here&&!me?`onclick="wingTail('${team}','${k}',${ci})"`:''} ${here||me?'':'disabled'} title="Chalk ${ci+1}: ${fl?'flying':grd?'grounded':loc===at?'here':'at '+loc}">${ci+1}<i>${fl?'flying':grd?'grounded':loc===at?placeName(team,at):loc}</i></button>`;   /* R11.465 */ } return `<div class="chk">${ch}</div>`; })():''}`; }).join('')}</div></div>`;   /* R11.439 chalk picker; R11.497 phones only */
   let R='';
   if(!act){ L+=`<div class="hint" style="margin-top:8px">Pick an aircraft, then ${(typeof onPhone==='function'&&onPhone())?`load it from the <a href="javascript:void 0" onclick="apGoRes('${team}','${at}')">Resources page</a>`:'tap or drag items from the list on the left'}.</div>`; R=`<div class="fhd"><b>No aircraft picked</b><span>—</span></div><div class="apempty"></div>`; }
   else { const A=ACFT[f.acft], tt=cargoTotals(f.cargo), seatCap=Math.max(...A.loads.filter(l=>tt.pp<=l[0]).map(l=>l[1]).concat([0])), lim=f.to?ldLimits(team,f.to):'', cant=f.to?ldCanLand(team,f.to,f.acft):'', LN=f.to?loadNeedsFor(team,f.to):null, D=f.to?ldDest(team,f.to):null, dn=D&&D.b?longId(D.tm,D.b).replace(/^Wing \d+ • /,''):'', ids=Object.keys(f.cargo).filter(k=>f.cargo[k]>0), RT=f.route||[], ppl0=CHIT_IDS.filter(id=>CHIT[id]&&f.cargo[id]&&!(CHIT[id].pp>0));
@@ -2620,6 +2632,7 @@ function airPanel(team){   /* R11.437 + R11.438 left = settings, right = the air
     if(RT.length>1){ const c=checkPlan(planOf(team),RT), noTxt=c.block?ckNo(c):'', why=c.block?(noTxt||'Open Details and fix the lines marked NO.'):!ids.length?'Load something first.':'', det=alDetOn();
       L+=`<div class="apbtns">${whyBtn(why,`<button class="btn p" ${why?'disabled':''} onclick="cmd.wingSubmit('${team}')">${S.airApprove?'Send to instructor':'Launch'}</button>`)}${alDetBtn()}</div><div class="apstat">${alSum(c,RT,A,team)}</div>${why?`<div class="hint" style="color:#E0C066;margin-top:4px">Can't launch: ${why}</div>`:''}${det?`<div class="hint" style="margin-top:6px;line-height:1.5">${RT.join(' → ')}<br>${c.out.join('<br>')}</div>`:''}`; }
     const al=D&&D.al, hdc=cant?' bad':al?' ally':''; R=`<div class="fhd${hdc}"><b>${A.n} · Chalk ${f.tail.i+1}</b><span>${ldNm(team,at)} → ${f.to?ldNm(team,f.to)+(cant?' · cannot land':''):'pick Fly to'}</span></div>`+ldPallets(team,at,f,true); }   /* R11.439 */
+  h+=rampHtml(team,at,f,ac);   /* R11.497 flight line */
   h+=`<div class="apgrid"><div class="apl">${L}</div><div class="apr">${R}</div></div>`;
   const bk=S.flights.filter(x=>x.team===team&&x.st!=='denied'&&x.st!=='arrived');
   if(bk.length&&MODE!=='wing') h+=`<div class="apbk"><div class="palhd"><span>Booked and flying</span><b>${bk.length}</b></div>${bk.map(x=>`<div class="apbr"><span>${ACFT[x.acft].n}${x.ci!=null?' Chalk '+(x.ci+1):''} · ${ldNm(team,x.path[0])} → ${ldNm(team,x.path[x.path.length-1])}</span><span class="hint">${chalkWhere(team,x)} · lands end of turn ${flLandTurn(x)}${flCanChange(x)?` · <a href="javascript:void 0" onclick="cmd.wingReopen('${team}',${x.id},${x.ci==null?0:x.ci})">change</a>`:''}</span></div>`).join('')}</div>`;
@@ -4802,6 +4815,32 @@ button:focus-visible,.btn:focus-visible{outline:1px solid #8FB6DA!important;outl
 .hico,.bico{border-radius:3px!important;box-shadow:inset 0 0 0 40px rgba(11,14,18,.58),inset 0 1px 0 rgba(255,255,255,.14),0 1px 1px rgba(0,0,0,.5)!important}
 .hico svg path,.bico svg path{fill:#EEF2F5!important}
 .h0 .hico{opacity:.5}
+</style>
+
+<style id="kfa-ramp">/* R11.497 flight line */
+.rampw{margin:2px 0 10px}
+.rtabs{display:flex;gap:4px;margin-bottom:6px}
+.rtabs .btn{flex:1 1 0;padding:4px 6px}
+.rtabs .rtn{font-weight:400;color:#9AA5AF;font-size:11px;margin-left:3px}
+.rtabs .btn.on .rtn{color:#CFE2F5}
+.ramp{display:flex;flex-wrap:wrap;gap:0;padding:4px;border:1px solid #2F3943;background-color:#A3A59F;
+  background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 38px),repeating-linear-gradient(90deg,rgba(0,0,0,.10) 0 1px,transparent 1px 38px)}
+.rspot{position:relative;width:25%;min-width:72px;height:86px;padding:0;margin:0;border:2px solid transparent;background:none!important;box-shadow:none!important;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;border-radius:0!important}
+.rspot::after{content:'';position:absolute;left:8%;right:8%;bottom:5px;height:2px;background:#DDB52A}
+.rspot::before{content:'';position:absolute;left:50%;bottom:5px;width:2px;height:7px;margin-left:-1px;background:#DDB52A}
+.rspot .rplane{transform:rotate(218deg);filter:contrast(1.15) drop-shadow(2px 3px 2px rgba(0,0,0,.5))!important;margin-bottom:12px}
+.rspot b{position:absolute;left:6px;bottom:7px;font-size:11px;font-weight:800;color:#F4F4F0;text-shadow:0 1px 1px rgba(0,0,0,.6)}
+.rspot em{position:absolute;right:4px;top:3px;font-style:normal;font-size:10px;font-weight:700;padding:0 3px;background:rgba(18,23,28,.78);color:#E8ECEF}
+.rspot.st-on{border-color:#4C8DD6;background:rgba(76,141,214,.18)!important}
+.rspot.st-on em{background:#2B4E6E;color:#fff}
+.rspot.st-ld em{background:#1F4A32;color:#BDEBC9}
+.rspot.st-fly{cursor:default}.rspot.st-fly::before{display:none}
+.rspot.st-fly{outline:1px dashed rgba(30,34,38,.45);outline-offset:-8px}
+.rspot.st-away .rplane,.rspot.st-grd .rplane{opacity:.4}
+.rspot.st-away,.rspot.st-grd{cursor:default}
+.rspot.st-ok:hover{border-color:rgba(76,141,214,.55)}
+.rspot:disabled{opacity:1}
 </style>
 </body>
 </html>
