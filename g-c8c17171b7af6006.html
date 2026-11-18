@@ -1169,7 +1169,7 @@ button:focus,.btn:focus{outline:none}button:focus-visible,.btn:focus-visible,sum
     </div>
 
     <div id="i-log" style="display:none"></div>
-    <div class="sec hint">Keys: <kbd>H</kbd> hide/show panel · <kbd>Space</kbd> start/pause timer · <kbd>Esc</kbd> deselect · <kbd>F11</kbd> full screen</div>
+    <div class="sec hint">Keys: <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo last step · <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> zoom in, out, fit · <kbd>H</kbd> hide/show panel · <kbd>Space</kbd> start/pause timer · <kbd>Esc</kbd> deselect · <kbd>F11</kbd> full screen</div>
   </aside>
 </div>
 
@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.395';   // shown on every screen; bump on each release
+const APP_VER='1.17.396';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2306,7 +2306,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 00:25';
+const KFA_BUILT='18 Nov 2026 00:31';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -3027,6 +3027,8 @@ function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o
   if((S.targets||[]).includes(hex)) L.unshift(`Mission hex (${(S.orders.intent||'').replace(/^.*: /,'')}) · 5 MP per sortie from a spoke, one scoring sortie per wing per turn`);
   const z=(S.redz||{})[hex]; if(z&&REDZ[z]){ const Z=REDZ[z]; L.unshift(`Red ${Z.die===20?'strong':Z.die===12?'medium':'light'} defense · each fighter rolls D${FDIE} vs D${Z.die}, one at a time; tie goes to Red; a loss shoots the fighter down; the first win clears it`); }
   if((S.redJam||{})[hex]) L.unshift('Red jammer · Red +2 in fighter combat nearby · may cut base comms within 2 hexes');
+  { const tc=hexCountry(hex); if(tc&&ADVERSARY.has(tc)&&!L.length) L.push(`${tc}: adversary airspace · ${skyClosed(tc)?'closed until Conflict':'open to sorties (Conflict)'}`); }   /* R11.514 */
+  { const p=dfSitePos(); let bh=null,bd=1e9; for(const h of HEXES){ const d=Math.hypot(h.x-p.x,h.y-p.y-40); if(d<bd){ bd=d; bh=h.id; } } if(bh===hex) L.unshift('Red DF-26 launch site · its missiles can reach any airfield inside the dashed red ring'); }
   return L.length?`<title>Hex ${hex}&#10;${L.join('&#10;')}</title>`:`<title>Hex ${hex}</title>`; }
 function baseLine(team,b){ if(!b) return 'No base here · fly these chips out'; if(b.role==='mob'||b.role==='hub') return 'Home base · full capacity'; if(b.st==='struck') return 'Struck · closed'+(b.recUntil?` until turn ${b.recUntil}`:' · staff Base recovery (task 15) to reopen'); if(b.vacateBy) return `Vacate by the end of turn ${b.vacateBy}`; { const h=holdOf(team,b.hex); if(h) return `${({all:'Flight operations',ftr:'Fighter operations',arr:'Arrivals',dep:'Departures'})[h.k]} suspended through turn ${h.until}`; }
   const done=IOC_TASKS.filter(id=>taskDone(team,b.hex,id)).length; if(b.st==='ioc'||b.st==='foc') return b.st.toUpperCase()+' reached';
