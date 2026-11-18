@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.388';   // shown on every screen; bump on each release
+const APP_VER='1.17.389';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2305,7 +2305,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 23:09';
+const KFA_BUILT='17 Nov 2026 23:15';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2594,7 +2594,7 @@ function airInfo(team){   /* R11.441 MY AIRLIFT: an information screen */
   const FL=S.flights.filter(x=>x.team===team&&x.st!=='denied'&&(x.st!=='arrived'||x.arrTurn===S.turn));
   const grp=[['On the ground',FL.filter(x=>x.st!=='arrived'&&(x.st==='requested'||flCanChange(x)))],['In the air',FL.filter(x=>x.st!=='arrived'&&x.st!=='requested'&&!flCanChange(x))],['Landed this turn',FL.filter(x=>x.st==='arrived')]];
   let h=`<div class="sec apnl"><h3>MY AIRLIFT</h3>`;
-  h+=f.tail?'':`<div class="apbtns" style="margin-top:0">${ac?`<button class="btn sm p" onclick="apEdit('${team}')">Load an aircraft →</button>`:(S.opening&&!spokesChosen(team))?whyBtn('Choose a spoke first',`<button class="btn sm p" disabled>Roll today's aircraft</button>`)+'<div class="hint" style="margin-top:6px">Choose a spoke first.</div>':`<button class="btn sm p" onclick="cmd.rollAcftFor('${team}','')">Roll today's aircraft</button>`}</div>`;   /* R11.473 */
+  h+=(f.tail||gameOverNow())?'':`<div class="apbtns" style="margin-top:0">${ac?`<button class="btn sm p" onclick="apEdit('${team}')">Load an aircraft →</button>`:(S.opening&&!spokesChosen(team))?whyBtn('Choose a spoke first',`<button class="btn sm p" disabled>Roll today's aircraft</button>`)+'<div class="hint" style="margin-top:6px">Choose a spoke first.</div>':`<button class="btn sm p" onclick="cmd.rollAcftFor('${team}','')">Roll today's aircraft</button>`}</div>`;   /* R11.473 */
   if(f.tail){ const tt=cargoTotals(f.cargo); h+=`<div class="aigrp">Being loaded</div><button class="airow" onclick="apEdit('${team}')"><b>${chalk(team,f.tail.k,f.tail.i)}</b><span>${ldNm(team,f.from)} → ${f.to?ldNm(team,f.to):'no destination yet'}</span><i>${tt.pp} PP${tt.pax?' · '+ppl(tt.pax):''} · not launched · continue →</i></button>`; }
   for(const [g,L] of grp){ if(!L.length) continue; h+=`<div class="aigrp">${g} <b>${L.length}</b></div>`;
     for(const x of L){ const on=window.AISEL===x.id; h+=`<button class="airow${on?' on':''}" onclick="aiSel(${x.id})"><b>${ACFT[x.acft].n}${x.ci!=null?' Chalk '+(x.ci+1):''}${x.n>1?' ×'+x.n:''}</b><span>${ldNm(team,x.path[0])} → ${ldNm(team,x.path[x.path.length-1])}</span><i>${aiStatus(team,x)}</i></button>`;
@@ -3345,12 +3345,11 @@ function munitionFx(so,A,B){ if(so.via&&HX[so.via]) B=HX[so.via]; if(!(so.confli
   return `<g transform="translate(${B.x},${B.y})" pointer-events="none">${sam}<defs><linearGradient id="munBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAFBFC"/><stop offset=".45" stop-color="#D5D9DD"/><stop offset="1" stop-color="#9CA3AA"/></linearGradient><linearGradient id="munFlame" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".35" stop-color="#FFB347"/><stop offset="1" stop-color="#E5533D" stop-opacity="0"/></linearGradient><radialGradient id="munFire"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".45" stop-color="#FFB347"/><stop offset=".8" stop-color="#E5533D"/><stop offset="1" stop-color="#E5533D" stop-opacity="0"/></radialGradient></defs>
     <g class="mtrail" style="animation-delay:${(tR-age).toFixed(2)}s"><line class="msmoke" x1="${dx}" y1="${dy}" x2="0" y2="0" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="1.6" stroke-dasharray="${rD.toFixed(0)} 9999" style="--len:${rD.toFixed(0)}px;animation-delay:${(tR-age).toFixed(2)}s"/></g>
     <g class="mun" style="--mx:${dx}px;--my:${dy}px;animation-delay:${(tR-age).toFixed(2)}s"><g transform="rotate(${ang}) scale(1.7) translate(-14,0)"><use href="#ki-THR-gbu39" x="-28" y="-28" width="56" height="56" transform="rotate(90)"/></g></g>
-    <g class="mburst" stroke="#E5533D" stroke-width="5" stroke-linecap="round" style="animation-delay:${(hit-age).toFixed(2)}s">${burst}</g>
     <circle class="mscorch" r="26" fill="#3A2A22" style="animation-delay:${(hit-age).toFixed(2)}s"/>
     <circle class="mfire" r="40" fill="url(#munFire)" style="animation-delay:${(hit-age).toFixed(2)}s"/>
     <circle class="mflash" r="22" fill="#FFF6D8" style="animation-delay:${(hit-age).toFixed(2)}s"/>
-    <circle class="mshock" r="60" fill="none" stroke="#FFB347" stroke-width="5" style="animation-delay:${(hit-age).toFixed(2)}s"/>
-    <circle class="mimp" r="34" fill="#E5533D" fill-opacity=".12" stroke="#E5533D" stroke-width="6" style="animation-delay:${(hit-age+0.5).toFixed(2)}s"/></g>`; }
+    <circle class="mshock" r="58" fill="none" stroke="#F4EEE2" stroke-opacity=".45" stroke-width="2" style="animation-delay:${(hit-age).toFixed(2)}s"/>
+    <g class="msmk" style="animation-delay:${(hit-age+0.25).toFixed(2)}s"><circle cx="0" cy="0" r="22" fill="#5E5A55"/><circle cx="14" cy="-18" r="18" fill="#6E6A64"/><circle cx="-12" cy="-26" r="16" fill="#7A766F"/><circle cx="6" cy="-40" r="14" fill="#8A867F"/></g></g>`; }   /* R11.505 flash, fireball, smoke plume, scorch */
 function turnArc(L){ return {r:52,tt:2.1}; }   /* R11.148 one turn around the target (half orbit centered on it) */   /* R11.35b: 1.6 s hold-and-swing over the target */
 function fightPlan(so,A,B){ const Vg=so.via&&HX[so.via]?HX[so.via]:null, Bf=Vg?HX[so.target]:null; if(Vg) B=Vg; const L=Math.hypot(B.x-A.x,B.y-A.y)||1, F=(so.fight||[]).slice(-6).map(f=>typeof f==='number'?{w:f}:f), k=F.length, won=!!(k&&F[k-1].w), sd=Math.min(L*0.55,200), p=1-sd/L, tA=Math.max(1.5,(L-sd)/SV)+2*RAMP_T,   /* R11.153; R11.157 takeoff ramp + R11.165 slow-in to the face-off */ R=3.4, tEnd=won?tA+Math.max(0,k-1)*R+2.4:tA+k*R, tArr=won?tEnd+Math.max(1.5,(sd+40)/SV):tEnd, a=turnArc(L), T=won?(so.long?tArr+a.tt+0.4:tArr+a.tt+Math.max(2.5,L/SV)+RAMP_T):tEnd+0.6;
   const a1=Math.atan2(B.y-A.y,B.x-A.x)*180/Math.PI, or=24, os=1, adv=Math.min(14,Math.max(4,sd*0.45/Math.max(1,tEnd-tA)));   /* R11.163 press-in speed: at most ~45% of the stand-off distance */
@@ -4904,5 +4903,12 @@ button:focus-visible,.btn:focus-visible{outline:1px solid #8FB6DA!important;outl
 .p463 .pbi svg{width:30px!important;height:30px!important}
 .p463 .pbn{position:relative;z-index:2;background:#E9E3C8;color:#1A1A16;padding:0 4px;border-radius:1px;font-weight:700;box-shadow:0 1px 0 rgba(0,0,0,.4)}
 </style>
+
+<style id="kfa-hit">/* R11.505 realistic strike hit */
+.msmk{opacity:0;transform-box:fill-box;transform-origin:center bottom;filter:url(#kfaSmokeBlur);animation:munSmoke 3.4s ease-out forwards}
+@keyframes munSmoke{0%{opacity:0;transform:translate(0,0) scale(.35)}12%{opacity:.85}60%{opacity:.6;transform:translate(10px,-22px) scale(1.15)}100%{opacity:0;transform:translate(22px,-46px) scale(1.6)}}
+.mscorch{animation-duration:4.5s!important}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="kfaSmokeBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs></svg>
 </body>
 </html>
