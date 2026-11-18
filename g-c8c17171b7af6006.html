@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.389';   // shown on every screen; bump on each release
+const APP_VER='1.17.390';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2051,7 +2051,7 @@ const SILK={c5:1.44,c17:1.22,c130:1.02};   /* R11.484 C-5M redrawn; R11.486 all 
 // ===== Air combat roll-out (owner 11-09: make it a moment). Plays once per combat on every open screen. =====
 function dieSvg(s,txt,cls){ const P={4:'50,6 94,88 6,88',6:'10,10 90,10 90,90 10,90',10:'50,4 94,40 50,96 6,40',12:'50,4 95,37 78,92 22,92 5,37',18:'50,3 90,25 90,75 50,97 10,75 10,25',20:'50,3 93,27 93,73 50,97 7,73 7,27'}[s]||'50,3 93,27 93,73 50,97 7,73 7,27';
   const inner=s===20?'<polyline points="50,3 27,62 73,62 50,3" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="2"/><polyline points="7,27 27,62 50,97 73,62 93,27" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/>':s===10?'<polyline points="6,40 50,58 94,40" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="2"/><line x1="50" y1="58" x2="50" y2="96" stroke="currentColor" stroke-opacity=".3" stroke-width="2"/>':s===12?'<polygon points="50,24 72,40 64,68 36,68 28,40" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="2"/>':'';
-  return `<svg viewBox="0 0 100 100" class="die ${cls||''}"><polygon points="${P}" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>${inner}<text x="50" y="${s===4?70:60}" text-anchor="middle" class="dv">${txt}</text></svg>`; }
+  return `<svg viewBox="0 0 100 100" class="die ${cls||''}"><defs><linearGradient id="dgL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient></defs><polygon points="${P}" transform="translate(2.5,3.5)" fill="#000" fill-opacity=".35"/><polygon points="${P}" fill="currentColor" stroke="#11161B" stroke-width="2.5" stroke-linejoin="round"/><polygon points="${P}" fill="url(#dgL)"/>${inner.replace(/stroke="currentColor" stroke-opacity="\.(\d+)"/g,'stroke="#0E1216" stroke-opacity=".45"')}<text x="50" y="${s===4?70:60}" text-anchor="middle" class="dv dve">${txt}</text></svg>`; }   /* R11.506 solid shaded dice */
 function pushRoll(ev){ ev.id=Date.now()+Math.random(); S.rolls=(S.rolls||[]).concat([ev]).slice(-24); if(!ev.team) window.__rollHold=Math.max(window.__rollHold||0,Date.now())+900+300*((ev.dice||[]).length+1)+3400; }
 let __seenRolls=new Set(), __rollPrimed=false, __rollQ=[], __rollBusy=false;
 function playRoll(){ const list=(S&&S.rolls)||[]; if(!__rollPrimed){ __rollPrimed=true; list.forEach(r=>__seenRolls.add(r.id)); return; }
@@ -2305,7 +2305,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 23:15';
+const KFA_BUILT='17 Nov 2026 23:18';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -4910,5 +4910,13 @@ button:focus-visible,.btn:focus-visible{outline:1px solid #8FB6DA!important;outl
 .mscorch{animation-duration:4.5s!important}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="kfaSmokeBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs></svg>
+
+<style id="kfa-dice">/* R11.506 solid dice */
+.dve{fill:#FFFFFF!important;stroke:#10151A;stroke-width:3px;paint-order:stroke;filter:drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+.die.spin{animation:tumble2 .55s linear infinite!important}
+@keyframes tumble2{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.die.land{animation:landd2 .3s ease-out!important}
+@keyframes landd2{0%{transform:rotate(-10deg)}100%{transform:rotate(0)}}
+</style>
 </body>
 </html>
