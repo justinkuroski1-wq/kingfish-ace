@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.400';   // shown on every screen; bump on each release
+const APP_VER='1.17.401';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2306,7 +2306,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 01:09';
+const KFA_BUILT='18 Nov 2026 01:13';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2651,7 +2651,7 @@ function airPanel(team){   /* R11.437 + R11.438 left = settings, right = the air
   return h+'</div>'; }
 function spokeStrip(team,hex){   /* R11.448 one status line for a spoke */
   const b=S.bases[team].find(x=>x.hex===hex), st=baseStage(team,hex), rows=iocSources(team,hex), ok=rows.filter(r=>IOC_TASKS.includes(r.T.id)&&r.state!=='need').length, byR=rfiDoneTasks(team,hex);
-  const grows=st?iocSources(team,hex,FOC_TASKS):rows; let short=0; grows.forEach(r=>{ if(byR.has(r.T.id)) return; r.items.forEach(x=>{ if(x.chit&&x.src==='need') short++; }); });
+  const grows=st?iocSources(team,hex,FOC_TASKS):rows.filter(r=>IOC_TASKS.includes(r.T.id)); let short=0;   /* R11.520 */ grows.forEach(r=>{ if(byR.has(r.T.id)) return; r.items.forEach(x=>{ if(x.chit&&x.src==='need') short++; }); });
   const run=TASKS.filter(T=>taskRunning(team,hex,T.id)||taskDone(team,hex,T.id)).length, mog=rfiAns(team,hex)[4];
   const stg=b&&b.st==='struck'?'STRUCK':st==='foc'?'FOC':st==='ioc'?'IOC':'NOT YET IOC';
   return `<div class="sstrip"><span class="sstg${st?' ok':''}">${stg}</span>${st?`<span>${run} of 16 tasks running or complete</span>`:`<span class="mbar">${rows.filter(r=>IOC_TASKS.includes(r.T.id)).map(r=>`<i class="${r.state!=='need'?'on':''}"></i>`).join('')}</span><span>${ok} of 5 IOC tasks covered</span>`}${short?`<span class="sshort">${short} resource${short===1?'':'s'} short${st?' for FOC':' for IOC'}</span>`:''}<span class="saf">${(afLine(team,hex)||'').replace(/\.\s*$/,'')}${mog?` · max on ground ${MOG[mog-1]}`:''}</span></div>`; }
