@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.367';   // shown on every screen; bump on each release
+const APP_VER='1.17.368';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2302,7 +2302,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='17 Nov 2026 19:10';
+const KFA_BUILT='17 Nov 2026 19:19';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -4748,5 +4748,64 @@ window.wbState=()=>{ plan(); const p=S.pts[T]; return `${TM[T].n} ${netScore(p)}
 for(const n of ['wbStaff','wbAirlift','wbFighters','wbPickSpokes','wbRfis','wbResupply','wbShare']) window[n]=quiet(window[n]);
 return 'commander bot v3.2 ready for '+T; })()
 </script>
+
+<style id="kfa-sharp">/* R11.488 sharp software look (loaded last) */
+:root{--bvA:#2C343D;--bvB:#1C2229;--bvE:#3B4653;--bvK:#090C0F;--bvH:rgba(255,255,255,.09)}
+/* square corners */
+.btn,#app.wingapp .btn,.tailb,#app.wingapp .tailb,.afb,#app.wingapp .afb,.aptype,.chkb,.airow,.aidet,.udeck,.fhd,.ldws,.ldcard,.ldphb,
+.mvgo,.mvgo.mvfix,.bin,.bchip,.fbr,.fbr.on,.fdt,.fseg,.fseg button,.ftg,.fdp button,.fair2,.sup2,.htile,.tokpp,.kcard,.hnall,.tchip,
+.pf-sw,.trow .ts,.trow .ts.ok,.trow .ts.ready,.trow .ts.miss,.trow .ts.take,.trow .ts.wait,#kfa-send,.wzb,#app.wingapp .phbases button,
+#ptabs button em,.stabs button em,.field,select.field,input.field,textarea,.lg-in,.lg-go,.lg-home,.gm,.gm button,#kfa-tip,#kfa-ctx,
+#kfa-btip,.zctl button,.cmsg,.cjam,.croom,.wc2,.wc2 .sp button,#kfa-notice,#kfa-notice .ntca,.kfa-card,.kfa-card .kc-in,.cfx .cfp,
+#kfa-guide,.cbx,.rlx,.kfa-end,.watk,.widle,.wnext,.rbp,.sstg,.bchip .bx,.tokc b,.wing .topbar .wtabs>button,
+#app.wingapp .wing .topbar .wtabs>button,nav#phnav,nav#phnav .phpill,.ibots,#kfa-dbre,.dbbtn,.dbtop{border-radius:2px!important}
+/* bevelled buttons */
+.btn,#app.wingapp .btn,.afb,#app.wingapp .afb,.aptype,.chkb,.fdp button,.lg-go,.gm button,.zctl button,.wc2 .sp button,#kfa-send,.dbbtn,
+.wing .topbar .wtabs>button,#app.wingapp .wing .topbar .wtabs>button{
+  background-color:var(--bvB)!important;background-image:linear-gradient(180deg,var(--bvA) 0%,var(--bvB) 100%)!important;
+  border:1px solid var(--bvE)!important;border-bottom-color:var(--bvK)!important;
+  box-shadow:inset 0 1px 0 var(--bvH),0 1px 1px rgba(0,0,0,.45)!important;
+  transition:background-color .05s linear,border-color .05s linear,box-shadow .05s linear!important;transform:none!important;
+  text-shadow:0 1px 0 rgba(0,0,0,.45)}
+.btn:hover:not(:disabled),.afb:hover:not(:disabled),.aptype:hover:not(:disabled),.chkb:hover:not(:disabled),.fdp button:hover:not(:disabled),
+.gm button:hover,.zctl button:hover,.wing .topbar .wtabs>button:hover,#app.wingapp .btn:hover:not(:disabled){
+  background-image:linear-gradient(180deg,#36404B 0%,#232A32 100%)!important;border-color:#56636F!important;border-bottom-color:var(--bvK)!important}
+.btn:active:not(:disabled),.afb:active:not(:disabled),.aptype:active:not(:disabled),.chkb:active:not(:disabled),.fdp button:active:not(:disabled),
+.gm button:active,.zctl button:active,.wing .topbar .wtabs>button:active,#app.wingapp .btn:active:not(:disabled),.lg-go:active,#kfa-send:active{
+  background-image:linear-gradient(180deg,#151A1F 0%,#1D242B 100%)!important;border-color:#0A0D10!important;border-bottom-color:#3B4653!important;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.65)!important;transform:translateY(1px)!important}
+/* primary, danger, current */
+.btn.p,#app.wingapp .btn.p,.lg-go,#kfa-send{background-color:#24486A!important;background-image:linear-gradient(180deg,#3B6E9C 0%,#24486A 100%)!important;
+  border-color:#4F82B0!important;border-bottom-color:#0E2134!important;color:#fff!important}
+.btn.p:hover:not(:disabled),#app.wingapp .btn.p:hover:not(:disabled),.lg-go:hover{background-image:linear-gradient(180deg,#457AAA 0%,#2A5379 100%)!important}
+.btn.p:active:not(:disabled),#app.wingapp .btn.p:active:not(:disabled){background-image:linear-gradient(180deg,#1C3954 0%,#244766 100%)!important}
+.btn.d,#app.wingapp .btn.d{background-image:linear-gradient(180deg,#5A2D28 0%,#3A1E1B 100%)!important;border-color:#8A453D!important;border-bottom-color:#1C0E0C!important}
+.btn.on,#app.wingapp .btn.on,.wing .topbar .wtabs>button.on,#app.wingapp .wing .topbar .wtabs>button.on,.afb.on,.aptype.on,.chkb.on,.btn.on:hover:not(:disabled),#app.wingapp .btn.on:hover:not(:disabled),.wing .topbar .wtabs>button.on:hover,.afb.on:hover:not(:disabled),.aptype.on:hover:not(:disabled),.chkb.on:hover:not(:disabled){
+  background-image:linear-gradient(180deg,#2C4A66 0%,#1D3348 100%)!important;border-color:#4C8DD6!important;border-bottom-color:#13263A!important;color:#fff!important}
+.btn.on{box-shadow:inset 3px 0 0 var(--info),inset 0 1px 0 var(--bvH)!important}
+.btn:disabled,#app.wingapp .btn:disabled,.afb:disabled,.aptype:disabled,.chkb:disabled,.fdp button:disabled{
+  background-image:none!important;background-color:#181D22!important;box-shadow:none!important;border-color:#2A323B!important;text-shadow:none;opacity:.55}
+/* segmented control and the phone tab bar: flat, square, instant */
+.fseg{background:#0F1317!important;border:1px solid var(--bvE)!important;padding:2px!important}
+.fseg button{transition:none!important}
+.fseg button.on{background-image:linear-gradient(180deg,#2C4A66 0%,#1D3348 100%)!important;box-shadow:inset 0 1px 0 var(--bvH)!important}
+nav#phnav{background:#151A1F!important;border:1px solid #2F3943!important;box-shadow:0 -1px 0 rgba(255,255,255,.04),0 6px 18px rgba(0,0,0,.5)!important}
+nav#phnav .phpill{transition:none!important;background:linear-gradient(180deg,#2C4A66 0%,#1D3348 100%)!important;box-shadow:inset 0 1px 0 var(--bvH)!important}
+nav#phnav button svg,nav#phnav button .phm,nav#phnav button.kp svg,nav#phnav button.kp .phm{transition:none!important;transform:none!important}
+/* tiles and rows: crisp edge, instant hover */
+.tailb,#app.wingapp .tailb,.htile,.fbr,.airow,.bchip,.ldcard{transition:none!important;transform:none!important}
+.htile,.fbr,.airow{box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+/* fields */
+.field,select.field,input.field,textarea,.lg-in{background-color:#0D1114!important;border:1px solid #36404B!important;border-top-color:#0A0D10!important;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.5)!important;transition:none!important}
+.field:focus,.lg-in:focus,textarea:focus{outline:1px solid #5B8DB8!important;outline-offset:0}
+/* keyboard focus stays visible, square */
+button:focus-visible,.btn:focus-visible{outline:1px solid #8FB6DA!important;outline-offset:1px}
+/* no entrance slides or glow pulses on panels, notices, menus, cards and scores */
+.ntc,#kfa-notice,.gm,#kfa-gl,.kfa-card .kc-in,.cfx .cfp,.cbx,.rlx,.kfa-card,.kfa-end,.wtc,#kfa-dwing.dwin,.pglow,.rtab td.chg,.chg,#kfa-tcard.on{animation:none!important}
+.hico,.bico{border-radius:3px!important;box-shadow:inset 0 0 0 40px rgba(11,14,18,.58),inset 0 1px 0 rgba(255,255,255,.14),0 1px 1px rgba(0,0,0,.5)!important}
+.hico svg path,.bico svg path{fill:#EEF2F5!important}
+.h0 .hico{opacity:.5}
+</style>
 </body>
 </html>
