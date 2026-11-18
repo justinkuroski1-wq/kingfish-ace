@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.413';   // shown on every screen; bump on each release
+const APP_VER='1.17.414';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -1741,7 +1741,11 @@ function keepFresh(catchUp){ let last=null; const rev=()=>{ try{ return localSto
 try{ if(navigator.locks&&navigator.locks.request) navigator.locks.request('kfa-awake-'+Math.random().toString(36).slice(2),()=>new Promise(()=>{})); }catch(e){}   /* R10.23 a tab holding a lock is not frozen by the browser */
 function gameKey(g){ return g?String(g).replace(/"savedAt":\d+,?/,'').replace(/"clock":\d+,?/,''):''; }
 function validSave(n){ return n&&n.bases&&n.v===SAVE_V; }
-function localUi(){ return {gid:S.gid, plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined}; }
+function localUi(){ const u={gid:S.gid, plot:S.plot, wselAf:WING_ID?(S.wselAf||{})[WING_ID]:undefined, wsel:WING_ID?(S.wsel||{})[WING_ID]:undefined, wform:WING_ID?(S.wform||{})[WING_ID]:undefined, rfiPick:WING_ID?(S.rfiPick||{})[WING_ID]:undefined};
+  if(WING_ID&&!window.__wuiUsed){ window.__wuiUsed=1; try{ const k=JSON.parse(localStorage.getItem('kfa-wui-'+WING_ID)||'null'); if(k&&k.wform&&(!u.gid||!k.gid||k.gid===u.gid)){ u.wform=k.wform; if(k.rfiPick) u.rfiPick=k.rfiPick; if(k.gid) u.gid=k.gid; } }catch(e){} }   /* R11.536 a reload keeps what this device had on screen */
+  return u; }
+function saveWui(){ if(!WING_ID||!window.__wuiUsed||!S||!S.gid) return; try{ localStorage.setItem('kfa-wui-'+WING_ID,JSON.stringify({gid:S.gid,wform:(S.wform||{})[WING_ID]||null,rfiPick:(S.rfiPick||{})[WING_ID]||null,t:Date.now()})); }catch(e){} }
+setInterval(saveWui,1000); addEventListener('pagehide',saveWui); document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveWui(); });   /* R11.536 */
 function restoreUi(k){ if(k.gid&&S.gid&&k.gid!==S.gid){ if(WING_ID){ for(const f of ['wsel','wselAf','wform','rfiPick']) if(S[f]) delete S[f][WING_ID]; } return; }   /* R11.397 #129 a new game drops the old game's on-screen state */ S.plot=k.plot===undefined?null:k.plot; if(WING_ID){ (S.wsel=S.wsel||{})[WING_ID]=k.wsel; (S.wselAf=S.wselAf||{})[WING_ID]=k.wselAf||null; if(k.wform) (S.wform=S.wform||{})[WING_ID]=k.wform; if(k.rfiPick) (S.rfiPick=S.rfiPick||{})[WING_ID]=k.rfiPick; } }
 function syncIn(){ const g=localStorage.getItem('kfa-game'); if(!g) return; const keep={clock:S.clock,running:S.running,hidden:S.hidden,endsAt:S.endsAt}, ui=localUi(); const n=JSON.parse(g); if(MODE==='instructor'&&!(((n&&n.savedAt)||0)>(S.savedAt||0))) return;   /* R11.251 never take an older copy */ if(validSave(n)){ S=n; Object.assign(S,keep); restoreUi(ui); } }
 const CMD_OK=['wingPickAccess','chipMove','chipOff','chipFree','taskAddChip','chipMoveOne','fillTasks','wingHello','wingReopen','wingAbortFighters','wingLoadNeeds','wingEmpty','wingCancelRequest','wingSetReady','wingUnsend','releaseForPickup','loadForRequest','wingAskSupport','takeForTask','wingChat','wingRoute','claimRP','attackDefend','wingPickAf','wingCancelFlight','rfiToggle','rfiRollPicked','staffTask','unstaffTask','wingFighterMove','wingSortie','wingTail','wingHex','wingRequest','wingRfi','wingSet','wingPlot','wingSubmit','undoPlot','cancelPlot','rollAcftFor','wingFrom','wingCargo'];
@@ -2307,7 +2311,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 04:25';
+const KFA_BUILT='18 Nov 2026 04:54';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -4066,7 +4070,7 @@ function rollSit(){ S.sitDay=day(); const {r,typed}=val('d-sit',12); const max=d
 function rollAcft(){ const team=document.getElementById('d-wing').value; rollAcftFor(team,document.getElementById('d-acft').value); document.getElementById('d-acft').value=''; }
 function spokesChosen(team){ return S.bases[team].filter(b=>b.role==='spoke').length+S.requests.filter(q=>q.team===team&&q.st==='pending'&&q.role==='spoke'&&!q.from).length; }
 function rollAcftFor(team,typed){ if(gameOverNow()) return; if(S.opening&&!spokesChosen(team)) return alert('Choose your spokes first. Then roll your aircraft.'); const t=(typed||'').split('/').map(x=>parseInt(x,10)); const a=t[0]>=1&&t[0]<=12?t[0]:d(12), b=t[1]>=1&&t[1]<=12?t[1]:d(12), c=t[2]>=1&&t[2]<=4?t[2]:d(4);
-  S.acft[team]={c17:a,c130:b,c5:c,day:day()}; pushRoll({team,title:`${TM[team].n} · aircraft for Day ${day()}`,dice:[{s:12,v:a,l:'C-17'},{s:12,v:b,l:'C-130'},{s:4,v:c,l:'C-5'}]});
+  S.acft[team]={c17:a,c130:b,c5:c,day:day()}; pushRoll({team,title:`${TM[team].n} · aircraft for Day ${day()}`,dice:[{s:12,v:a,l:'C-17',sub:a+' aircraft'},{s:12,v:b,l:'C-130',sub:b+' aircraft'},{s:4,v:c,l:'C-5',sub:c+' aircraft'}]});   /* R11.534 */
   S.orders.acft=TEAMS.filter(x=>S.acft[x.id]&&S.acft[x.id].day===day()).map(x=>`W${wingNo(x.id)} ${S.acft[x.id].c17}/${S.acft[x.id].c130}/${S.acft[x.id].c5}`).join(' · ')+' (C-17/C-130/C-5)';
   out(`${TM[team].n} aircraft today: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`); banner(`${TM[team].n.toUpperCase()} AIRCRAFT TODAY: C-17 ×${a} · C-130 ×${b} · C-5 ×${c}`,false); render(); }
 // R8.3 Base access and overflight (rulebook p.8): the game master rolls a D10 for every country.
@@ -4977,6 +4981,18 @@ body.kpaused.m-wing:has(.commsbar ~ .commsbar)::before{top:calc(58px + 2 * var(-
 <style id="kfa-rfipick">/* R11.533 */
 .rfirow.pick .rfiq{width:auto;flex:1 1 auto;min-width:0}
 .rfirow.pick>input{flex:0 0 auto}
+</style>
+
+<style id="kfa-tilestep">/* R11.535 */
+@media (max-width:700px){
+.htile.hld{grid-template-rows:auto auto auto;row-gap:2px;padding:6px 8px}
+.htile.hld .hico{grid-row:1/4;align-self:start}
+.htile.hld .hnm{grid-column:2/4;grid-row:1}
+.htile.hld .hon{grid-column:2/4;grid-row:2}
+.htile.hld .mvstep{grid-column:2/4;grid-row:3;justify-self:start;gap:6px;margin-top:2px}
+.htile.hld .mvstep .btn{height:30px;min-height:30px;padding:0 13px;line-height:28px;font-size:15px}
+.htile.hld .mvstep b{font-size:15px;min-width:16px}
+}
 </style>
 </body>
 </html>
