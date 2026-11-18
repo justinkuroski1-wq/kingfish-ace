@@ -807,7 +807,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 .rl.done{opacity:.6}.rl.done i{border-color:#4C9A6A;background:#4C9A6A;color:#fff}.rl.next{background:#18324A;color:var(--ink)}.rl.next i{border-color:#5B8DB8;background:#5B8DB8;color:#fff}.rl.next b{color:#fff}
 #kfa-guide{position:fixed;right:18px;bottom:18px;z-index:9450;width:340px;background:#121A22;border:1px solid #3A5A7C;border-top:3px solid #F2C14E;padding:14px 16px;box-shadow:0 14px 34px rgba(0,0,0,.5)}#kfa-guide b{font-size:15px}#kfa-guide p{font-size:13px;line-height:1.45;color:#C9D1D8;margin:6px 0 10px}#kfa-guide small{color:var(--dim);font-size:11px}
 .bline{display:block;font-size:12px;color:#9CC3E6;margin-top:2px}
-.rlx{pointer-events:none!important;background:rgba(5,8,11,.35)!important}.rlx>*{pointer-events:auto}
+.rlx{pointer-events:none!important;background:rgba(5,8,11,.35)!important}.rlx>*{pointer-events:none!important}/* R11.518 the dice never eat a click */
 #kfa-cards{pointer-events:none!important;background:rgba(5,8,11,.3)!important}#kfa-cards .kcard,#kfa-cards .kx{pointer-events:auto}
 .sbnote{font-size:13px;color:var(--mute);margin-top:4px;line-height:1.35}#app.projmode .sbnote{font-size:16px}
 .lgd{font-size:13px!important}#app.projmode .lgd{font-size:16px!important}
@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.398';   // shown on every screen; bump on each release
+const APP_VER='1.17.399';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2306,7 +2306,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 00:48';
+const KFA_BUILT='18 Nov 2026 01:02';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -3023,7 +3023,7 @@ function renderPanel(){
 function hexTip(hex,only){ const L=[]; for(const o of ownersOf(hex)){ if(only&&o.team!==only) continue; L.push(longId(o.team,o.b)+(o.b.st==='struck'?' · STRUCK':'')); { const h=holdOf(o.team,hex); if(h) L.push(`  ${({all:'Flight operations',ftr:'Fighter operations',arr:'Arrivals',dep:'Departures'})[h.k]} suspended through turn ${h.until}`); if(o.b.vacateBy) L.push(`  VACATE by the end of turn ${o.b.vacateBy}`); const ob=outAt(o.team,hex), k=Object.keys(ob); if(k.length) L.push('  Out of action: '+k.map(c=>`${ob[c]>1?ob[c]+' × ':''}${CHIT[c].name}`).join(', ')); } const f=((S.fighters||{})[o.team]||{})[hex]; if(f) L.push(`  ${f} × ${FTYPE[o.team]}`); }
   const by={}; for(const f of (S.flights||[])) if(['requested','approved','enroute'].includes(f.st)&&f.moved===0&&f.path[0]===hex&&(!only||f.team===only)){ const k=TM[f.team].n+' '+ACFT[f.acft].n; by[k]=(by[k]||0)+(f.n||1); }
   for(const k in by) L.push(`  ${by[k]} × ${k.split(' ').slice(-1)[0]} (${k.split(' ').slice(0,2).join(' ')})`);
-  { const co=airfieldCountry(hex); if(co&&ACCESS[co]&&S.access){ const a=accessOf(co); L.unshift(`${co}: ${a==='granted'?'base access open':a==='overflight'?'overflight only (no bases)':'DENIED (no bases, no overflight)'} today`); } }
+  { const ow=ownersOf(hex).find(o=>(!only||o.team===only)&&o.b.af), co=airfieldCountry(hex,ow?ow.b.af:undefined); if(co&&ACCESS[co]&&S.access){   /* R11.518b */ const a=accessOf(co); L.unshift(`${co}: ${a==='granted'?'base access open':a==='overflight'?'overflight only (no bases)':'DENIED (no bases, no overflight)'} today`); } }
   if((S.targets||[]).includes(hex)) L.unshift(`Mission hex (${(S.orders.intent||'').replace(/^.*: /,'')}) · 5 MP per sortie from a spoke, one scoring sortie per wing per turn`);
   const z=(S.redz||{})[hex]; if(z&&REDZ[z]){ const Z=REDZ[z]; L.unshift(`Red ${Z.die===20?'strong':Z.die===12?'medium':'light'} defense · each fighter rolls D${FDIE} vs D${Z.die}, one at a time; tie goes to Red; a loss shoots the fighter down; the first win clears it`); }
   if((S.redJam||{})[hex]) L.unshift('Red jammer · Red +2 in fighter combat nearby · may cut base comms within 2 hexes');
