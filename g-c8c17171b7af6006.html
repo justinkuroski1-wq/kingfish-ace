@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.412';   // shown on every screen; bump on each release
+const APP_VER='1.17.413';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2307,7 +2307,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 02:42';
+const KFA_BUILT='18 Nov 2026 04:25';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2879,7 +2879,7 @@ function wingHtml(team,call,view){ const C=call||'opener.'; if(call==='cmd.') si
       <div class="hint" style="margin-top:4px">RFIs answered: ${ans.length} of 10 · delivered so far: ${del.pp} PP, ${ppl(del.pax)}${del.n?` (${del.n} flight${del.n>1?'s':''})`:''}</div></div>`; }).join('')||'<div class="hint">No bases yet.</div>';
   bs+='</div>';
   const rq=S.requests.filter(q=>q.team===team).slice(-5).reverse();
-  const req=!rq.length?'':`<div class="sec"><h3>MY REQUESTS</h3>${rq.length?rq.map(q=>`<div class="kv" data-hex="${q.hex}"><span>${q.from?'move '+q.from+' → '+q.hex+reqAf(q):'base at '+q.hex+reqAf(q)+' as '+(q.role==='cl'?'contingency location':q.role)}</span><span class="hint" style="color:${q.st==='approved'||(q.st==='pending'&&q.queued)?'#8FC7A3':q.st==='denied'?'#F09A8F':'var(--mute)'}">${q.st==='pending'&&q.queued?'approved · opens at end of turn':q.st}${q.st==='pending'?` <button class="btn sm" style="margin-left:6px" onclick="cmd.wingCancelRequest('${team}','${q.id}')">Cancel</button>`:''}</span></div>`).join(''):'<div class="hint">None yet.</div>'}</div>`;
+  const req=!rq.length?'':`<div class="sec"><h3>MY REQUESTS</h3>${rq.length?rq.map(q=>`<div class="kv" data-hex="${q.hex}"><span>${q.from?'Move '+q.from+' → hex '+q.hex+reqAf(q):(q.role==='cl'?'Contingency location':'Spoke')+' at hex '+q.hex+reqAf(q)/* R11.532 */}</span><span class="hint" style="color:${q.st==='approved'||(q.st==='pending'&&q.queued)?'#8FC7A3':q.st==='denied'?'#F09A8F':'var(--mute)'}">${q.st==='pending'&&q.queued?'approved · opens at end of turn':q.st}${q.st==='pending'?` <button class="btn sm" style="margin-left:6px" onclick="cmd.wingCancelRequest('${team}','${q.id}')">Cancel</button>`:''}</span></div>`).join(''):'<div class="hint">None yet.</div>'}</div>`;
   const tabs=call==='cmd.'?`<span class="wtabs"><button class="${view!=='res'?'on':''}" onclick="setWView('map')">Hex map</button><button class="${view==='res'?'on':''}" onclick="setWView('res')">Resources</button><button class="hlp" onclick="showHelp()" title="What is on this screen?" aria-label="Help for this screen">?</button><button class="hlp wzb" onclick="wTextSize(-1)" title="Smaller text in the side panel" aria-label="Smaller text">A−</button><button class="hlp wzb" onclick="wTextSize(1)" title="Larger text in the side panel" aria-label="Larger text">A+</button><button class="hlp wzb" onclick="goFull()" title="Full screen (Esc to leave)" aria-label="Full screen">Full screen</button></span>`:'';
   return `<div class="wing${view==='res'?' wres':''}"><div class="topbar"><span class="t" style="color:${T.c}">${T.n.toUpperCase()}</span><span class="hrs">${T.full}</span>${tabs}<span class="ds">DAY ${day()} · ${sn}</span><span class="hrs">${S.opening?'Before turn 1':sh+' · TURN '+S.turn+' of '+S.turns}</span><span class="sp"></span>${S.opening?'<span class="sit mw">PLANNING PHASE</span>':S.movesOpen?(S.turn>=(S.turns||12)?'<span class="sit mw">GAME OVER</span>':'<span class="sit mw">MOVE WINDOW OPEN</span>'):sitRolled()?`<span class="sit ${S.orders.sit} dkonly" title="${S.orders.intent||''}">${S.orders.sit.toUpperCase()}</span>`:''}<span class="sit" style="font-family:Consolas,monospace;font-size:22px;letter-spacing:2px;color:var(--ink)" id="wtime">${clockText()}</span></div>
    ${(MODE==='wing'&&!REMOTE&&window.top===window&&!instructorAlive()&&Date.now()-(window.__wingT0||Date.now())>7000)?'<div class="commsbar" style="background:#5a1f1f">NOT CONNECTED TO THE CLASS · this screen has no game code and no instructor on this laptop. Sign out, then sign in with the game code shown on the CAOC board.</div>':''}${(S.comms||{})[team]>=S.turn?`<div class="commsbar">COMMS DOWN THIS TURN · ${String((S.commsWhy||{})[team]||'jamming or cyber attack').replace(/[<>&]/g,'')}: no messages in or out</div>`:''}
@@ -4972,6 +4972,11 @@ body.kpaused.m-wing:has(.commsbar ~ .commsbar)::before{top:calc(58px + 2 * var(-
 
 <style id="kfa-dbre-ph">/* R11.529c phone: the floating Final results button sits above the bottom tab bar, not on it */
 @media (max-width: 760px), (pointer: coarse) and (max-height: 500px){ body.m-wing #kfa-dbre{bottom:calc(88px + env(safe-area-inset-bottom))} }
+</style>
+
+<style id="kfa-rfipick">/* R11.533 */
+.rfirow.pick .rfiq{width:auto;flex:1 1 auto;min-width:0}
+.rfirow.pick>input{flex:0 0 auto}
 </style>
 </body>
 </html>
