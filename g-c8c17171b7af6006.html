@@ -1304,7 +1304,7 @@ const TEAMS=[{id:'alpha',n:'Wing 1',full:'Kadena Air Base',hub:'Kadena AB',c:'#8
 const TM=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const VIS=()=>TEAMS.filter(t=>S.show[t.id]!==false);   // wings shown on the projector board
 const SHIFTS=[['DAY SHIFT','0600–1400'],['SWING SHIFT','1400–2200'],['MID SHIFT','2200–0600']];
-const APP_VER='1.17.396';   // shown on every screen; bump on each release
+const APP_VER='1.17.397';   // shown on every screen; bump on each release
 const CLOCK_MIN=t=>((S&&S.timerMin)||20)/((S&&S.speed)||1);   /* R11.417 game speed */     // owner 11-11: 20-minute turns by default (was 30); Game setup can change it
 const INTENT={crisis:[['Observe','708 805 807 905 907'],['Assure','308 309 705 706 805 905'],['Shape','125 708 805 807 904 905 907'],['Persuade','805 806 906 907']],
               conflict:[['Deter','308 309 705 706 805 905'],['Subdue','806 906'],['Compel','125 805 806 906'],['Eradicate','407 507 606']]};
@@ -2306,7 +2306,7 @@ const WHATSNEW=['Bots take over (Game menu): bots play all four wings from the i
   'Fixed: the instructor map no longer slides under the panel, and a refused request no longer stays pending on a student laptop.'];   /* R11.262 (11-15) */
 function wTextSize(d){ let z=1; try{ z=+localStorage.getItem('kfa-wz')||1; }catch(e){} z=Math.max(1,Math.min(1.3,Math.round((z+d*0.15)*100)/100)); try{ localStorage.setItem('kfa-wz',String(z)); }catch(e){} document.documentElement.style.setProperty('--wz',String(z)); const s=document.querySelector('.wzs'); if(s) s.textContent=Math.round(z*100)+'%'; }   /* R11.232 */
 if(MODE==='wing') setTimeout(()=>{ try{ wTextSize(0); }catch(e){} },300);
-const KFA_BUILT='18 Nov 2026 00:31';
+const KFA_BUILT='18 Nov 2026 00:42';
 /* R11.213 milestone flash: IOC / FOC turns the hex gold for 2.6 s on every screen; the wing that did it gets a notice */
 function msFlash(hex,st){ try{ const find=()=>[...document.querySelectorAll(`polygon.hex[data-id="${hex}"]`)].find(p=>p.getBoundingClientRect().width>0); const p0=find(); if(!p0||!HX[hex]) return; const s0=p0.ownerSVGElement; if(!s0) return;
   const box=document.createElement('div'); box.className='msfl'; const h=HX[hex];
@@ -2917,7 +2917,7 @@ function phTarget(h){ S.wsel=S.wsel||{}; S.wsel[WING_ID]=h||null; render(); }   
 function phoneBases(team){ const hub=HOME[team], sel=(S.wsel||{})[team];   /* R11.289 phones have no map: your bases + find an airfield */
   const own=S.bases[team].map(b=>`<button class="${sel===b.hex?'on':''}" onclick="phPick('${b.hex}')">${b.role==='mob'||b.role==='hub'?'Hub':b.role==='cl'?'CL':'Spoke'} ${b.hex}</button>`).join('');
   const free=h=>MD.chips.filter(c=>c.hex===h&&!TEAMS.some(t=>S.bases[t.id].some(b=>b.hex===h&&(b.af===c.id||!b.af)))&&!S.requests.some(q=>q.st==='pending'&&q.team!==team&&q.hex===h&&(!q.af||q.af===c.id)));   /* R11.336 #47 */
-  const L=[...new Set(MD.chips.map(c=>c.hex))].filter(h=>!S.bases[team].some(b=>b.hex===h)&&free(h).length)   /* R11.302 */.map(h=>{ const c=free(h)[0], co=airfieldCountry(h,c.id); return {h,c,co,ac:accessOf(co),d:hexDist(hub,h)}; }).filter(x=>!ADVERSARY.has(x.co)).sort((a,b)=>a.d-b.d||(a.h<b.h?-1:1)).slice(0,8);
+  const L=[...new Set(MD.chips.map(c=>c.hex))].filter(h=>!S.bases[team].some(b=>b.hex===h)&&free(h).length)   /* R11.302 */.map(h=>{ const c=free(h)[0], co=airfieldCountry(h,c.id); return {h,c,co,ac:accessOf(co),d:hexDist(hub,h)}; }).filter(x=>!ADVERSARY.has(x.co)).sort((a,b)=>a.d-b.d||(a.h<b.h?-1:1)); { const op=L.filter(x=>x.ac==='granted').slice(0,8), sh=L.filter(x=>x.ac!=='granted').slice(0,3); L.length=0; L.push(...op,...sh); }   /* R11.516 open airfields first */
   const rows=L.map(x=>`<div class="phrow"><span class="dot" style="background:${CHIPC[x.c.c]}"></span><div class="txt"><b>Hex ${x.h}</b> · ${x.co}<small>${AFDESC[x.c.c]} · ${x.d} hex${x.d===1?'':'es'} from your hub${x.ac!=='granted'?' · '+(x.ac==='overflight'?'overflight only':'access denied'):''}${S.requests.some(q=>q.st==='pending'&&q.team===team&&q.hex===x.h)?' · <b style="color:#8FC7A3">you asked for it</b>':''}</small></div>${x.ac==='granted'?`<button class="btn sm p" onclick="phPick('${x.h}')">Select</button>`:`<button class="btn sm" disabled>Closed</button>`}</div>`).join('');
   return `<div class="phonly"><div class="sec"><h3>YOUR BASES <span class="r">tap one for its RFIs and tasks</span></h3><div class="phbases">${own}</div></div><div class="sec phpick"><h3>FIND AN AIRFIELD <span class="r">type a hex or pick from the list</span></h3><input id="ph-find" class="field" inputmode="numeric" maxlength="3" placeholder="Hex number, for example 607" oninput="if(this.value.length===3) phFind(this.value)" onkeydown="if(event.key==='Enter') phFind(this.value)"><div>${rows}</div></div></div>`; }
 function afLetter(c){ return (c.id.match(/[a-z]$/)||['A'])[0].toUpperCase(); }
