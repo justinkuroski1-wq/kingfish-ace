@@ -1,0 +1,563 @@
+{
+ "sw_f22_j20_w": {
+  "name": "sw_f22_j20_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 453880,
+  "crf": 22,
+  "src": [
+   "la_f22 7-54 la_f22",
+   "hb_j20 55-156 hb_j20"
+  ]
+ },
+ "su_f35a_al_w": {
+  "name": "su_f35a_al_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 374589,
+  "crf": 22,
+  "src": [
+   "sua_f35a 1-48 sua_f35a",
+   "sub_al 49-120 sb_al"
+  ]
+ },
+ "st_f15e_pol": {
+  "name": "st_f15e_pol",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 491180,
+  "crf": 22,
+  "src": [
+   "sta_f15e 1-52 sta_f15e",
+   "stb_pol 53-112 stb_pol"
+  ]
+ },
+ "sw_f15e_j20_w": {
+  "name": "sw_f15e_j20_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 463377,
+  "crf": 22,
+  "src": [
+   "la_f15e 7-54 la_f15e",
+   "hb_j20 55-156 hb_j20"
+  ]
+ },
+ "sw_f35a_j20_w": {
+  "name": "sw_f35a_j20_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 454164,
+  "crf": 22,
+  "src": [
+   "la_f35a 7-54 la_f35a",
+   "hb_j20 55-156 hb_j20"
+  ]
+ },
+ "sw_f22_j10_w": {
+  "name": "sw_f22_j10_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 436492,
+  "crf": 22,
+  "src": [
+   "la_f22 7-54 la_f22",
+   "hb_j10 55-156 hb_j10"
+  ]
+ },
+ "sw_f15e_j10_w": {
+  "name": "sw_f15e_j10_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 445481,
+  "crf": 22,
+  "src": [
+   "la_f15e 7-54 la_f15e",
+   "hb_j10 55-156 hb_j10"
+  ]
+ },
+ "sw_f35a_j10_w": {
+  "name": "sw_f35a_j10_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 436720,
+  "crf": 22,
+  "src": [
+   "la_f35a 7-54 la_f35a",
+   "hb_j10 55-156 hb_j10"
+  ]
+ },
+ "sw_f22_j16_w": {
+  "name": "sw_f22_j16_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 483434,
+  "crf": 22,
+  "src": [
+   "la_f22 7-54 la_f22",
+   "hb_j16 55-156 hb_j16"
+  ]
+ },
+ "sw_f15e_j16_w": {
+  "name": "sw_f15e_j16_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 491429,
+  "crf": 22,
+  "src": [
+   "la_f15e 7-54 la_f15e",
+   "hb_j16 55-156 hb_j16"
+  ]
+ },
+ "sw_f35a_j16_w": {
+  "name": "sw_f35a_j16_w",
+  "frames": 150,
+  "seconds": 6.25,
+  "bytes": 481315,
+  "crf": 22,
+  "src": [
+   "la_f35a 7-54 la_f35a",
+   "hb_j16 55-156 hb_j16"
+  ]
+ },
+ "su_f22_al_ln": {
+  "name": "su_f22_al_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 247257,
+  "crf": 22,
+  "src": [
+   "sam_al 49-73 sl_al",
+   "hb_f22 58-108 hb_f22"
+  ]
+ },
+ "sw_f22_j20_ln": {
+  "name": "sw_f22_j20_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 301245,
+  "crf": 22,
+  "src": [
+   "la_j20 7-54 la_j20",
+   "hb_f22 55-108 hb_f22"
+  ]
+ },
+ "sw_f15e_j20_ln": {
+  "name": "sw_f15e_j20_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 310158,
+  "crf": 22,
+  "src": [
+   "la_j20 7-54 la_j20",
+   "hb_f15e 55-108 hb_f15e"
+  ]
+ },
+ "su_f15e_al_ln": {
+  "name": "su_f15e_al_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 255036,
+  "crf": 22,
+  "src": [
+   "sam_al 49-73 sl_al",
+   "hb_f15e 58-108 hb_f15e"
+  ]
+ },
+ "sw_f35a_j20_ln": {
+  "name": "sw_f35a_j20_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 298817,
+  "crf": 22,
+  "src": [
+   "la_j20 7-54 la_j20",
+   "hb_f35a 55-108 hb_f35a"
+  ]
+ },
+ "su_f35a_al_ln": {
+  "name": "su_f35a_al_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 245015,
+  "crf": 22,
+  "src": [
+   "sam_al 49-73 sl_al",
+   "hb_f35a 58-108 hb_f35a"
+  ]
+ },
+ "sw_f22_j10_ln": {
+  "name": "sw_f22_j10_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 292788,
+  "crf": 22,
+  "src": [
+   "la_j10 7-54 la_j10",
+   "hb_f22 55-108 hb_f22"
+  ]
+ },
+ "sw_f22_j16_ln": {
+  "name": "sw_f22_j16_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 305233,
+  "crf": 22,
+  "src": [
+   "la_j16 7-54 la_j16",
+   "hb_f22 55-108 hb_f22"
+  ]
+ },
+ "sw_f15e_j10_ln": {
+  "name": "sw_f15e_j10_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 301863,
+  "crf": 22,
+  "src": [
+   "la_j10 7-54 la_j10",
+   "hb_f15e 55-108 hb_f15e"
+  ]
+ },
+ "sw_f15e_j16_ln": {
+  "name": "sw_f15e_j16_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 314048,
+  "crf": 22,
+  "src": [
+   "la_j16 7-54 la_j16",
+   "hb_f15e 55-108 hb_f15e"
+  ]
+ },
+ "sw_f35a_j10_ln": {
+  "name": "sw_f35a_j10_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 290667,
+  "crf": 22,
+  "src": [
+   "la_j10 7-54 la_j10",
+   "hb_f35a 55-108 hb_f35a"
+  ]
+ },
+ "sw_f35a_j16_ln": {
+  "name": "sw_f35a_j16_ln",
+  "frames": 102,
+  "seconds": 4.25,
+  "bytes": 302713,
+  "crf": 22,
+  "src": [
+   "la_j16 7-54 la_j16",
+   "hb_f35a 55-108 hb_f35a"
+  ]
+ },
+ "su_f22_al_w": {
+  "name": "su_f22_al_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 375879,
+  "crf": 22,
+  "src": [
+   "sua_f22 1-48 sua_f22",
+   "sub_al 49-120 sb_al"
+  ]
+ },
+ "su_f15e_al_w": {
+  "name": "su_f15e_al_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 389585,
+  "crf": 22,
+  "src": [
+   "sua_f15e 1-48 sua_f15e",
+   "sub_al 49-120 sb_al"
+  ]
+ },
+ "st_f22_pol": {
+  "name": "st_f22_pol",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 464195,
+  "crf": 22,
+  "src": [
+   "sta_f22 1-52 sta_f22",
+   "stb_pol 53-112 stb_pol"
+  ]
+ },
+ "st_f35a_pol": {
+  "name": "st_f35a_pol",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 460655,
+  "crf": 22,
+  "src": [
+   "sta_f35a 1-52 sta_f35a",
+   "stb_pol 53-112 stb_pol"
+  ]
+ },
+ "st_f15e_airbase": {
+  "name": "st_f15e_airbase",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 479162,
+  "crf": 22,
+  "src": [
+   "sta_f15e 1-52 sta_f15e",
+   "stb_airbase 53-112 stb_airbase"
+  ]
+ },
+ "st_f22_airbase": {
+  "name": "st_f22_airbase",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 453303,
+  "crf": 22,
+  "src": [
+   "sta_f22 1-52 sta_f22",
+   "stb_airbase 53-112 stb_airbase"
+  ]
+ },
+ "st_f22_garrison": {
+  "name": "st_f22_garrison",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 474985,
+  "crf": 22,
+  "src": [
+   "sta_f22 1-52 sta_f22",
+   "stb_garrison 53-112 stb_garrison"
+  ]
+ },
+ "st_f22_factory": {
+  "name": "st_f22_factory",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 465346,
+  "crf": 22,
+  "src": [
+   "sta_f22 1-52 sta_f22",
+   "stb_factory 53-112 stb_factory"
+  ]
+ },
+ "st_f22_port": {
+  "name": "st_f22_port",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 450270,
+  "crf": 22,
+  "src": [
+   "sta_f22 1-52 sta_f22",
+   "stb_port 53-112 stb_port"
+  ]
+ },
+ "st_f15e_garrison": {
+  "name": "st_f15e_garrison",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 501868,
+  "crf": 22,
+  "src": [
+   "sta_f15e 1-52 sta_f15e",
+   "stb_garrison 53-112 stb_garrison"
+  ]
+ },
+ "st_f15e_factory": {
+  "name": "st_f15e_factory",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 492140,
+  "crf": 22,
+  "src": [
+   "sta_f15e 1-52 sta_f15e",
+   "stb_factory 53-112 stb_factory"
+  ]
+ },
+ "st_f15e_port": {
+  "name": "st_f15e_port",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 476955,
+  "crf": 22,
+  "src": [
+   "sta_f15e 1-52 sta_f15e",
+   "stb_port 53-112 stb_port"
+  ]
+ },
+ "st_f35a_airbase": {
+  "name": "st_f35a_airbase",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 450405,
+  "crf": 22,
+  "src": [
+   "sta_f35a 1-52 sta_f35a",
+   "stb_airbase 53-112 stb_airbase"
+  ]
+ },
+ "st_f35a_garrison": {
+  "name": "st_f35a_garrison",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 471805,
+  "crf": 22,
+  "src": [
+   "sta_f35a 1-52 sta_f35a",
+   "stb_garrison 53-112 stb_garrison"
+  ]
+ },
+ "st_f35a_factory": {
+  "name": "st_f35a_factory",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 461811,
+  "crf": 22,
+  "src": [
+   "sta_f35a 1-52 sta_f35a",
+   "stb_factory 53-112 stb_factory"
+  ]
+ },
+ "st_f35a_port": {
+  "name": "st_f35a_port",
+  "frames": 112,
+  "seconds": 4.67,
+  "bytes": 447606,
+  "crf": 22,
+  "src": [
+   "sta_f35a 1-52 sta_f35a",
+   "stb_port 53-112 stb_port"
+  ]
+ },
+ "su_f22_s400_w": {
+  "name": "su_f22_s400_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 375934,
+  "crf": 22,
+  "src": [
+   "sua_f22 1-48 sua_f22",
+   "sub_s400 49-120 sb_s400"
+  ]
+ },
+ "su_f22_s400_ln": {
+  "name": "su_f22_s400_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 246748,
+  "crf": 22,
+  "src": [
+   "sam_s400 49-73 sl_s400",
+   "hb_f22 58-108 hb_f22"
+  ]
+ },
+ "su_f22_hq16_w": {
+  "name": "su_f22_hq16_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 378537,
+  "crf": 22,
+  "src": [
+   "sua_f22 1-48 sua_f22",
+   "sub_hq16 49-120 sb_hq16"
+  ]
+ },
+ "su_f22_hq16_ln": {
+  "name": "su_f22_hq16_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 247415,
+  "crf": 22,
+  "src": [
+   "sam_hq16 49-73 sl_hq16",
+   "hb_f22 58-108 hb_f22"
+  ]
+ },
+ "su_f15e_s400_w": {
+  "name": "su_f15e_s400_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 389606,
+  "crf": 22,
+  "src": [
+   "sua_f15e 1-48 sua_f15e",
+   "sub_s400 49-120 sb_s400"
+  ]
+ },
+ "su_f15e_s400_ln": {
+  "name": "su_f15e_s400_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 254569,
+  "crf": 22,
+  "src": [
+   "sam_s400 49-73 sl_s400",
+   "hb_f15e 58-108 hb_f15e"
+  ]
+ },
+ "su_f15e_hq16_w": {
+  "name": "su_f15e_hq16_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 392493,
+  "crf": 22,
+  "src": [
+   "sua_f15e 1-48 sua_f15e",
+   "sub_hq16 49-120 sb_hq16"
+  ]
+ },
+ "su_f15e_hq16_ln": {
+  "name": "su_f15e_hq16_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 255447,
+  "crf": 22,
+  "src": [
+   "sam_hq16 49-73 sl_hq16",
+   "hb_f15e 58-108 hb_f15e"
+  ]
+ },
+ "su_f35a_s400_w": {
+  "name": "su_f35a_s400_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 374714,
+  "crf": 22,
+  "src": [
+   "sua_f35a 1-48 sua_f35a",
+   "sub_s400 49-120 sb_s400"
+  ]
+ },
+ "su_f35a_s400_ln": {
+  "name": "su_f35a_s400_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 244392,
+  "crf": 22,
+  "src": [
+   "sam_s400 49-73 sl_s400",
+   "hb_f35a 58-108 hb_f35a"
+  ]
+ },
+ "su_f35a_hq16_w": {
+  "name": "su_f35a_hq16_w",
+  "frames": 120,
+  "seconds": 5.0,
+  "bytes": 377477,
+  "crf": 22,
+  "src": [
+   "sua_f35a 1-48 sua_f35a",
+   "sub_hq16 49-120 sb_hq16"
+  ]
+ },
+ "su_f35a_hq16_ln": {
+  "name": "su_f35a_hq16_ln",
+  "frames": 76,
+  "seconds": 3.17,
+  "bytes": 244991,
+  "crf": 22,
+  "src": [
+   "sam_hq16 49-73 sl_hq16",
+   "hb_f35a 58-108 hb_f35a"
+  ]
+ }
+}
